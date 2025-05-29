@@ -8,13 +8,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const previewContent = document.getElementById('previewContent');
   const settingsToggleBtn = document.getElementById('settingsToggleBtn');
   const settingsContainer = document.getElementById('settingsContainer');
+  const convertShortcut = document.getElementById('convertShortcut');
+  const popupShortcut = document.getElementById('popupShortcut');
+  const quickConvertShortcut = document.getElementById('quickConvertShortcut');
   
   // Settings elements
   const contentScopeRadios = document.getElementsByName('contentScope');
   const preserveTablesCheckbox = document.getElementById('preserveTables');
   const includeImagesCheckbox = document.getElementById('includeImages');
   
-  // Load saved settings
+  // Detect operating system
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  
+  // Set up shortcut display based on OS
+  function setupShortcutDisplay() {
+    // Default shortcuts (can be customized by user)
+    const popupShortcutText = isMac ? '⌥⇧L' : 'Alt+Shift+L';
+    const quickConvertShortcutText = isMac ? '⌥⇧M' : 'Alt+Shift+M';
+    
+    // Update shortcut displays
+    popupShortcut.textContent = popupShortcutText;
+    quickConvertShortcut.textContent = quickConvertShortcutText;
+    convertShortcut.textContent = quickConvertShortcutText;
+  }
+  
+  // Initialize
+  setupShortcutDisplay();
   loadSettings();
   
   // Event Listeners
@@ -22,6 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   settingsToggleBtn.addEventListener('click', () => {
     settingsContainer.classList.toggle('hidden');
+    settingsToggleBtn.classList.toggle('active');
+    
+    // Toggle the arrow icon
+    const toggleIcon = settingsToggleBtn.querySelector('.toggle-icon');
+    toggleIcon.textContent = settingsContainer.classList.contains('hidden') ? '▼' : '▲';
   });
   
   // Save settings when changed
@@ -107,6 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
           error.message.includes('No content could be extracted')
       )) {
         settingsContainer.classList.remove('hidden');
+        settingsToggleBtn.classList.add('active');
+        const toggleIcon = settingsToggleBtn.querySelector('.toggle-icon');
+        toggleIcon.textContent = '▲';
       }
       
       // Analytics tracking (if implemented)

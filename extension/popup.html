@@ -6,14 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LLMFeeder</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
 </head>
 <body>
   <div class="container">
-    <h1>LLMFeeder</h1>
-    <p class="tagline">Convert page content to Markdown</p>
+    <header class="header">
+      <h1>LLMFeeder</h1>
+      <p class="tagline">Convert web pages to clean Markdown and copy to clipboard so you can feed it to your favorite LLM model as context.</p>
+    </header>
     
     <div class="main-controls">
-      <button id="convertBtn" class="primary-btn">Convert & Copy</button>
+      <button id="convertBtn" class="primary-btn">
+        <span class="btn-text">Convert & Copy</span>
+        <span id="convertShortcut" class="shortcut-badge"></span>
+      </button>
       <div id="statusIndicator" class="status">Ready</div>
     </div>
     
@@ -22,42 +28,61 @@
       <div id="previewContent" class="preview-content"></div>
     </div>
     
-    <div class="settings-toggle">
-      <button id="settingsToggleBtn">Settings</button>
-    </div>
-    
-    <div id="settingsContainer" class="settings-container hidden">
-      <h2>Settings</h2>
+    <div class="settings-section">
+      <button id="settingsToggleBtn" class="settings-toggle-btn">
+        <span class="btn-text">Settings</span>
+        <span class="toggle-icon">▼</span>
+      </button>
       
-      <div class="setting-group">
-        <h3>Content Scope</h3>
-        <label>
-          <input type="radio" name="contentScope" value="mainContent" checked> 
-          Main article content only
-        </label>
-        <label>
-          <input type="radio" name="contentScope" value="fullPage"> 
-          Full page content
-        </label>
-        <label>
-          <input type="radio" name="contentScope" value="selection"> 
-          Selected text only
-        </label>
-      </div>
-      
-      <div class="setting-group">
-        <h3>Formatting Options</h3>
-        <label>
-          <input type="checkbox" id="preserveTables" checked> 
-          Preserve table formatting
-        </label>
-        <label>
-          <input type="checkbox" id="includeImages" checked> 
-          Include images
-        </label>
+      <div id="settingsContainer" class="settings-container hidden">
+        <div class="setting-group">
+          <h3>Content Scope</h3>
+          <label class="setting-option">
+            <input type="radio" name="contentScope" value="mainContent" checked> 
+            <span>Main article content only</span>
+          </label>
+          <label class="setting-option">
+            <input type="radio" name="contentScope" value="fullPage"> 
+            <span>Full page content</span>
+          </label>
+          <label class="setting-option">
+            <input type="radio" name="contentScope" value="selection"> 
+            <span>Selected text only</span>
+          </label>
+        </div>
+        
+        <div class="setting-group">
+          <h3>Formatting Options</h3>
+          <label class="setting-option">
+            <input type="checkbox" id="preserveTables" checked> 
+            <span>Preserve table formatting</span>
+          </label>
+          <label class="setting-option">
+            <input type="checkbox" id="includeImages" checked> 
+            <span>Include images</span>
+          </label>
+        </div>
+        
+        <div class="setting-group">
+          <h3>Keyboard Shortcuts</h3>
+          <div class="shortcut-info">
+            <div class="shortcut-row">
+              <span>Open Extension:</span>
+              <code id="popupShortcut">Alt+Shift+L</code>
+            </div>
+            <div class="shortcut-row">
+              <span>Quick Convert:</span>
+              <code id="quickConvertShortcut">Alt+Shift+M</code>
+            </div>
+            <div class="shortcut-customize">
+              <small>Customize at <code>chrome://extensions/shortcuts</code></small>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+  
   <div class="footer">
     Made with ❤️ by <a href="https://github.com/jatinkrmalik" target="_blank">@jatinkrmalik</a>
   </div>
