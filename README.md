@@ -59,6 +59,18 @@ This architecture ensures that your content remains exclusively on your device t
 
 6. Click the puzzle piece icon in Chrome toolbar and pin LLMFeeder for easy access
 
+### Option 3: Load in Firefox (Manual)
+
+LLMFeeder can also be loaded as a temporary extension in Firefox for testing and use:
+
+1. Download or clone this repository.
+2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
+3. Click "Load Temporary Add-on..."
+4. Select the `manifest.json` file inside the `extension` directory.
+5. The extension will appear in your Firefox extensions list for the current session.
+
+> **Note:** Some Chrome APIs may have limited support in Firefox. For best results, use the latest Firefox version.
+
 ### Usage
 
 1. Navigate to any web page you want to convert to Markdown
@@ -150,4 +162,4 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. 
+Contributions are welcome! Please feel free to submit a Pull Request.
