@@ -5,7 +5,7 @@
 # Usage: ./scripts/build.sh [chrome|firefox|source|all]
 
 # Default values
-VERSION="1.0.0"
+VERSION="1.0.1"
 TARGET="all"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -29,7 +29,7 @@ if [ $# -gt 0 ]; then
       echo "  source  - Build source package only"
       echo "  all     - Build all packages (default)"
       echo ""
-      echo "  --version VERSION - Set version number (default: 1.0.0)"
+      echo "  --version VERSION - Set version number (default: 1.0.1)"
       echo "  --help|-h         - Show this help message"
       exit 0
       ;;
@@ -92,9 +92,10 @@ build_chrome() {
   cp "$EXT_DIR/icons/"* "$CHROME_DIR/icons/" 2>/dev/null
   cp "$EXT_DIR/libs/"* "$CHROME_DIR/libs/" 2>/dev/null
   
-  # Create Chrome-specific manifest without Firefox settings
+  # Create Chrome-specific manifest
   if command -v jq &> /dev/null; then
     echo "Using jq to create Chrome manifest..."
+    # Remove Firefox-specific settings but ensure service_worker is preserved
     jq 'del(.browser_specific_settings)' "$EXT_DIR/manifest.json" > "$CHROME_DIR/manifest.json"
   else
     echo "jq not found, using sed instead..."
@@ -140,15 +141,28 @@ build_firefox() {
   # Create Firefox-specific manifest with required settings
   if command -v jq &> /dev/null; then
     echo "Using jq to create Firefox manifest..."
-    jq '.browser_specific_settings = {
+    # For Firefox 109, modify the background section to use scripts instead of service_worker
+    jq '
+    .browser_specific_settings = {
       "gecko": {
         "id": "llmfeeder@j47.in",
         "strict_min_version": "109.0"
       }
-    }' "$EXT_DIR/manifest.json" > "$FIREFOX_DIR/manifest.json"
+    } | 
+    if has("background") then
+      .background = {
+        "scripts": ["background.js"]
+      }
+    else
+      .
+    end
+    ' "$EXT_DIR/manifest.json" > "$FIREFOX_DIR/manifest.json"
   else
-    echo "jq not found, using copy instead..."
+    echo "jq not found, using manual modification..."
     cp "$EXT_DIR/manifest.json" "$FIREFOX_DIR/manifest.json"
+    # This is a basic substitution but might not work for all cases
+    sed -i.bak 's/"service_worker": "background.js",\s*"type": "module"/"scripts": ["background.js"]/' "$FIREFOX_DIR/manifest.json" || true
+    rm -f "$FIREFOX_DIR/manifest.json.bak" 2>/dev/null || true
   fi
   
   # Create the ZIP file
