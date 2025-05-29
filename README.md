@@ -2,6 +2,20 @@
 
 A Chrome extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs).
 
+## Privacy & Security
+
+LLMFeeder operates as a fully client-side extension with zero backend dependencies. All content processing occurs locally within your browser's execution environment:
+
+- **No Remote Data Transmission**: The extension performs all operations (content extraction, Markdown conversion, clipboard operations) entirely within your browser's sandbox. No data is ever transmitted to external servers.
+
+- **Zero Telemetry**: Unlike many extensions, LLMFeeder contains no analytics, tracking, or data collection mechanisms of any kind.
+
+- **Minimal Permissions**: The extension requests only the permissions strictly necessary for its core functionality (activeTab, clipboardWrite, storage, scripting).
+
+- **Verifiable Codebase**: Being fully open source, the entire codebase is available for inspection to verify these privacy claims. Users are encouraged to review the source code to confirm the absence of any data exfiltration mechanisms.
+
+This architecture ensures that your content remains exclusively on your device throughout the entire extraction and conversion process.
+
 ## Features
 
 - **Smart Content Extraction**: Uses Readability algorithm to focus on main content
