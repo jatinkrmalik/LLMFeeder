@@ -311,9 +311,11 @@ input[type="checkbox"] {
   padding: 12px 0;
   border-top: 1px solid var(--border-color);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 20px;
+  gap: 8px;
+  min-height: 42px;
 }
 
 .footer a {
@@ -323,4 +325,21 @@ input[type="checkbox"] {
 
 .footer a:hover {
   text-decoration: underline;
+}
+
+.github-link a {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--dark-gray);
+  background-color: var(--light-gray);
+  padding: 3px 8px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.github-link a:hover {
+  background-color: #e8eaed;
+  color: var(--primary-color);
+  text-decoration: none;
 } 
