@@ -1,10 +1,82 @@
 // LLMFeeder Popup Script
 // Created by @jatinkrmalik (https://github.com/jatinkrmalik)
 
-// Use the browser compatibility layer
-const browserAPI = typeof window !== 'undefined' && window.browserAPI ? 
-                 window.browserAPI : 
-                 (typeof chrome !== 'undefined' ? chrome : (typeof browser !== 'undefined' ? browser : {}));
+// Create a proper browserAPI wrapper for the popup
+const browserAPI = (function() {
+  // Check if we're in Firefox (browser is defined) or Chrome (chrome is defined)
+  const isBrowser = typeof browser !== 'undefined';
+  const isChrome = typeof chrome !== 'undefined';
+  
+  // Base object
+  const api = {};
+  
+  if (isBrowser) {
+    // Firefox already has promise-based APIs
+    api.tabs = browser.tabs;
+    api.runtime = browser.runtime;
+    api.storage = browser.storage;
+    api.commands = browser.commands;
+  } else if (isChrome) {
+    // Chrome APIs
+    api.tabs = {
+      query: function(queryInfo) {
+        return new Promise((resolve, reject) => {
+          chrome.tabs.query(queryInfo, (tabs) => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve(tabs);
+            }
+          });
+        });
+      },
+      sendMessage: function(tabId, message) {
+        return new Promise((resolve, reject) => {
+          chrome.tabs.sendMessage(tabId, message, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve(response);
+            }
+          });
+        });
+      }
+    };
+    
+    api.runtime = chrome.runtime;
+    
+    api.storage = {
+      sync: {
+        get: function(keys) {
+          return new Promise((resolve, reject) => {
+            chrome.storage.sync.get(keys, (result) => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve(result);
+              }
+            });
+          });
+        },
+        set: function(items) {
+          return new Promise((resolve, reject) => {
+            chrome.storage.sync.set(items, () => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve();
+              }
+            });
+          });
+        }
+      }
+    };
+    
+    api.commands = chrome.commands;
+  }
+  
+  return api;
+})();
 
 // DOM elements
 const convertBtn = document.getElementById('convertBtn');

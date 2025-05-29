@@ -11,10 +11,10 @@ const browserAPI = (function() {
   const api = {};
   
   // Helper to promisify callback-based Chrome APIs
-  function promisify(chromeAPICall) {
+  function promisify(chromeAPICall, context) {
     return (...args) => {
       return new Promise((resolve, reject) => {
-        chromeAPICall(...args, (result) => {
+        chromeAPICall.call(context, ...args, (result) => {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
           } else {
@@ -36,8 +36,8 @@ const browserAPI = (function() {
   } else if (isChrome) {
     // Chrome needs promisification
     api.tabs = {
-      query: promisify(chrome.tabs.query),
-      sendMessage: promisify(chrome.tabs.sendMessage),
+      query: promisify(chrome.tabs.query, chrome.tabs),
+      sendMessage: promisify(chrome.tabs.sendMessage, chrome.tabs),
     };
     
     api.runtime = {
@@ -48,8 +48,28 @@ const browserAPI = (function() {
     
     api.storage = {
       sync: {
-        get: promisify(chrome.storage.sync.get),
-        set: promisify(chrome.storage.sync.set)
+        get: function(keys) {
+          return new Promise((resolve, reject) => {
+            chrome.storage.sync.get(keys, (result) => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve(result);
+              }
+            });
+          });
+        },
+        set: function(items) {
+          return new Promise((resolve, reject) => {
+            chrome.storage.sync.set(items, () => {
+              if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+              } else {
+                resolve();
+              }
+            });
+          });
+        }
       }
     };
     
@@ -72,24 +92,28 @@ browserAPI.commands.onCommand.addListener(async (command) => {
     
     if (activeTab) {
       // Get user settings
-      const settings = await browserAPI.storage.sync.get({
-        contentScope: 'mainContent',
-        preserveTables: true,
-        includeImages: true
-      });
-      
-      // Send message to content script to perform conversion
       try {
-        const response = await browserAPI.tabs.sendMessage(activeTab.id, {
-          action: "convertToMarkdown",
-          options: settings
+        const settings = await browserAPI.storage.sync.get({
+          contentScope: 'mainContent',
+          preserveTables: true,
+          includeImages: true
         });
         
-        if (response && response.success) {
-          console.log("Markdown conversion successful");
+        // Send message to content script to perform conversion
+        try {
+          const response = await browserAPI.tabs.sendMessage(activeTab.id, {
+            action: "convertToMarkdown",
+            options: settings
+          });
+          
+          if (response && response.success) {
+            console.log("Markdown conversion successful");
+          }
+        } catch (error) {
+          console.error("Error during conversion:", error);
         }
       } catch (error) {
-        console.error("Error during conversion:", error);
+        console.error("Error loading settings:", error);
       }
     }
   }

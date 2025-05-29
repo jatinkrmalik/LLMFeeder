@@ -12,13 +12,20 @@
   
   const CONVERSION_TIMEOUT = 10000; // 10 seconds
   
-  // Use the browser compatibility layer if available, or fallback to direct chrome API
-  const browserAPI = typeof window !== 'undefined' && window.browserAPI ? 
-                    window.browserAPI : 
-                    (typeof chrome !== 'undefined' ? { runtime: { onMessage: chrome.runtime.onMessage } } : {});
+  // Create a proper runtime API wrapper for message handling
+  const browserRuntime = (function() {
+    if (typeof browser !== 'undefined' && browser.runtime) {
+      return browser.runtime;
+    } else if (typeof chrome !== 'undefined' && chrome.runtime) {
+      return chrome.runtime;
+    }
+    return {
+      onMessage: { addListener: function() {} }
+    };
+  })();
   
   // Listen for messages from popup or background script
-  browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  browserRuntime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'convert') {
       const options = request.options || {};
       const markdownResult = convertToMarkdown(options);
