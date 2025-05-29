@@ -1,19 +1,78 @@
 // LLMFeeder Background Script
 // Handles keyboard shortcuts and background tasks
 
-// Use the browser compatibility layer instead of direct Chrome API
-const browser = window.browserAPI || {};
+// Create browser compatibility layer for service worker context
+const browserAPI = (function() {
+  // Check if we're in Firefox (browser is defined) or Chrome (chrome is defined)
+  const isBrowser = typeof browser !== 'undefined';
+  const isChrome = typeof chrome !== 'undefined';
+  
+  // Base object
+  const api = {};
+  
+  // Helper to promisify callback-based Chrome APIs
+  function promisify(chromeAPICall) {
+    return (...args) => {
+      return new Promise((resolve, reject) => {
+        chromeAPICall(...args, (result) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(result);
+          }
+        });
+      });
+    };
+  }
+  
+  // Set up APIs
+  if (isBrowser) {
+    // Firefox already has promise-based APIs
+    api.tabs = browser.tabs;
+    api.runtime = browser.runtime;
+    api.storage = browser.storage;
+    api.commands = browser.commands;
+    api.scripting = browser.scripting;
+  } else if (isChrome) {
+    // Chrome needs promisification
+    api.tabs = {
+      query: promisify(chrome.tabs.query),
+      sendMessage: promisify(chrome.tabs.sendMessage),
+    };
+    
+    api.runtime = {
+      onMessage: chrome.runtime.onMessage,
+      getURL: chrome.runtime.getURL,
+      lastError: chrome.runtime.lastError
+    };
+    
+    api.storage = {
+      sync: {
+        get: promisify(chrome.storage.sync.get),
+        set: promisify(chrome.storage.sync.set)
+      }
+    };
+    
+    api.commands = {
+      onCommand: chrome.commands.onCommand
+    };
+    
+    api.scripting = chrome.scripting;
+  }
+  
+  return api;
+})();
 
 // Handle keyboard shortcuts
-browser.commands.onCommand.addListener(async (command) => {
+browserAPI.commands.onCommand.addListener(async (command) => {
   if (command === "convert_to_markdown") {
     // Get current active tab
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
     const activeTab = tabs[0];
     
     if (activeTab) {
       // Get user settings
-      const settings = await browser.storage.sync.get({
+      const settings = await browserAPI.storage.sync.get({
         contentScope: 'mainContent',
         preserveTables: true,
         includeImages: true
@@ -21,7 +80,7 @@ browser.commands.onCommand.addListener(async (command) => {
       
       // Send message to content script to perform conversion
       try {
-        const response = await browser.tabs.sendMessage(activeTab.id, {
+        const response = await browserAPI.tabs.sendMessage(activeTab.id, {
           action: "convertToMarkdown",
           options: settings
         });
@@ -44,11 +103,11 @@ browser.commands.onCommand.addListener(async (command) => {
 function showNotification(title, message) {
   // In Chrome extensions, we can use the notifications API if we have permission
   // For this simple implementation, we'll just create a basic notification
-  browser.tabs.query({active: true, currentWindow: true}, function(tabs) {
+  browserAPI.tabs.query({active: true, currentWindow: true}, function(tabs) {
     const tab = tabs[0];
     
     // Inject a content script to show a visual notification on the page
-    browser.scripting.executeScript({
+    browserAPI.scripting.executeScript({
       target: {tabId: tab.id},
       function: createPageNotification,
       args: [title, message]
@@ -102,29 +161,22 @@ function createPageNotification(title, message) {
 }
 
 /**
- * Copy text to clipboard
- * Note: This might not work from a background script due to security restrictions
+ * Copy text to clipboard via content script
  * @param {string} text - Text to copy
  */
 async function copyToClipboard(text) {
   try {
-    // First approach: Try to use the clipboard API directly (might not work in background)
-    await navigator.clipboard.writeText(text);
-    console.log('Content copied to clipboard using Clipboard API');
-  } catch (error) {
-    console.error('Could not use Clipboard API directly:', error);
-    
-    // Second approach: Create a temporary offscreen document (requires "offscreen" permission)
-    // or inject a content script to handle the copy operation
-    browser.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    browserAPI.tabs.query({active: true, currentWindow: true}, function(tabs) {
       const tab = tabs[0];
       
-      browser.scripting.executeScript({
+      browserAPI.scripting.executeScript({
         target: {tabId: tab.id},
         function: textToClipboard,
         args: [text]
       }).catch(err => console.error('Could not inject clipboard script:', err));
     });
+  } catch (error) {
+    console.error('Could not copy to clipboard:', error);
   }
 }
 

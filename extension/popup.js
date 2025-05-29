@@ -2,7 +2,9 @@
 // Created by @jatinkrmalik (https://github.com/jatinkrmalik)
 
 // Use the browser compatibility layer
-const browser = window.browserAPI || {};
+const browserAPI = typeof window !== 'undefined' && window.browserAPI ? 
+                 window.browserAPI : 
+                 (typeof chrome !== 'undefined' ? chrome : (typeof browser !== 'undefined' ? browser : {}));
 
 // DOM elements
 const convertBtn = document.getElementById('convertBtn');
@@ -43,7 +45,7 @@ function updateShortcutDisplay() {
 // Load user settings
 async function loadSettings() {
   try {
-    const data = await browser.storage.sync.get({
+    const data = await browserAPI.storage.sync.get({
       contentScope: 'mainContent',
       preserveTables: true,
       includeImages: true
@@ -67,7 +69,7 @@ async function saveSettings() {
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     
-    await browser.storage.sync.set({
+    await browserAPI.storage.sync.set({
       contentScope,
       preserveTables,
       includeImages
@@ -87,7 +89,7 @@ async function convertToMarkdown() {
   
   try {
     // Get current tab
-    const tabs = await browser.tabs.query({active: true, currentWindow: true});
+    const tabs = await browserAPI.tabs.query({active: true, currentWindow: true});
     if (!tabs || tabs.length === 0) {
       throw new Error('No active tab found');
     }
@@ -98,7 +100,7 @@ async function convertToMarkdown() {
     const includeImages = includeImagesCheckbox.checked;
     
     // Send message to content script
-    const response = await browser.tabs.sendMessage(tabs[0].id, {
+    const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
       action: 'convertToMarkdown',
       settings: {
         contentScope,

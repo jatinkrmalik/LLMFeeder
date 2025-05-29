@@ -3,9 +3,11 @@
  * Provides a unified interface for Chrome and Firefox extensions
  */
 
-(function() {
+(function(globalThis) {
+  // Use globalThis instead of window to be compatible with both browser context and service worker
+  
   // Create a unified 'browser' object that works in both Chrome and Firefox
-  window.browserAPI = (function() {
+  globalThis.browserAPI = (function() {
     // Check if we're in Firefox (browser is defined) or Chrome (chrome is defined)
     const isBrowser = typeof browser !== 'undefined';
     const isChrome = typeof chrome !== 'undefined';
@@ -82,12 +84,15 @@
     }
     
     // Clipboard handling - different across browsers
-    api.clipboard = {
-      writeText: (text) => {
-        return navigator.clipboard.writeText(text);
-      }
-    };
+    // Only include if in a browser context that has navigator
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      api.clipboard = {
+        writeText: (text) => {
+          return navigator.clipboard.writeText(text);
+        }
+      };
+    }
     
     return api;
   })();
-})(); 
+})(typeof window !== 'undefined' ? window : self); 
