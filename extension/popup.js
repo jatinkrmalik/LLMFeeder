@@ -1,4 +1,5 @@
 // LLMFeeder Popup Script
+// Created by @jatinkrmalik (https://github.com/jatinkrmalik)
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const convertBtn = document.getElementById('convertBtn');

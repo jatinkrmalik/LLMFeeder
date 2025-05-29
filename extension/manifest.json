@@ -3,6 +3,7 @@
   "name": "LLMFeeder",
   "version": "1.0.0",
   "description": "Convert web pages to clean Markdown and copy to clipboard for LLM consumption",
+  "author": "Jatin Malik (jatinkrmalik)",
   "permissions": [
     "activeTab",
     "clipboardWrite",

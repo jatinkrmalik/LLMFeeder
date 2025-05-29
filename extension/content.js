@@ -1,4 +1,5 @@
 // LLMFeeder Content Script
+// Created by @jatinkrmalik (https://github.com/jatinkrmalik)
 (function() {
   // Constants for error handling
   const ERROR_MESSAGES = {

@@ -1,4 +1,5 @@
 // LLMFeeder Background Script
+// Created by @jatinkrmalik (https://github.com/jatinkrmalik)
 chrome.commands.onCommand.addListener(async (command) => {
   if (command === 'convert_to_markdown') {
     // Get the active tab

@@ -2,6 +2,8 @@
 
 A Chrome extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs).
 
+**Created by [@jatinkrmalik](https://github.com/jatinkrmalik)**
+
 ## Features
 
 - **Smart Content Extraction**: Uses Readability algorithm to focus on main content
