@@ -1,14 +1,50 @@
 // LLMFeeder Content Script
 (function() {
+  // Constants for error handling
+  const ERROR_MESSAGES = {
+    NO_CONTENT: 'No content could be extracted from this page.',
+    TIMEOUT: 'Conversion timed out. The page might be too large.',
+    NO_SELECTION: 'No text is selected. Please select text or use a different content scope.',
+    PERMISSION_DENIED: 'Permission denied. Please check extension permissions.',
+    GENERAL: 'An error occurred during conversion.'
+  };
+  
+  const CONVERSION_TIMEOUT = 10000; // 10 seconds
+  
   // Listen for messages from the popup
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'convertToMarkdown') {
+      // Set up timeout for conversion process
+      const timeoutId = setTimeout(() => {
+        sendResponse({ 
+          success: false, 
+          error: ERROR_MESSAGES.TIMEOUT 
+        });
+      }, CONVERSION_TIMEOUT);
+      
       try {
         const markdown = convertToMarkdown(request.settings);
+        clearTimeout(timeoutId);
         sendResponse({ success: true, markdown });
       } catch (error) {
+        clearTimeout(timeoutId);
         console.error('Conversion error:', error);
-        sendResponse({ success: false, error: error.message });
+        
+        // Map error to user-friendly message
+        let errorMessage = ERROR_MESSAGES.GENERAL;
+        if (error.message.includes('No content')) {
+          errorMessage = ERROR_MESSAGES.NO_CONTENT;
+        } else if (error.message.includes('No text is selected')) {
+          errorMessage = ERROR_MESSAGES.NO_SELECTION;
+        } else if (error.message.includes('Permission')) {
+          errorMessage = ERROR_MESSAGES.PERMISSION_DENIED;
+        }
+        
+        sendResponse({ 
+          success: false, 
+          error: errorMessage,
+          details: error.message 
+        });
       }
       return true; // Indicates we will send a response asynchronously
     }
@@ -42,15 +78,42 @@
       throw new Error('No content could be extracted');
     }
     
+    // Check if content is too large (potential performance issue)
+    const contentSize = content.innerHTML.length;
+    if (contentSize > 1000000) { // 1MB
+      console.warn('Large content detected:', contentSize, 'bytes');
+    }
+    
     // Clean the content before conversion
     cleanContent(content, settings);
     
     // Convert to Markdown using TurndownService
     const turndownService = configureTurndownService(settings);
-    const markdown = turndownService.turndown(content);
     
-    // Post-process the markdown
-    return postProcessMarkdown(markdown);
+    try {
+      const markdown = turndownService.turndown(content);
+      
+      // Validate markdown output
+      if (!markdown || markdown.trim() === '') {
+        throw new Error('Conversion resulted in empty markdown');
+      }
+      
+      // Post-process the markdown
+      return postProcessMarkdown(markdown);
+    } catch (error) {
+      console.error('Turndown conversion error:', error);
+      
+      // Attempt a simplified conversion for problematic content
+      if (contentSize > 100000) { // 100KB
+        // Try converting a smaller portion of the content
+        const simplifiedContent = document.createElement('div');
+        simplifiedContent.innerHTML = content.innerHTML.substring(0, 100000);
+        return turndownService.turndown(simplifiedContent) + 
+               '\n\n---\n*Note: Content was truncated due to size limitations.*';
+      }
+      
+      throw error;
+    }
   }
   
   /**

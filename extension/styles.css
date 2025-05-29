@@ -88,6 +88,7 @@ h3 {
 
 .status.error {
   color: var(--error-color);
+  animation: shakeError 0.5s ease-in-out;
 }
 
 .status.processing {
@@ -112,6 +113,27 @@ h3 {
   0% { opacity: 0; transform: scale(0); }
   70% { transform: scale(1.2); }
   100% { opacity: 1; transform: scale(1); }
+}
+
+/* Error animation */
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+.error-icon {
+  display: inline-block;
+  margin-right: 4px;
+  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: var(--error-color);
+  color: white;
+  font-size: 12px;
 }
 
 .preview-container {

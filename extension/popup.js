@@ -56,6 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
         settings: settings
       });
       
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to convert');
+      }
+      
       // Copy to clipboard
       await navigator.clipboard.writeText(response.markdown);
       
@@ -82,9 +86,27 @@ document.addEventListener('DOMContentLoaded', () => {
       
     } catch (error) {
       // Update UI with error
-      statusIndicator.textContent = 'Error: ' + (error.message || 'Failed to convert');
+      const errorIcon = document.createElement('span');
+      errorIcon.textContent = '!';
+      errorIcon.className = 'error-icon';
+      
+      statusIndicator.innerHTML = '';
+      statusIndicator.appendChild(errorIcon);
+      
+      // Use the error message, but fallback to a generic message if not available
+      const errorMessage = error.message || 'Failed to convert';
+      statusIndicator.appendChild(document.createTextNode(errorMessage));
       statusIndicator.className = 'status error';
+      
       console.error('Conversion error:', error);
+      
+      // Show settings if the error is related to the content scope
+      if (error.message && (
+          error.message.includes('No text is selected') || 
+          error.message.includes('No content could be extracted')
+      )) {
+        settingsContainer.classList.remove('hidden');
+      }
       
       // Analytics tracking (if implemented)
       trackEvent('conversion_error', {
