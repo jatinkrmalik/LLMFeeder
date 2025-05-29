@@ -2,13 +2,14 @@
 
 <div align="center">
 
-[![GitHub release](https://img.shields.io/github/v/release/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/releases)
+
+![Chrome](https://img.shields.io/badge/Chrome-supported-4285F4?logo=googlechrome&logoColor=white&labelColor=4285F4&color=4caf50)
+![Firefox](https://img.shields.io/badge/Firefox-supported-FF7139?logo=firefox-browser&logoColor=white&labelColor=FF7139&color=4caf50)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/v/release/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/releases)
+[![Last Commit](https://img.shields.io/github/last-commit/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/commits/main)
 [![GitHub issues](https://img.shields.io/github/issues/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/issues)
 [![GitHub stars](https://img.shields.io/github/stars/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/stargazers)
-[![Last Commit](https://img.shields.io/github/last-commit/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/commits/main)
-[![Chrome](https://img.shields.io/badge/Chrome-supported-brightgreen)](https://chrome.google.com/webstore/detail/llmfeeder/coming-soon)
-[![Firefox](https://img.shields.io/badge/Firefox-coming_soon-orange)](https://github.com/jatinkrmalik/LLMFeeder)
 
 </div>
 
