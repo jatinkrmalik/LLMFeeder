@@ -44,6 +44,8 @@ This architecture ensures that your content remains exclusively on your device t
 
 ### Option 1: Direct Download (Easiest)
 
+#### For Chrome
+
 1. Download the [latest release zip file](https://github.com/jatinkrmalik/LLMFeeder/releases/latest)
 2. Extract the zip file to a location of your choice
 3. Open Chrome and navigate to `chrome://extensions/`
@@ -52,7 +54,18 @@ This architecture ensures that your content remains exclusively on your device t
 6. The LLMFeeder extension should now appear in your extensions list
 7. Click the puzzle piece icon in Chrome toolbar and pin LLMFeeder for easy access
 
+#### For Firefox
+
+1. Download the [latest release zip file](https://github.com/jatinkrmalik/LLMFeeder/releases/latest)
+2. Extract the zip file to a location of your choice
+3. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
+4. Click "Load Temporary Add-on..."
+5. Select the `manifest.json` file inside the `extension` directory.
+6. The extension will appear in your Firefox extensions list for the current session.
+
 ### Option 2: From Source (Development)
+
+#### For Chrome
 
 1. Clone this repository:
    ```
@@ -69,9 +82,7 @@ This architecture ensures that your content remains exclusively on your device t
 
 6. Click the puzzle piece icon in Chrome toolbar and pin LLMFeeder for easy access
 
-### Option 3: Load in Firefox (Manual)
-
-LLMFeeder can also be loaded as a temporary extension in Firefox for testing and use:
+#### For Firefox
 
 1. Clone this repository:
    ```
@@ -81,8 +92,6 @@ LLMFeeder can also be loaded as a temporary extension in Firefox for testing and
 3. Click "Load Temporary Add-on..."
 4. Select the `manifest.json` file inside the `extension` directory.
 5. The extension will appear in your Firefox extensions list for the current session.
-
-> **Note:** Some Chrome APIs may have limited support in Firefox. For best results, use the latest Firefox version.
 
 ### Usage
 
