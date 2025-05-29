@@ -134,6 +134,11 @@ Below is a visual representation of the project structure to help developers und
 ```
 LLMFeeder/
 │
+├── dist/                     # Distribution packages directory
+│   ├── LLMFeeder-Chrome-*.zip # Chrome package
+│   ├── LLMFeeder-Firefox-*.zip # Firefox package
+│   └── LLMFeeder-Source-*.zip # Source package
+│
 ├── extension/                 # Browser extension directory
 │   ├── icons/                 # Extension icons
 │   │   ├── icon16.png         # 16x16 icon
@@ -153,10 +158,8 @@ LLMFeeder/
 │   └── background.js          # Background script for keyboard shortcuts
 │
 ├── scripts/                   # Build and utility scripts
-│   ├── build-chrome.sh        # Chrome package build script
-│   └── build-firefox.sh       # Firefox package build script
+│   └── build.sh               # Main build script
 │
-├── build.sh                   # Main build script (runs both browser builds)
 ├── .gitignore                 # Git ignore rules
 └── README.md                  # Project documentation
 ```
@@ -198,20 +201,30 @@ LLMFeeder is designed to work on all modern browsers with complete feature parit
 To build the extension packages for distribution:
 
 1. Make sure you have `zip` and `jq` installed (optional but recommended)
-2. Run the main build script:
+2. Run the build script:
    ```bash
-   ./build.sh
+   ./scripts/build.sh
    ```
 
-This will create three packages:
+This will create three packages in the `dist/` directory:
 - `LLMFeeder-Chrome-v1.0.0.zip` - Chrome-compatible package
 - `LLMFeeder-Firefox-v1.0.0.zip` - Firefox-compatible package
-- `LLMFeeder-v1.0.0.zip` - Source code package
+- `LLMFeeder-Source-v1.0.0.zip` - Source code package
 
-You can also run individual build scripts:
-- `./scripts/build-chrome.sh` - Build only Chrome package
-- `./scripts/build-firefox.sh` - Build only Firefox package
-- `./scripts/build-all.sh` - Build only source code package
+You can also build specific packages:
+```bash
+# Build only Chrome package
+./scripts/build.sh chrome
+
+# Build only Firefox package
+./scripts/build.sh firefox
+
+# Build only source package
+./scripts/build.sh source
+
+# Specify version number
+./scripts/build.sh --version 1.1.0 all
+```
 
 ## License
 

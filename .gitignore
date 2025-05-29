@@ -50,8 +50,10 @@ logs/
 # Build files
 temp-chrome-build/
 temp-firefox-build/
+.tmp-build/
 LLMFeeder-Chrome-*.zip
 LLMFeeder-Firefox-*.zip
+LLMFeeder-Source-*.zip
 LLMFeeder-v*.zip
 
 # IDE files
