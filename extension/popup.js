@@ -60,7 +60,13 @@ document.addEventListener('DOMContentLoaded', () => {
       await navigator.clipboard.writeText(response.markdown);
       
       // Update UI with success
-      statusIndicator.textContent = 'Copied to clipboard!';
+      const checkMark = document.createElement('span');
+      checkMark.textContent = '✓';
+      checkMark.className = 'success-animation';
+      
+      statusIndicator.innerHTML = '';
+      statusIndicator.appendChild(checkMark);
+      statusIndicator.appendChild(document.createTextNode('Copied to clipboard!'));
       statusIndicator.className = 'status success';
       
       // Show preview
@@ -68,11 +74,22 @@ document.addEventListener('DOMContentLoaded', () => {
       previewContent.textContent = preview;
       previewContainer.classList.remove('hidden');
       
+      // Analytics tracking (if implemented)
+      trackEvent('conversion_success', {
+        contentScope: settings.contentScope,
+        charCount: response.markdown.length
+      });
+      
     } catch (error) {
       // Update UI with error
       statusIndicator.textContent = 'Error: ' + (error.message || 'Failed to convert');
       statusIndicator.className = 'status error';
       console.error('Conversion error:', error);
+      
+      // Analytics tracking (if implemented)
+      trackEvent('conversion_error', {
+        error: error.message || 'Unknown error'
+      });
     } finally {
       // Re-enable button
       convertBtn.disabled = false;
@@ -119,5 +136,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
+  }
+  
+  // Simple analytics tracking function (placeholder)
+  function trackEvent(eventName, eventData) {
+    // This would normally send data to an analytics service
+    console.log('Event tracked:', eventName, eventData);
   }
 }); 
