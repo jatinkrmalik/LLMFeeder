@@ -42,4 +42,24 @@ temp/
 
 # Log files
 logs/
-*.log 
+*.log
+
+# macOS
+.DS_Store
+
+# Build files
+temp-chrome-build/
+temp-firefox-build/
+LLMFeeder-Chrome-*.zip
+LLMFeeder-Firefox-*.zip
+LLMFeeder-v*.zip
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+npm-debug.log* 

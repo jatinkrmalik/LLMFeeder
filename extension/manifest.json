@@ -4,6 +4,12 @@
   "version": "1.0.0",
   "description": "Convert web pages to clean Markdown and copy to clipboard for LLM consumption",
   "author": "Jatin Malik (jatinkrmalik)",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "llmfeeder@j47.in",
+      "strict_min_version": "109.0"
+    }
+  },
   "permissions": [
     "activeTab",
     "clipboardWrite",
@@ -47,15 +53,6 @@
     }
   },
   "background": {
-    "service_worker": "background.js",
-    "scripts": [
-      "background.js"
-    ]
-  },
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "llmfeeder@j47.in",
-      "strict_min_version": "109.0"
-    }
+    "service_worker": "background.js"
   }
 }

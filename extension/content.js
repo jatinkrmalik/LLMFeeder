@@ -12,9 +12,16 @@
   
   const CONVERSION_TIMEOUT = 10000; // 10 seconds
   
-  // Listen for messages from the popup
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'convertToMarkdown') {
+  // Use the browser compatibility layer
+  const browser = window.browserAPI || {};
+  
+  // Listen for messages from popup or background script
+  browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'convert') {
+      const options = request.options || {};
+      const markdownResult = convertToMarkdown(options);
+      sendResponse({ success: true, markdown: markdownResult });
+    } else if (request.action === 'convertToMarkdown') {
       // Set up timeout for conversion process
       const timeoutId = setTimeout(() => {
         sendResponse({ 

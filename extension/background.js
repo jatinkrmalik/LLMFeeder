@@ -1,47 +1,37 @@
 // LLMFeeder Background Script
-// Created by @jatinkrmalik (https://github.com/jatinkrmalik)
-chrome.commands.onCommand.addListener(async (command) => {
-  if (command === 'convert_to_markdown') {
-    // Get the active tab
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+// Handles keyboard shortcuts and background tasks
+
+// Use the browser compatibility layer instead of direct Chrome API
+const browser = window.browserAPI || {};
+
+// Handle keyboard shortcuts
+browser.commands.onCommand.addListener(async (command) => {
+  if (command === "convert_to_markdown") {
+    // Get current active tab
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const activeTab = tabs[0];
     
-    if (!tab) {
-      console.error('No active tab found');
-      return;
-    }
-    
-    try {
+    if (activeTab) {
       // Get user settings
-      const data = await chrome.storage.sync.get('settings');
-      const settings = data.settings || {
+      const settings = await browser.storage.sync.get({
         contentScope: 'mainContent',
         preserveTables: true,
         includeImages: true
-      };
-      
-      // Send conversion request to content script
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: 'convertToMarkdown',
-        settings: settings
       });
       
-      if (!response.success) {
-        console.error('Conversion failed:', response.error);
-        // Show an error notification
-        showNotification('Conversion Failed', response.error);
-        return;
+      // Send message to content script to perform conversion
+      try {
+        const response = await browser.tabs.sendMessage(activeTab.id, {
+          action: "convertToMarkdown",
+          options: settings
+        });
+        
+        if (response && response.success) {
+          console.log("Markdown conversion successful");
+        }
+      } catch (error) {
+        console.error("Error during conversion:", error);
       }
-      
-      // Copy to clipboard (this might not work from background script due to security restrictions)
-      // As a fallback, we'll pass the markdown to a temporary offscreen document or to the popup
-      await copyToClipboard(response.markdown);
-      
-      // Show success notification
-      showNotification('Conversion Successful', 'Content copied to clipboard');
-      
-    } catch (error) {
-      console.error('Error in background script:', error);
-      showNotification('Error', error.message || 'Failed to convert page');
     }
   }
 });
@@ -54,11 +44,11 @@ chrome.commands.onCommand.addListener(async (command) => {
 function showNotification(title, message) {
   // In Chrome extensions, we can use the notifications API if we have permission
   // For this simple implementation, we'll just create a basic notification
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+  browser.tabs.query({active: true, currentWindow: true}, function(tabs) {
     const tab = tabs[0];
     
     // Inject a content script to show a visual notification on the page
-    chrome.scripting.executeScript({
+    browser.scripting.executeScript({
       target: {tabId: tab.id},
       function: createPageNotification,
       args: [title, message]
@@ -126,10 +116,10 @@ async function copyToClipboard(text) {
     
     // Second approach: Create a temporary offscreen document (requires "offscreen" permission)
     // or inject a content script to handle the copy operation
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    browser.tabs.query({active: true, currentWindow: true}, function(tabs) {
       const tab = tabs[0];
       
-      chrome.scripting.executeScript({
+      browser.scripting.executeScript({
         target: {tabId: tab.id},
         function: textToClipboard,
         args: [text]

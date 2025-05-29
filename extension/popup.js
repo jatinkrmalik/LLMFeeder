@@ -1,51 +1,150 @@
 // LLMFeeder Popup Script
 // Created by @jatinkrmalik (https://github.com/jatinkrmalik)
-document.addEventListener('DOMContentLoaded', () => {
-  // DOM Elements
-  const convertBtn = document.getElementById('convertBtn');
-  const statusIndicator = document.getElementById('statusIndicator');
-  const previewContainer = document.getElementById('previewContainer');
-  const previewContent = document.getElementById('previewContent');
-  const settingsToggleBtn = document.getElementById('settingsToggleBtn');
-  const settingsContainer = document.getElementById('settingsContainer');
-  const convertShortcut = document.getElementById('convertShortcut');
-  const popupShortcut = document.getElementById('popupShortcut');
-  const quickConvertShortcut = document.getElementById('quickConvertShortcut');
-  
-  // Settings elements
-  const contentScopeRadios = document.getElementsByName('contentScope');
-  const preserveTablesCheckbox = document.getElementById('preserveTables');
-  const includeImagesCheckbox = document.getElementById('includeImages');
-  
-  // Detect operating system
+
+// Use the browser compatibility layer
+const browser = window.browserAPI || {};
+
+// DOM elements
+const convertBtn = document.getElementById('convertBtn');
+const statusIndicator = document.getElementById('statusIndicator');
+const settingsToggleBtn = document.getElementById('settingsToggleBtn');
+const settingsContainer = document.getElementById('settingsContainer');
+const previewContainer = document.getElementById('previewContainer');
+const previewContent = document.getElementById('previewContent');
+const convertShortcut = document.getElementById('convertShortcut');
+const popupShortcut = document.getElementById('popupShortcut');
+const quickConvertShortcut = document.getElementById('quickConvertShortcut');
+
+// Get all settings elements
+const contentScopeRadios = document.querySelectorAll('input[name="contentScope"]');
+const preserveTablesCheckbox = document.getElementById('preserveTables');
+const includeImagesCheckbox = document.getElementById('includeImages');
+
+// Show proper keyboard shortcuts based on OS
+function updateShortcutDisplay() {
+  // Detect OS
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const modifier = isMac ? '⌥⇧' : 'Alt+Shift+';
   
-  // Set up shortcut display based on OS
-  function setupShortcutDisplay() {
-    // Default shortcuts (can be customized by user)
-    const popupShortcutText = isMac ? '⌥⇧L' : 'Alt+Shift+L';
-    const quickConvertShortcutText = isMac ? '⌥⇧M' : 'Alt+Shift+M';
-    
-    // Update shortcut displays
-    popupShortcut.textContent = popupShortcutText;
-    quickConvertShortcut.textContent = quickConvertShortcutText;
-    convertShortcut.textContent = quickConvertShortcutText;
+  // Update shortcut badges
+  popupShortcut.textContent = `${modifier}L`;
+  quickConvertShortcut.textContent = `${modifier}M`;
+  convertShortcut.textContent = `${modifier}M`;
+  
+  // Update shortcut customization instruction
+  const shortcutCustomizeText = document.querySelector('.shortcut-customize small');
+  if (shortcutCustomizeText) {
+    const browserName = typeof browser !== 'undefined' ? 'Firefox' : 'Chrome';
+    const shortcutPage = browserName === 'Firefox' ? 'about:addons' : 'chrome://extensions/shortcuts';
+    shortcutCustomizeText.textContent = `Customize at ${shortcutPage}`;
   }
+}
+
+// Load user settings
+async function loadSettings() {
+  try {
+    const data = await browser.storage.sync.get({
+      contentScope: 'mainContent',
+      preserveTables: true,
+      includeImages: true
+    });
+    
+    // Apply settings to UI
+    document.querySelector(`input[name="contentScope"][value="${data.contentScope}"]`).checked = true;
+    preserveTablesCheckbox.checked = data.preserveTables;
+    includeImagesCheckbox.checked = data.includeImages;
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    statusIndicator.textContent = 'Error loading settings';
+    statusIndicator.classList.add('error');
+  }
+}
+
+// Save user settings
+async function saveSettings() {
+  try {
+    const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
+    const preserveTables = preserveTablesCheckbox.checked;
+    const includeImages = includeImagesCheckbox.checked;
+    
+    await browser.storage.sync.set({
+      contentScope,
+      preserveTables,
+      includeImages
+    });
+    
+    console.log('Settings saved');
+  } catch (error) {
+    console.error('Error saving settings:', error);
+  }
+}
+
+// Convert current page to Markdown
+async function convertToMarkdown() {
+  statusIndicator.textContent = 'Converting...';
+  statusIndicator.className = 'status processing';
+  previewContainer.classList.add('hidden');
   
-  // Initialize
-  setupShortcutDisplay();
+  try {
+    // Get current tab
+    const tabs = await browser.tabs.query({active: true, currentWindow: true});
+    if (!tabs || tabs.length === 0) {
+      throw new Error('No active tab found');
+    }
+    
+    // Get current settings
+    const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
+    const preserveTables = preserveTablesCheckbox.checked;
+    const includeImages = includeImagesCheckbox.checked;
+    
+    // Send message to content script
+    const response = await browser.tabs.sendMessage(tabs[0].id, {
+      action: 'convertToMarkdown',
+      settings: {
+        contentScope,
+        preserveTables,
+        includeImages
+      }
+    });
+    
+    if (!response.success) {
+      throw new Error(response.error || 'Unknown error');
+    }
+    
+    // Copy to clipboard
+    await navigator.clipboard.writeText(response.markdown);
+    
+    // Update UI
+    statusIndicator.textContent = 'Copied to clipboard!';
+    statusIndicator.className = 'status success';
+    
+    // Show preview
+    previewContent.textContent = response.markdown;
+    previewContainer.classList.remove('hidden');
+    
+    // Save settings
+    saveSettings();
+    
+  } catch (error) {
+    console.error('Conversion error:', error);
+    statusIndicator.textContent = `Error: ${error.message || 'Failed to convert page'}`;
+    statusIndicator.className = 'status error';
+  }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  updateShortcutDisplay();
   loadSettings();
   
-  // Event Listeners
-  convertBtn.addEventListener('click', handleConversion);
+  // Convert button click
+  convertBtn.addEventListener('click', convertToMarkdown);
   
+  // Settings toggle
   settingsToggleBtn.addEventListener('click', () => {
+    const isHidden = settingsContainer.classList.contains('hidden');
     settingsContainer.classList.toggle('hidden');
-    settingsToggleBtn.classList.toggle('active');
-    
-    // Toggle the arrow icon
-    const toggleIcon = settingsToggleBtn.querySelector('.toggle-icon');
-    toggleIcon.textContent = settingsContainer.classList.contains('hidden') ? '▼' : '▲';
+    settingsToggleBtn.querySelector('.toggle-icon').textContent = isHidden ? '▲' : '▼';
   });
   
   // Save settings when changed
@@ -55,142 +154,4 @@ document.addEventListener('DOMContentLoaded', () => {
   
   preserveTablesCheckbox.addEventListener('change', saveSettings);
   includeImagesCheckbox.addEventListener('change', saveSettings);
-  
-  // Main conversion function
-  async function handleConversion() {
-    // Update UI state
-    convertBtn.disabled = true;
-    statusIndicator.textContent = 'Processing...';
-    statusIndicator.className = 'status processing';
-    previewContainer.classList.add('hidden');
-    
-    try {
-      // Get current settings
-      const settings = {
-        contentScope: getSelectedContentScope(),
-        preserveTables: preserveTablesCheckbox.checked,
-        includeImages: includeImagesCheckbox.checked
-      };
-      
-      // Get current active tab
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      
-      // Send message to content script
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: 'convertToMarkdown',
-        settings: settings
-      });
-      
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to convert');
-      }
-      
-      // Copy to clipboard
-      await navigator.clipboard.writeText(response.markdown);
-      
-      // Update UI with success
-      const checkMark = document.createElement('span');
-      checkMark.textContent = '✓';
-      checkMark.className = 'success-animation';
-      
-      statusIndicator.innerHTML = '';
-      statusIndicator.appendChild(checkMark);
-      statusIndicator.appendChild(document.createTextNode('Copied to clipboard!'));
-      statusIndicator.className = 'status success';
-      
-      // Show preview
-      const preview = response.markdown.substring(0, 200) + (response.markdown.length > 200 ? '...' : '');
-      previewContent.textContent = preview;
-      previewContainer.classList.remove('hidden');
-      
-      // Analytics tracking (if implemented)
-      trackEvent('conversion_success', {
-        contentScope: settings.contentScope,
-        charCount: response.markdown.length
-      });
-      
-    } catch (error) {
-      // Update UI with error
-      const errorIcon = document.createElement('span');
-      errorIcon.textContent = '!';
-      errorIcon.className = 'error-icon';
-      
-      statusIndicator.innerHTML = '';
-      statusIndicator.appendChild(errorIcon);
-      
-      // Use the error message, but fallback to a generic message if not available
-      const errorMessage = error.message || 'Failed to convert';
-      statusIndicator.appendChild(document.createTextNode(errorMessage));
-      statusIndicator.className = 'status error';
-      
-      console.error('Conversion error:', error);
-      
-      // Show settings if the error is related to the content scope
-      if (error.message && (
-          error.message.includes('No text is selected') || 
-          error.message.includes('No content could be extracted')
-      )) {
-        settingsContainer.classList.remove('hidden');
-        settingsToggleBtn.classList.add('active');
-        const toggleIcon = settingsToggleBtn.querySelector('.toggle-icon');
-        toggleIcon.textContent = '▲';
-      }
-      
-      // Analytics tracking (if implemented)
-      trackEvent('conversion_error', {
-        error: error.message || 'Unknown error'
-      });
-    } finally {
-      // Re-enable button
-      convertBtn.disabled = false;
-    }
-  }
-  
-  // Helper functions
-  function getSelectedContentScope() {
-    for (const radio of contentScopeRadios) {
-      if (radio.checked) {
-        return radio.value;
-      }
-    }
-    return 'mainContent'; // Default
-  }
-  
-  function saveSettings() {
-    const settings = {
-      contentScope: getSelectedContentScope(),
-      preserveTables: preserveTablesCheckbox.checked,
-      includeImages: includeImagesCheckbox.checked
-    };
-    
-    chrome.storage.sync.set({ settings }, () => {
-      console.log('Settings saved:', settings);
-    });
-  }
-  
-  function loadSettings() {
-    chrome.storage.sync.get('settings', (data) => {
-      if (data.settings) {
-        // Set content scope
-        for (const radio of contentScopeRadios) {
-          radio.checked = (radio.value === data.settings.contentScope);
-        }
-        
-        // Set checkboxes
-        if (typeof data.settings.preserveTables === 'boolean') {
-          preserveTablesCheckbox.checked = data.settings.preserveTables;
-        }
-        
-        if (typeof data.settings.includeImages === 'boolean') {
-          includeImagesCheckbox.checked = data.settings.includeImages;
-        }
-      }
-    });
-  }
-  
-  // Simple analytics tracking function (placeholder)
-  function trackEvent(eventName, eventData) {
-    // This would normally send data to an analytics service
-    console.log('Event tracked:', eventName, eventData);
-  }
 }); 
