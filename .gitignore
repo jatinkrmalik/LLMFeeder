@@ -1,0 +1,45 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Build and distribution files
+dist/
+build/
+*.zip
+*.crx
+*.pem
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.temp/
+.cache/
+
+# Log files
+logs/
+*.log 
