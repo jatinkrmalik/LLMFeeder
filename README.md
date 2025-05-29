@@ -64,6 +64,51 @@ Users can customize keyboard shortcuts by following these steps:
   - Preserve table formatting
   - Include/exclude images
 
+## Project Structure
+
+Below is a visual representation of the project structure to help developers understand the codebase:
+
+```
+LLMFeeder/
+│
+├── extension/               # Chrome extension directory (load this in Chrome)
+│   ├── icons/               # Extension icons
+│   │   ├── icon16.png       # 16x16 icon
+│   │   ├── icon48.png       # 48x48 icon
+│   │   └── icon128.png      # 128x128 icon
+│   │
+│   ├── libs/                # Third-party libraries
+│   │   ├── readability.js   # Mozilla's Readability for content extraction
+│   │   └── turndown.js      # HTML to Markdown conversion
+│   │
+│   ├── manifest.json        # Extension configuration and metadata
+│   ├── popup.html           # UI for the extension popup
+│   ├── popup.js             # Controls popup behavior and user interactions
+│   ├── styles.css           # Styling for the popup UI
+│   ├── content.js           # Content script that runs on web pages
+│   └── background.js        # Background script for keyboard shortcuts
+│
+├── .gitignore               # Git ignore rules
+└── README.md                # Project documentation
+```
+
+### Component Descriptions
+
+- **manifest.json**: Defines extension metadata, permissions, and configuration
+- **popup.html/js/css**: Creates the user interface when you click the extension icon
+- **content.js**: Contains the core functionality to extract and convert web content to Markdown
+- **background.js**: Handles keyboard shortcuts and global extension functionality
+- **readability.js**: Mozilla's library that identifies and extracts the main content from a webpage
+- **turndown.js**: Converts HTML to Markdown with configurable options
+
+### Data Flow
+
+1. User triggers conversion (via popup UI or keyboard shortcut)
+2. Request is sent from popup.js or background.js to content.js
+3. content.js extracts content using readability.js
+4. Content is converted to Markdown using turndown.js
+5. Markdown is copied to clipboard and success feedback is shown
+
 ## Tech Stack
 
 - **Content Extraction**: Mozilla's Readability.js
