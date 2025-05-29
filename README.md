@@ -63,7 +63,10 @@ This architecture ensures that your content remains exclusively on your device t
 
 LLMFeeder can also be loaded as a temporary extension in Firefox for testing and use:
 
-1. Download or clone this repository.
+1. Clone this repository:
+   ```
+   git clone git@github.com:jatinkrmalik/LLMFeeder.git
+   ```
 2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
 3. Click "Load Temporary Add-on..."
 4. Select the `manifest.json` file inside the `extension` directory.
