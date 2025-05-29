@@ -1,5 +1,15 @@
 # LLMFeeder
 
+<div align="center">
+
+[![GitHub release](https://img.shields.io/github/v/release/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub issues](https://img.shields.io/github/issues/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/issues)
+[![GitHub stars](https://img.shields.io/github/stars/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/stargazers)
+[![Last Commit](https://img.shields.io/github/last-commit/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/commits/main)
+
+</div>
+
 A Chrome extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs).
 
 ## Demo
