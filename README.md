@@ -32,7 +32,17 @@ This architecture ensures that your content remains exclusively on your device t
 
 ## Installation
 
-### From Source (Development)
+### Option 1: Direct Download (Easiest)
+
+1. Download the [latest release zip file](https://github.com/jatinkrmalik/LLMFeeder/releases/latest)
+2. Extract the zip file to a location of your choice
+3. Open Chrome and navigate to `chrome://extensions/`
+4. Enable "Developer mode" by toggling the switch in the top right
+5. Click "Load unpacked" and select the extracted `extension` directory
+6. The LLMFeeder extension should now appear in your extensions list
+7. Click the puzzle piece icon in Chrome toolbar and pin LLMFeeder for easy access
+
+### Option 2: From Source (Development)
 
 1. Clone this repository:
    ```
