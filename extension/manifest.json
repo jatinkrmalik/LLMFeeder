@@ -20,8 +20,14 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["libs/readability.js", "libs/turndown.js", "content.js"]
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "libs/readability.js",
+        "libs/turndown.js",
+        "content.js"
+      ]
     }
   ],
   "commands": {
@@ -41,6 +47,15 @@
     }
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "llmfeeder@j47.in",
+      "strict_min_version": "109.0"
+    }
   }
-} 
+}
