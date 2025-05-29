@@ -42,8 +42,18 @@ A Chrome extension that converts web page content to clean Markdown format and c
 
 ### Keyboard Shortcuts
 
-- **Open Extension Popup**: `Ctrl+Shift+M` (Windows/Linux) or `Command+Shift+M` (Mac)
-- **Convert & Copy without Opening Popup**: `Ctrl+Shift+C` (Windows/Linux) or `Command+Shift+C` (Mac)
+- **Open Extension Popup**: `Alt+Shift+L` (all platforms)
+- **Convert & Copy without Opening Popup**: `Alt+Shift+M` (all platforms)
+
+#### Customizing Shortcuts
+
+Users can customize keyboard shortcuts by following these steps:
+
+1. Go to `chrome://extensions/shortcuts` in your Chrome browser
+2. Find "LLMFeeder" in the list
+3. Click on the pencil icon next to the shortcut you want to change
+4. Press your desired key combination
+5. Click "OK" to save
 
 ### Settings
 
