@@ -9,6 +9,7 @@ A Chrome extension that converts web page content to clean Markdown format and c
 - **LLM-Optimized Output**: Clean, structured Markdown perfect for AI consumption
 - **Visual Feedback**: Clear indication of successful copying
 - **Customizable**: Configure content scope and formatting options
+- **Keyboard Shortcuts**: Convert content without opening the popup
 
 ## Installation
 
@@ -16,7 +17,7 @@ A Chrome extension that converts web page content to clean Markdown format and c
 
 1. Clone this repository:
    ```
-   git clone https://github.com/yourusername/LLMFeeder.git
+   git clone git@github.com:jatinkrmalik/LLMFeeder.git
    ```
 
 2. Open Chrome and navigate to `chrome://extensions/`
@@ -36,6 +37,11 @@ A Chrome extension that converts web page content to clean Markdown format and c
 3. Click the "Convert & Copy" button
 4. The content will be processed and copied to your clipboard
 5. Paste the Markdown content into your LLM tool of choice
+
+### Keyboard Shortcuts
+
+- **Open Extension Popup**: `Ctrl+Shift+M` (Windows/Linux) or `Command+Shift+M` (Mac)
+- **Convert & Copy without Opening Popup**: `Ctrl+Shift+C` (Windows/Linux) or `Command+Shift+C` (Mac)
 
 ### Settings
 
