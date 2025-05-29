@@ -1,0 +1,327 @@
+// LLMFeeder Content Script
+(function() {
+  // Listen for messages from the popup
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'convertToMarkdown') {
+      try {
+        const markdown = convertToMarkdown(request.settings);
+        sendResponse({ success: true, markdown });
+      } catch (error) {
+        console.error('Conversion error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+      return true; // Indicates we will send a response asynchronously
+    }
+  });
+  
+  /**
+   * Main conversion function
+   * @param {Object} settings - User settings for conversion
+   * @returns {string} Markdown output
+   */
+  function convertToMarkdown(settings) {
+    // Clone the document to avoid modifying the original
+    const docClone = document.cloneNode(true);
+    
+    // Get content based on scope setting
+    let content;
+    switch (settings.contentScope) {
+      case 'fullPage':
+        content = extractFullPageContent(docClone);
+        break;
+      case 'selection':
+        content = extractSelectedContent();
+        break;
+      case 'mainContent':
+      default:
+        content = extractMainContent(docClone);
+        break;
+    }
+    
+    if (!content) {
+      throw new Error('No content could be extracted');
+    }
+    
+    // Clean the content before conversion
+    cleanContent(content, settings);
+    
+    // Convert to Markdown using TurndownService
+    const turndownService = configureTurndownService(settings);
+    const markdown = turndownService.turndown(content);
+    
+    // Post-process the markdown
+    return postProcessMarkdown(markdown);
+  }
+  
+  /**
+   * Extract the full page content
+   * @param {Document} doc - Cloned document
+   * @returns {HTMLElement} Content element
+   */
+  function extractFullPageContent(doc) {
+    // Remove script and style tags
+    const scripts = doc.getElementsByTagName('script');
+    const styles = doc.getElementsByTagName('style');
+    
+    // Remove scripts and styles (iterate backwards to avoid issues with live collections)
+    for (let i = scripts.length - 1; i >= 0; i--) {
+      scripts[i].parentNode.removeChild(scripts[i]);
+    }
+    
+    for (let i = styles.length - 1; i >= 0; i--) {
+      styles[i].parentNode.removeChild(styles[i]);
+    }
+    
+    return doc.body;
+  }
+  
+  /**
+   * Extract the selected content
+   * @returns {HTMLElement} Content element
+   */
+  function extractSelectedContent() {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.toString().trim() === '') {
+      throw new Error('No text is selected');
+    }
+    
+    const container = document.createElement('div');
+    const range = selection.getRangeAt(0);
+    container.appendChild(range.cloneContents());
+    
+    return container;
+  }
+  
+  /**
+   * Extract the main content using Readability
+   * @param {Document} doc - Cloned document
+   * @returns {HTMLElement} Content element
+   */
+  function extractMainContent(doc) {
+    try {
+      // Use Readability to extract the main content
+      const documentClone = doc.implementation.createHTMLDocument('Article');
+      documentClone.documentElement.innerHTML = doc.documentElement.innerHTML;
+      
+      const reader = new Readability(documentClone);
+      const article = reader.parse();
+      
+      if (!article || !article.content) {
+        throw new Error('Could not extract main content');
+      }
+      
+      const container = document.createElement('div');
+      container.innerHTML = article.content;
+      
+      // Add the title as an H1 if available
+      if (article.title) {
+        const titleElement = document.createElement('h1');
+        titleElement.textContent = article.title;
+        container.insertBefore(titleElement, container.firstChild);
+      }
+      
+      return container;
+    } catch (error) {
+      console.error('Readability error:', error);
+      // Fallback to a simple extraction
+      return fallbackContentExtraction(doc);
+    }
+  }
+  
+  /**
+   * Fallback content extraction when Readability fails
+   * @param {Document} doc - Cloned document
+   * @returns {HTMLElement} Content element
+   */
+  function fallbackContentExtraction(doc) {
+    // Try to find the main content area
+    const container = document.createElement('div');
+    
+    // Add the title
+    const titleElement = document.createElement('h1');
+    titleElement.textContent = doc.title || 'Extracted Content';
+    container.appendChild(titleElement);
+    
+    // Look for common content containers
+    const mainContent = doc.querySelector('main') || 
+                        doc.querySelector('article') || 
+                        doc.querySelector('.content') || 
+                        doc.querySelector('#content') ||
+                        doc.body;
+    
+    // Clone the content to avoid modifying the original
+    container.appendChild(mainContent.cloneNode(true));
+    
+    return container;
+  }
+  
+  /**
+   * Clean the HTML content before conversion
+   * @param {HTMLElement} content - The content element
+   * @param {Object} settings - User settings
+   */
+  function cleanContent(content, settings) {
+    // Remove elements that shouldn't be included
+    const elementsToRemove = [
+      'script', 'style', 'noscript', 'iframe',
+      'nav', 'footer', '.comments', '.ads', '.sidebar'
+    ];
+    
+    // Add more elements to remove if images are disabled
+    if (!settings.includeImages) {
+      elementsToRemove.push('img', 'picture', 'svg');
+    }
+    
+    // Remove unwanted elements
+    elementsToRemove.forEach(selector => {
+      const elements = content.querySelectorAll(selector);
+      for (let i = 0; i < elements.length; i++) {
+        if (elements[i].parentNode) {
+          elements[i].parentNode.removeChild(elements[i]);
+        }
+      }
+    });
+    
+    // Remove empty paragraphs and divs
+    const emptyElements = content.querySelectorAll('p:empty, div:empty');
+    for (let i = 0; i < emptyElements.length; i++) {
+      emptyElements[i].parentNode.removeChild(emptyElements[i]);
+    }
+    
+    // Convert relative URLs to absolute
+    makeUrlsAbsolute(content);
+  }
+  
+  /**
+   * Make all URLs in the content absolute
+   * @param {HTMLElement} content - The content element
+   */
+  function makeUrlsAbsolute(content) {
+    // Convert links
+    const links = content.querySelectorAll('a');
+    for (let i = 0; i < links.length; i++) {
+      if (links[i].href) {
+        links[i].href = new URL(links[i].getAttribute('href'), document.baseURI).href;
+      }
+    }
+    
+    // Convert images
+    const images = content.querySelectorAll('img');
+    for (let i = 0; i < images.length; i++) {
+      if (images[i].src) {
+        images[i].src = new URL(images[i].getAttribute('src'), document.baseURI).href;
+      }
+    }
+  }
+  
+  /**
+   * Configure the TurndownService based on user settings
+   * @param {Object} settings - User settings
+   * @returns {TurndownService} Configured TurndownService
+   */
+  function configureTurndownService(settings) {
+    const turndownService = new TurndownService({
+      headingStyle: 'atx',        // Use # style headings
+      hr: '---',                  // Use --- for horizontal rules
+      bulletListMarker: '-',      // Use - for bullet lists
+      codeBlockStyle: 'fenced',   // Use ``` style code blocks
+      emDelimiter: '*'            // Use * for emphasis
+    });
+    
+    // Preserve tables if enabled
+    if (settings.preserveTables) {
+      turndownService.use(turndownPluginTables);
+    }
+    
+    // Configure image handling
+    if (!settings.includeImages) {
+      // Override image rule to ignore images
+      turndownService.addRule('images', {
+        filter: 'img',
+        replacement: function() {
+          return '';
+        }
+      });
+    }
+    
+    // Improve code block handling
+    turndownService.addRule('fencedCodeBlock', {
+      filter: function(node) {
+        return (
+          node.nodeName === 'PRE' &&
+          node.firstChild &&
+          node.firstChild.nodeName === 'CODE'
+        );
+      },
+      replacement: function(content, node) {
+        const language = node.firstChild.getAttribute('class') || '';
+        const languageMatch = language.match(/language-(\S+)/);
+        const languageIdentifier = languageMatch ? languageMatch[1] : '';
+        
+        return (
+          '\n\n```' + languageIdentifier + '\n' +
+          node.firstChild.textContent.replace(/\n$/, '') +
+          '\n```\n\n'
+        );
+      }
+    });
+    
+    return turndownService;
+  }
+  
+  /**
+   * Post-process the markdown output
+   * @param {string} markdown - Raw markdown
+   * @returns {string} Processed markdown
+   */
+  function postProcessMarkdown(markdown) {
+    // Remove excessive blank lines (more than 2 in a row)
+    markdown = markdown.replace(/\n{3,}/g, '\n\n');
+    
+    // Ensure proper spacing around headings
+    markdown = markdown.replace(/([^\n])(\n#{1,6} )/g, '$1\n\n$2');
+    
+    // Fix list item spacing
+    markdown = markdown.replace(/(\n[*\-+] [^\n]+)(\n[*\-+] )/g, '$1\n$2');
+    
+    // Add URL source at the end
+    markdown = markdown + '\n\n---\nSource: [' + document.title + '](' + window.location.href + ')';
+    
+    return markdown;
+  }
+  
+  // This function would normally be provided by the TurndownService-tables plugin
+  // Simplified implementation for demonstration
+  function turndownPluginTables() {
+    return function(turndownService) {
+      turndownService.addRule('tableCell', {
+        filter: ['th', 'td'],
+        replacement: function(content, node) {
+          return ' ' + content + ' |';
+        }
+      });
+      
+      turndownService.addRule('tableRow', {
+        filter: 'tr',
+        replacement: function(content, node) {
+          let output = '|' + content + '\n';
+          
+          // Add header row separator
+          if (node.parentNode.nodeName === 'THEAD') {
+            const cells = node.querySelectorAll('th, td');
+            output += '|' + Array.from(cells).map(() => ' --- |').join('') + '\n';
+          }
+          
+          return output;
+        }
+      });
+      
+      turndownService.addRule('table', {
+        filter: 'table',
+        replacement: function(content, node) {
+          return '\n\n' + content + '\n\n';
+        }
+      });
+    };
+  }
+})(); 

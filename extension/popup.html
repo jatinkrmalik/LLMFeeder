@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLMFeeder</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>LLMFeeder</h1>
+    <p class="tagline">Convert page content to Markdown</p>
+    
+    <div class="main-controls">
+      <button id="convertBtn" class="primary-btn">Convert & Copy</button>
+      <div id="statusIndicator" class="status">Ready</div>
+    </div>
+    
+    <div id="previewContainer" class="preview-container hidden">
+      <h2>Preview</h2>
+      <div id="previewContent" class="preview-content"></div>
+    </div>
+    
+    <div class="settings-toggle">
+      <button id="settingsToggleBtn">Settings</button>
+    </div>
+    
+    <div id="settingsContainer" class="settings-container hidden">
+      <h2>Settings</h2>
+      
+      <div class="setting-group">
+        <h3>Content Scope</h3>
+        <label>
+          <input type="radio" name="contentScope" value="mainContent" checked> 
+          Main article content only
+        </label>
+        <label>
+          <input type="radio" name="contentScope" value="fullPage"> 
+          Full page content
+        </label>
+        <label>
+          <input type="radio" name="contentScope" value="selection"> 
+          Selected text only
+        </label>
+      </div>
+      
+      <div class="setting-group">
+        <h3>Formatting Options</h3>
+        <label>
+          <input type="checkbox" id="preserveTables" checked> 
+          Preserve table formatting
+        </label>
+        <label>
+          <input type="checkbox" id="includeImages" checked> 
+          Include images
+        </label>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html> 

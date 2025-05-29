@@ -1,0 +1,152 @@
+/* LLMFeeder Styles */
+:root {
+  --primary-color: #4285f4;
+  --primary-hover: #3367d6;
+  --secondary-color: #34a853;
+  --text-color: #202124;
+  --background-color: #ffffff;
+  --border-color: #dadce0;
+  --light-gray: #f1f3f4;
+  --dark-gray: #5f6368;
+  --success-color: #34a853;
+  --error-color: #ea4335;
+  --warning-color: #fbbc04;
+}
+
+body {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  margin: 0;
+  padding: 0;
+  color: var(--text-color);
+  background-color: var(--background-color);
+}
+
+.container {
+  width: 350px;
+  padding: 16px;
+}
+
+h1 {
+  font-size: 20px;
+  color: var(--primary-color);
+  margin: 0 0 4px 0;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 16px 0 8px 0;
+}
+
+h3 {
+  font-size: 14px;
+  margin: 12px 0 8px 0;
+}
+
+.tagline {
+  color: var(--dark-gray);
+  margin: 0 0 16px 0;
+  font-size: 14px;
+}
+
+.main-controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.primary-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.primary-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+.primary-btn:disabled {
+  background-color: var(--border-color);
+  cursor: not-allowed;
+}
+
+.status {
+  margin-left: 16px;
+  font-size: 14px;
+  color: var(--dark-gray);
+}
+
+.status.success {
+  color: var(--success-color);
+}
+
+.status.error {
+  color: var(--error-color);
+}
+
+.status.processing {
+  color: var(--warning-color);
+}
+
+.preview-container {
+  background-color: var(--light-gray);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.preview-content {
+  font-family: monospace;
+  font-size: 12px;
+  max-height: 100px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.settings-toggle {
+  margin-bottom: 8px;
+}
+
+.settings-toggle button {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.settings-toggle button:hover {
+  background-color: var(--light-gray);
+}
+
+.settings-container {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.setting-group {
+  margin-bottom: 16px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.hidden {
+  display: none;
+} 
