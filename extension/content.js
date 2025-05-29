@@ -12,8 +12,46 @@
   
   const CONVERSION_TIMEOUT = 10000; // 10 seconds
   
-  // Listen for messages from the popup
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // Create a proper runtime API wrapper for message handling
+  const browserRuntime = (function() {
+    if (typeof browser !== 'undefined' && browser.runtime) {
+      return browser.runtime;
+    } else if (typeof chrome !== 'undefined' && chrome.runtime) {
+      return chrome.runtime;
+    }
+    return {
+      onMessage: { addListener: function() {} }
+    };
+  })();
+  
+  // Listen for messages from popup or background script
+  browserRuntime.onMessage.addListener((request, sender, sendResponse) => {
+    // Ping handler - used to check if content script is loaded
+    if (request.action === 'ping') {
+      sendResponse({ success: true });
+      return true;
+    }
+    
+    // Copy to clipboard handler
+    if (request.action === 'copyToClipboard' && request.text) {
+      copyTextToClipboard(request.text)
+        .then(() => sendResponse({ success: true }))
+        .catch(error => sendResponse({ 
+          success: false, 
+          error: 'Failed to copy to clipboard: ' + error.message 
+        }));
+      return true;
+    }
+    
+    // Convert handler (simplified version)
+    if (request.action === 'convert') {
+      const options = request.options || {};
+      const markdownResult = convertToMarkdown(options);
+      sendResponse({ success: true, markdown: markdownResult });
+      return true;
+    }
+    
+    // Main conversion handler
     if (request.action === 'convertToMarkdown') {
       // Set up timeout for conversion process
       const timeoutId = setTimeout(() => {
@@ -24,7 +62,8 @@
       }, CONVERSION_TIMEOUT);
       
       try {
-        const markdown = convertToMarkdown(request.settings);
+        const settings = request.settings || request.options || {};
+        const markdown = convertToMarkdown(settings);
         clearTimeout(timeoutId);
         sendResponse({ success: true, markdown });
       } catch (error) {
@@ -50,6 +89,43 @@
       return true; // Indicates we will send a response asynchronously
     }
   });
+  
+  /**
+   * Copy text to clipboard
+   * @param {string} text - Text to copy to clipboard
+   * @returns {Promise} - Promise resolving when copy completes
+   */
+  async function copyTextToClipboard(text) {
+    // Try using the Clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    
+    // Fallback to document.execCommand
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-999999px';
+    textarea.style.top = '-999999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    
+    return new Promise((resolve, reject) => {
+      try {
+        const success = document.execCommand('copy');
+        if (success) {
+          resolve();
+        } else {
+          reject(new Error('execCommand returned false'));
+        }
+      } catch (err) {
+        reject(err);
+      } finally {
+        document.body.removeChild(textarea);
+      }
+    });
+  }
   
   /**
    * Main conversion function
