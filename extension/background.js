@@ -86,19 +86,96 @@ const browserAPI = (function() {
 // Ensure content script is injected before sending messages
 async function ensureContentScriptLoaded(tabId) {
   try {
+    // Get tab information to check URL
+    const tab = await chrome.tabs.get(tabId);
+    const url = tab.url || "";
+    
+    // Check if we're on a restricted page
+    if (isRestrictedPage(url)) {
+      console.warn("Cannot inject scripts into restricted page:", url);
+      return false;
+    }
+    
     // Try sending a ping message to check if content script is loaded
-    await browserAPI.tabs.sendMessage(tabId, { action: "ping" }).catch(() => {
-      // If error, inject the content script
-      return chrome.scripting.executeScript({
-        target: { tabId: tabId },
-        files: ["libs/readability.js", "libs/turndown.js", "content.js"]
-      });
-    });
-    return true;
+    try {
+      await browserAPI.tabs.sendMessage(tabId, { action: "ping" });
+      console.log("Content script is already loaded");
+      return true;
+    } catch (pingError) {
+      console.log("Content script not loaded, attempting to inject...");
+      
+      // If error (script not loaded), inject the content script
+      if (typeof chrome !== 'undefined' && chrome.scripting) {
+        await chrome.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ["libs/readability.js", "libs/turndown.js", "content.js"]
+        });
+        
+        // Verify injection worked by sending another ping
+        try {
+          await browserAPI.tabs.sendMessage(tabId, { action: "ping" });
+          console.log("Content script injected successfully");
+          return true;
+        } catch (verifyError) {
+          console.error("Failed to verify content script injection:", verifyError);
+          return false;
+        }
+      } else if (typeof browser !== 'undefined' && browser.scripting) {
+        await browser.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ["libs/readability.js", "libs/turndown.js", "content.js"]
+        });
+        
+        // Verify injection worked
+        try {
+          await browserAPI.tabs.sendMessage(tabId, { action: "ping" });
+          console.log("Content script injected successfully");
+          return true;
+        } catch (verifyError) {
+          console.error("Failed to verify content script injection:", verifyError);
+          return false;
+        }
+      } else {
+        console.error("Scripting API not available");
+        return false;
+      }
+    }
   } catch (error) {
-    console.error("Cannot inject content script:", error);
+    console.error("Error ensuring content script loaded:", error);
     return false;
   }
+}
+
+// Helper function to check if a page is restricted
+function isRestrictedPage(url) {
+  if (!url) return true;
+  
+  // List of restricted URL schemes
+  const restrictedSchemes = [
+    'chrome://', 
+    'chrome-extension://',
+    'edge://',
+    'about:',
+    'moz-extension://',
+    'file://',
+    'view-source:',
+    'data:',
+    'devtools://'
+  ];
+  
+  // Check if URL starts with any restricted scheme
+  for (const scheme of restrictedSchemes) {
+    if (url.startsWith(scheme)) {
+      return true;
+    }
+  }
+  
+  // Check for other special cases
+  if (url === 'newtab' || url === 'New Tab') {
+    return true;
+  }
+  
+  return false;
 }
 
 // Show notification in the current tab

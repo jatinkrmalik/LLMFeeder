@@ -28,7 +28,17 @@
   browserRuntime.onMessage.addListener((request, sender, sendResponse) => {
     // Ping handler - used to check if content script is loaded
     if (request.action === 'ping') {
-      sendResponse({ success: true });
+      console.log('Content script received ping');
+      try {
+        sendResponse({ 
+          success: true, 
+          loaded: true, 
+          url: window.location.href,
+          timestamp: Date.now()
+        });
+      } catch (error) {
+        console.error('Error responding to ping:', error);
+      }
       return true;
     }
     

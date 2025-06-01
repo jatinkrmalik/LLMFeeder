@@ -166,39 +166,83 @@ async function convertToMarkdown() {
       throw new Error('No active tab found');
     }
     
+    // Check if we're on a restricted page
+    const tab = tabs[0];
+    if (isRestrictedPage(tab.url)) {
+      statusIndicator.textContent = 'Cannot run on this type of page';
+      statusIndicator.className = 'status error';
+      return;
+    }
+    
     // Get current settings
     const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     
-    // Send message to content script
-    const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
-      action: 'convertToMarkdown',
-      settings: {
-        contentScope,
-        preserveTables,
-        includeImages
+    // Try to send message to content script
+    try {
+      // Send message to content script
+      const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
+        action: 'convertToMarkdown',
+        settings: {
+          contentScope,
+          preserveTables,
+          includeImages
+        }
+      });
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Unknown error');
       }
-    });
-    
-    if (!response.success) {
-      throw new Error(response.error || 'Unknown error');
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(response.markdown);
+      
+      // Update UI
+      statusIndicator.textContent = 'Copied to clipboard!';
+      statusIndicator.className = 'status success';
+      
+      // Show preview
+      previewContent.textContent = response.markdown;
+      previewContainer.classList.remove('hidden');
+      
+      // Save settings
+      saveSettings();
+    } catch (messageError) {
+      console.error('Message error:', messageError);
+      
+      // Check if this is a connection error (content script not loaded)
+      const errorMessage = messageError.message || '';
+      if (errorMessage.includes('Receiving end does not exist') || 
+          errorMessage.includes('Could not establish connection')) {
+        
+        statusIndicator.textContent = 'Attempting to inject content script...';
+        
+        // Try to inject the content script
+        try {
+          if (chrome && chrome.scripting) {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ["libs/readability.js", "libs/turndown.js", "content.js"]
+            });
+            
+            // Try again after injection
+            statusIndicator.textContent = 'Retrying conversion...';
+            setTimeout(() => convertToMarkdown(), 500);
+          } else {
+            throw new Error('Cannot inject script');
+          }
+        } catch (injectionError) {
+          console.error('Injection error:', injectionError);
+          statusIndicator.textContent = 'Please refresh the page and try again';
+          statusIndicator.className = 'status error';
+        }
+      } else {
+        // Other message errors
+        statusIndicator.textContent = `Error: ${messageError.message || 'Failed to convert page'}`;
+        statusIndicator.className = 'status error';
+      }
     }
-    
-    // Copy to clipboard
-    await navigator.clipboard.writeText(response.markdown);
-    
-    // Update UI
-    statusIndicator.textContent = 'Copied to clipboard!';
-    statusIndicator.className = 'status success';
-    
-    // Show preview
-    previewContent.textContent = response.markdown;
-    previewContainer.classList.remove('hidden');
-    
-    // Save settings
-    saveSettings();
-    
   } catch (error) {
     console.error('Conversion error:', error);
     statusIndicator.textContent = `Error: ${error.message || 'Failed to convert page'}`;
@@ -206,10 +250,45 @@ async function convertToMarkdown() {
   }
 }
 
+// Helper function to check if a page is restricted
+function isRestrictedPage(url) {
+  if (!url) return true;
+  
+  // List of restricted URL schemes
+  const restrictedSchemes = [
+    'chrome://', 
+    'chrome-extension://',
+    'edge://',
+    'about:',
+    'moz-extension://',
+    'file://',
+    'view-source:',
+    'data:',
+    'devtools://'
+  ];
+  
+  // Check if URL starts with any restricted scheme
+  for (const scheme of restrictedSchemes) {
+    if (url.startsWith(scheme)) {
+      return true;
+    }
+  }
+  
+  // Check for other special cases
+  if (url === 'newtab' || url === 'New Tab') {
+    return true;
+  }
+  
+  return false;
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
   updateShortcutDisplay();
   loadSettings();
+  
+  // Check current tab
+  checkCurrentTab();
   
   // Convert button click
   convertBtn.addEventListener('click', convertToMarkdown);
@@ -228,4 +307,24 @@ document.addEventListener('DOMContentLoaded', () => {
   
   preserveTablesCheckbox.addEventListener('change', saveSettings);
   includeImagesCheckbox.addEventListener('change', saveSettings);
-}); 
+});
+
+// Check the current tab and update UI accordingly
+async function checkCurrentTab() {
+  try {
+    const tabs = await browserAPI.tabs.query({active: true, currentWindow: true});
+    if (!tabs || tabs.length === 0) return;
+    
+    const tab = tabs[0];
+    
+    // If we're on a restricted page, disable the convert button and show a message
+    if (isRestrictedPage(tab.url)) {
+      convertBtn.disabled = true;
+      convertBtn.classList.add('disabled');
+      statusIndicator.textContent = 'Cannot run on browser pages';
+      statusIndicator.className = 'status warning';
+    }
+  } catch (error) {
+    console.error('Error checking current tab:', error);
+  }
+} 

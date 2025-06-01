@@ -124,6 +124,11 @@ h3 {
   color: var(--warning-color);
 }
 
+.status.warning {
+  color: var(--warning-color);
+  font-weight: 500;
+}
+
 /* Success animation */
 @keyframes fadeInOut {
   0% { opacity: 0; transform: scale(0.9); }
