@@ -14,7 +14,8 @@
     "activeTab",
     "clipboardWrite",
     "storage",
-    "scripting"
+    "scripting",
+    "contextMenus"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -55,5 +56,11 @@
   "background": {
     "service_worker": "background.js",
     "type": "module"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["copy-popup.html", "direct-copy.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

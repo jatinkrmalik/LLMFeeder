@@ -33,6 +33,7 @@ const browserAPI = (function() {
     api.storage = browser.storage;
     api.commands = browser.commands;
     api.scripting = browser.scripting;
+    api.contextMenus = browser.contextMenus;
   } else if (isChrome) {
     // Chrome needs promisification
     api.tabs = {
@@ -78,10 +79,118 @@ const browserAPI = (function() {
     };
     
     api.scripting = chrome.scripting;
+    api.contextMenus = chrome.contextMenus;
   }
   
   return api;
 })();
+
+// Create context menu items when the extension is installed
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("Creating context menu items");
+  
+  // Main context menu item - only appears when text is selected
+  chrome.contextMenus.create({
+    id: "convert-selection",
+    title: "Convert selection to Markdown & copy",
+    contexts: ["selection"]
+  });
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "convert-selection") {
+    handleSelectedText(info.selectionText, tab);
+  }
+});
+
+// Function to handle selected text conversion
+async function handleSelectedText(selectedText, tab) {
+  if (!selectedText || selectedText.trim() === '') {
+    await showNotificationInTab("Error", "No text selected");
+    return;
+  }
+  
+  try {
+    // Format the selected text
+    const formattedMarkdown = formatSelectedTextAsMarkdown(selectedText, tab.title, tab.url);
+    
+    // Copy to clipboard - multiple approaches for maximum compatibility
+    let copied = false;
+    
+    // 1. Try using navigator.clipboard directly in background context (works in some browsers)
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(formattedMarkdown);
+        copied = true;
+        console.log("Copied using navigator.clipboard in background");
+      }
+    } catch (clipboardError) {
+      console.log("Background clipboard API failed:", clipboardError);
+    }
+    
+    // 2. If direct clipboard access failed, try to use the service worker approach
+    if (!copied) {
+      try {
+        // Store the text to be copied
+        chrome.storage.local.set({
+          'markdownToCopy': formattedMarkdown
+        });
+        
+        // Open the copy popup which will handle the clipboard operation
+        chrome.windows.create({
+          url: chrome.runtime.getURL('copy-popup.html'),
+          type: 'popup',
+          width: 600,
+          height: 400,
+          focused: true
+        });
+        
+        return; // Exit early since we're showing the popup
+      } catch (error) {
+        console.error("Clipboard error:", error);
+        
+        // 3. Last resort: Try the ultra-minimal approach with query parameter
+        // This is the most compatible approach for highly restricted sites
+        const encodedText = encodeURIComponent(formattedMarkdown);
+        chrome.tabs.create({
+          url: chrome.runtime.getURL(`direct-copy.html?text=${encodedText}`)
+        });
+        
+        return;
+      }
+    }
+    
+    // Show success notification if we got here (meaning the direct clipboard worked)
+    if (copied) {
+      await showNotificationInTab("Success", "Selection converted and copied to clipboard");
+    }
+  } catch (error) {
+    console.error("Selection handling error:", error);
+    
+    // Try to show a notification or open the popup as last resort
+    try {
+      // Use the ultra-minimal approach as final fallback
+      const errorMessage = `# Error occurred\n\nCould not process the selection due to site restrictions.\n\nHere's your original selection:\n\n${selectedText}`;
+      const encodedText = encodeURIComponent(errorMessage);
+      
+      chrome.tabs.create({
+        url: chrome.runtime.getURL(`direct-copy.html?text=${encodedText}`)
+      });
+    } catch (popupError) {
+      console.error("Even popup failed:", popupError);
+    }
+  }
+}
+
+// Format selected text as markdown with title and source link
+function formatSelectedTextAsMarkdown(text, title, url) {
+  // Clean the text (remove excessive whitespace)
+  const cleanedText = text.replace(/\s+/g, ' ').trim();
+  
+  // Format as markdown
+  return `# ${title}\n\n${cleanedText}\n\n---\nSource: [${title}](${url})`;
+}
 
 // Ensure content script is injected before sending messages
 async function ensureContentScriptLoaded(tabId) {
