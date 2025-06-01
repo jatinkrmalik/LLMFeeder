@@ -3,8 +3,8 @@
 <div align="center">
 
 
-![Chrome](https://img.shields.io/badge/Chrome-supported-4285F4?logo=googlechrome&logoColor=white&labelColor=4285F4&color=4caf50)
-![Firefox](https://img.shields.io/badge/Firefox-supported-FF7139?logo=firefox-browser&logoColor=white&labelColor=FF7139&color=4caf50)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/cjjfhhapabcpcokkfldbiiojiphbifdk?logo=googlechrome&logoColor=white&color=4285F4&label=Chrome)](https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk)
+![Firefox](https://img.shields.io/badge/Firefox-coming_soon-FF7139?logo=firefox-browser&logoColor=white&labelColor=FF7139)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub release](https://img.shields.io/github/v/release/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/releases)
 [![Last Commit](https://img.shields.io/github/last-commit/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/commits/main)
@@ -49,10 +49,10 @@ This architecture ensures that your content remains exclusively on your device t
 ### Option 1: Browser Extension Stores (Recommended)
 
 #### Chrome Web Store
-The Chrome extension is currently under review and will be available soon for one-click installation. 
+✅ **Now Available!** Install directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk)
 
 #### Firefox Add-ons
-The Firefox add-on is currently in development and will be submitted to the Firefox Add-ons store soon. Stay tuned for updates!
+🔄 **Coming Soon!** The Firefox add-on has been submitted to the Mozilla Add-ons store and is currently under review.
 
 ### Option 2: Direct Download
 
@@ -208,9 +208,9 @@ To build the extension packages for distribution:
    ```
 
 This will create three packages in the `dist/` directory:
-- `LLMFeeder-Chrome-v1.0.0.zip` - Chrome-compatible package
-- `LLMFeeder-Firefox-v1.0.0.zip` - Firefox-compatible package
-- `LLMFeeder-Source-v1.0.0.zip` - Source code package
+- `LLMFeeder-Chrome-v1.0.1.zip` - Chrome-compatible package
+- `LLMFeeder-Firefox-v1.0.1.zip` - Firefox-compatible package
+- `LLMFeeder-Source-v1.0.1.zip` - Source code package
 
 You can also build specific packages:
 ```bash
