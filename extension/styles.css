@@ -347,4 +347,22 @@ input[type="checkbox"] {
   background-color: #e8eaed;
   color: var(--primary-color);
   text-decoration: none;
+}
+
+.help-text {
+  margin: 12px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-left: 3px solid var(--warning-color);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dark-gray);
+}
+
+.help-text code {
+  background-color: #eee;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 11px;
 } 

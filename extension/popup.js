@@ -234,8 +234,32 @@ async function convertToMarkdown() {
           }
         } catch (injectionError) {
           console.error('Injection error:', injectionError);
-          statusIndicator.textContent = 'Please refresh the page and try again';
-          statusIndicator.className = 'status error';
+          
+          // Check for CSP/ExtensionsSettings policy errors
+          const errorMsg = injectionError.message || '';
+          if (errorMsg.includes('ExtensionsSettings policy') || 
+              errorMsg.includes('Cannot access contents') ||
+              errorMsg.includes('cannot be scripted')) {
+            
+            statusIndicator.textContent = 'This website restricts extensions. Try using the keyboard shortcut instead.';
+            statusIndicator.className = 'status error';
+            
+            // Add a help text with instructions
+            const helpText = document.createElement('p');
+            helpText.className = 'help-text';
+            helpText.innerHTML = 'Some websites block extensions from running scripts. Try:<br>' +
+                                '1. Select text manually and use the "Selection" option<br>' +
+                                '2. Or try the keyboard shortcut: <code>' + convertShortcut.textContent + '</code>';
+            
+            // Find where to insert the help text
+            const mainControls = document.querySelector('.main-controls');
+            if (mainControls && !document.querySelector('.help-text')) {
+              mainControls.appendChild(helpText);
+            }
+          } else {
+            statusIndicator.textContent = 'Please refresh the page and try again';
+            statusIndicator.className = 'status error';
+          }
         }
       } else {
         // Other message errors

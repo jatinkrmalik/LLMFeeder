@@ -73,9 +73,36 @@
       
       try {
         const settings = request.settings || request.options || {};
-        const markdown = convertToMarkdown(settings);
-        clearTimeout(timeoutId);
-        sendResponse({ success: true, markdown });
+        
+        // Try the full conversion first
+        try {
+          const markdown = convertToMarkdown(settings);
+          clearTimeout(timeoutId);
+          sendResponse({ success: true, markdown });
+        } catch (mainError) {
+          console.error('Primary conversion failed:', mainError);
+          
+          // If the main conversion fails, try a simpler approach for restricted sites
+          if (settings.contentScope === 'selection') {
+            // For selection, just get the text directly
+            const selection = window.getSelection();
+            if (selection && selection.toString().trim()) {
+              const selectionText = selection.toString();
+              const simpleMarkdown = `# ${document.title}\n\n${selectionText}\n\n---\nSource: [${document.title}](${window.location.href})`;
+              
+              clearTimeout(timeoutId);
+              sendResponse({ 
+                success: true, 
+                markdown: simpleMarkdown,
+                simplified: true 
+              });
+              return true;
+            }
+          }
+          
+          // If we got here, we couldn't recover, so throw the original error
+          throw mainError;
+        }
       } catch (error) {
         clearTimeout(timeoutId);
         console.error('Conversion error:', error);

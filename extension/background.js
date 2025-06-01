@@ -248,27 +248,45 @@ browserAPI.commands.onCommand.addListener(async (command) => {
       
       // Check if the URL is valid for content scripts
       const url = activeTab.url || "";
-      if (!url || url.startsWith("chrome://") || url.startsWith("edge://") || url.startsWith("about:")) {
+      if (!url || isRestrictedPage(url)) {
         await showNotificationInTab("Cannot Convert", "Cannot run on browser pages. Please try on a regular website.");
         return;
       }
       
-      // Ensure content script is loaded
-      const isLoaded = await ensureContentScriptLoaded(activeTab.id);
-      if (!isLoaded) {
-        await showNotificationInTab("Error", "Could not load content script. Try refreshing the page.");
-        return;
-      }
-      
-      // Get user settings
-      const settings = await browserAPI.storage.sync.get({
-        contentScope: 'mainContent',
-        preserveTables: true,
-        includeImages: true
-      });
-      
-      // Send message to content script to perform conversion
+      // Handle sites with CSP restrictions by trying a simplified approach first
       try {
+        // Get user settings
+        const settings = await browserAPI.storage.sync.get({
+          contentScope: 'mainContent',
+          preserveTables: true,
+          includeImages: true
+        });
+        
+        // Try direct approach first - getting selected text
+        const scriptResult = await browserAPI.scripting.executeScript({
+          target: { tabId: activeTab.id },
+          function: getSelectedTextAndTitle
+        });
+        
+        // Check if we got a successful result
+        if (scriptResult && scriptResult[0] && scriptResult[0].result) {
+          const result = scriptResult[0].result;
+          
+          // If there's selected text, use it directly
+          if (result.selectedText && result.selectedText.trim().length > 0) {
+            await copyToClipboard(result.selectedText);
+            await showNotificationInTab("Success", "Selected text copied to clipboard");
+            return;
+          }
+        }
+        
+        // If no selection or the direct approach failed, try the regular way
+        const isLoaded = await ensureContentScriptLoaded(activeTab.id);
+        if (!isLoaded) {
+          throw new Error("Could not load content script");
+        }
+        
+        // Send message to content script to perform conversion
         const response = await browserAPI.tabs.sendMessage(activeTab.id, {
           action: "convertToMarkdown",
           settings: settings
@@ -288,13 +306,44 @@ browserAPI.commands.onCommand.addListener(async (command) => {
         }
       } catch (error) {
         console.error("Error during conversion:", error);
-        await showNotificationInTab("Error", "Could not convert page. Please try again or open the extension popup.");
+        
+        // Check if this might be a CSP restriction
+        if (error.message && (
+            error.message.includes("ExtensionsSettings policy") || 
+            error.message.includes("cannot be scripted") ||
+            error.message.includes("Cannot access contents"))) {
+          await showNotificationInTab("Restricted Page", "This page restricts extensions. Try selecting text manually.");
+        } else {
+          await showNotificationInTab("Error", "Could not convert page. Please try again or open the extension popup.");
+        }
       }
     } catch (error) {
       console.error("Command handler error:", error);
     }
   }
 });
+
+/**
+ * Function to get selected text and page title directly 
+ * (runs in page context so might work with CSP restrictions)
+ */
+function getSelectedTextAndTitle() {
+  const selection = window.getSelection();
+  const selectedText = selection ? selection.toString() : '';
+  
+  // Format the selected text with some basic context
+  let formattedText = '';
+  
+  if (selectedText && selectedText.trim().length > 0) {
+    formattedText = `# ${document.title}\n\n${selectedText}\n\n---\nSource: [${document.title}](${window.location.href})`;
+  }
+  
+  return {
+    selectedText: formattedText,
+    title: document.title,
+    url: window.location.href
+  };
+}
 
 /**
  * Copy text to clipboard via content script
