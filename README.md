@@ -1,4 +1,4 @@
-# LLMFeeder
+# LLMFeeder - Webpage to Markdown for your LLM context!
 
 <div align="center">
 
