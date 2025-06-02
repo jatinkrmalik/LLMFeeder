@@ -4,7 +4,7 @@
 
 
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/cjjfhhapabcpcokkfldbiiojiphbifdk?logo=googlechrome&logoColor=white&color=4285F4&label=Chrome)](https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk)
-![Firefox](https://img.shields.io/badge/Firefox-coming_soon-FF7139?logo=firefox-browser&logoColor=white&labelColor=FF7139)
+[![Firefox Add-on](https://img.shields.io/amo/v/llmfeeder?logo=firefox-browser&logoColor=white&color=FF7139&label=Firefox)](https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub release](https://img.shields.io/github/v/release/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/releases)
 [![Last Commit](https://img.shields.io/github/last-commit/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/commits/main)
@@ -52,7 +52,7 @@ This architecture ensures that your content remains exclusively on your device t
 ✅ **Now Available!** Install directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk)
 
 #### Firefox Add-ons
-🔄 **Coming Soon!** The Firefox add-on has been submitted to the Mozilla Add-ons store and is currently under review.
+✅ **Now Available!** Install directly from the [Firefox Add-ons Store](https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/)
 
 ### Option 2: Direct Download
 
