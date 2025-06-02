@@ -60,9 +60,7 @@ This architecture ensures that your content remains exclusively on your device t
 
 ### Option 2: Direct Download
 
-#### For Chrome
-
-1. Download the [latest release zip file](https://github.com/jatinkrmalik/LLMFeeder/releases/latest)
+1. Download the [latest release zip file](https://github.com/jatinkrmalik/LLMFeeder/releases/latest) based on your browser.
 2. Extract the zip file to a location of your choice
 
 #### For Chrome:
