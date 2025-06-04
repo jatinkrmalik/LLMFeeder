@@ -88,6 +88,7 @@ const previewContent = document.getElementById('previewContent');
 const convertShortcut = document.getElementById('convertShortcut');
 const popupShortcut = document.getElementById('popupShortcut');
 const quickConvertShortcut = document.getElementById('quickConvertShortcut');
+const darkModeToggle = document.getElementById('darkModeToggle');
 
 // Get all settings elements
 const contentScopeRadios = document.querySelectorAll('input[name="contentScope"]');
@@ -206,10 +207,31 @@ async function convertToMarkdown() {
   }
 }
 
+async function loadDarkModePreference() {
+  try {
+    const data = await browserAPI.storage.sync.get({ darkMode: false });
+    if (data.darkMode) {
+      document.body.classList.add('dark-mode');
+    }
+  } catch (error) {
+    console.error('Error loading dark mode preference:', error);
+  }
+}
+
+async function toggleDarkMode() {
+  const isDarkMode = document.body.classList.toggle('dark-mode');
+  try {
+    await browserAPI.storage.sync.set({ darkMode: isDarkMode });
+  } catch (error) {
+    console.error('Error saving dark mode preference:', error);
+  }
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
   updateShortcutDisplay();
   loadSettings();
+  loadDarkModePreference();
   
   // Convert button click
   convertBtn.addEventListener('click', convertToMarkdown);
@@ -228,4 +250,5 @@ document.addEventListener('DOMContentLoaded', () => {
   
   preserveTablesCheckbox.addEventListener('change', saveSettings);
   includeImagesCheckbox.addEventListener('change', saveSettings);
+  darkModeToggle.addEventListener('click', toggleDarkMode);
 }); 

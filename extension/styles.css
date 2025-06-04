@@ -12,6 +12,11 @@
   --success-color: #34a853;
   --error-color: #ea4335;
   --warning-color: #fbbc04;
+  --dark-bg-color: #1a1a1a;
+  --dark-text-color: #e0e0e0;
+  --dark-border-color: #333333;
+  --dark-light-gray: #2d2d2d;
+  --dark-dark-gray: #a0a0a0;
 }
 
 body {
@@ -343,3 +348,117 @@ input[type="checkbox"] {
   color: var(--primary-color);
   text-decoration: none;
 } 
+
+/* Dark mode class */
+body.dark-mode {
+  background-color: var(--dark-bg-color);
+  color: var(--dark-text-color);
+}
+
+body.dark-mode .container {
+  background-color: var(--dark-bg-color);
+}
+
+body.dark-mode .header h1 {
+  color: var(--primary-color);
+}
+
+body.dark-mode .tagline {
+  color: var(--dark-dark-gray);
+}
+
+body.dark-mode .preview-container {
+  background-color: var(--dark-light-gray);
+}
+
+body.dark-mode .preview-content {
+  background-color: var(--dark-bg-color);
+  border-color: var(--dark-border-color);
+  color: var(--dark-text-color);
+}
+
+body.dark-mode .settings-toggle-btn {
+  background-color: var(--dark-light-gray);
+  border-color: var(--dark-border-color);
+  color: var(--dark-text-color);
+}
+
+body.dark-mode .settings-toggle-btn:hover {
+  background-color: #3d3d3d;
+}
+
+body.dark-mode .settings-container {
+  background-color: var(--dark-bg-color);
+  border-color: var(--dark-border-color);
+}
+
+body.dark-mode .shortcut-info {
+  background-color: var(--dark-light-gray);
+}
+
+body.dark-mode .shortcut-row code {
+  background-color: var(--dark-bg-color);
+  border-color: var(--dark-border-color);
+  color: var(--dark-text-color);
+}
+
+body.dark-mode .shortcut-customize {
+  color: var(--dark-dark-gray);
+}
+
+body.dark-mode .shortcut-customize code {
+  background-color: var(--dark-light-gray);
+  color: var(--dark-text-color);
+}
+
+/* Dark mode toggle button styles */
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dark-mode-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.dark-mode-toggle:hover {
+  background-color: var(--light-gray);
+}
+
+body.dark-mode .dark-mode-toggle:hover {
+  background-color: var(--dark-light-gray);
+}
+
+.dark-mode-toggle svg {
+  fill: var(--dark-gray);
+  transition: fill 0.2s;
+}
+
+body.dark-mode .dark-mode-toggle svg {
+  fill: var(--dark-dark-gray);
+}
+
+.dark-mode-toggle:hover svg {
+  fill: var(--primary-color);
+}
+
+.sun-icon {
+  display: none;
+}
+
+body.dark-mode .moon-icon {
+  display: none;
+}
+
+body.dark-mode .sun-icon {
+  display: block;
+}
