@@ -88,6 +88,13 @@
       }
       return true; // Indicates we will send a response asynchronously
     }
+    
+    // Persistent banner notification handler
+    if (request.action === 'showPersistentBanner' && request.message) {
+      showPersistentBanner(request.message, request.type || 'success');
+      sendResponse({ success: true });
+      return true;
+    }
   });
   
   /**
@@ -430,6 +437,42 @@
     return markdown;
   }
   
+  /**
+   * Show a persistent, prominent banner notification at the top of the page
+   * @param {string} message - The message to display
+   * @param {string} [type] - Type of banner: 'success', 'error', etc.
+   */
+  function showPersistentBanner(message, type = 'success') {
+    // Remove any existing banner
+    const oldBanner = document.getElementById('llmfeeder-banner-notification');
+    if (oldBanner) oldBanner.remove();
+
+    const banner = document.createElement('div');
+    banner.id = 'llmfeeder-banner-notification';
+    banner.textContent = message;
+    banner.style.position = 'fixed';
+    banner.style.top = '0';
+    banner.style.left = '0';
+    banner.style.width = '100%';
+    banner.style.zIndex = '2147483647';
+    banner.style.padding = '18px 0';
+    banner.style.textAlign = 'center';
+    banner.style.fontSize = '18px';
+    banner.style.fontWeight = '600';
+    banner.style.letterSpacing = '0.02em';
+    banner.style.background = type === 'error' ? '#d32f2f' : '#1976d2';
+    banner.style.color = '#fff';
+    banner.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+    banner.style.transition = 'top 0.4s cubic-bezier(.4,0,.2,1), opacity 0.4s';
+
+    document.body.appendChild(banner);
+
+    setTimeout(() => {
+      banner.style.opacity = '0';
+      setTimeout(() => banner.remove(), 600);
+    }, 5000);
+  }
+
   // This function would normally be provided by the TurndownService-tables plugin
   // Simplified implementation for demonstration
   function turndownPluginTables() {
@@ -464,4 +507,4 @@
       });
     };
   }
-})(); 
+})();
