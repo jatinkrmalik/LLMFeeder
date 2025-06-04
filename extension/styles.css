@@ -94,6 +94,37 @@ h3 {
   transform: none;
 }
 
+.secondary-btn {
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--light-gray);
+  color: var(--primary-color);
+  border: 1px solid var(--border-color);
+  margin-right: 8px;
+  margin-top: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.secondary-btn:hover {
+  background: #e8eaed;
+}
+
+.debug-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.debug-status {
+  font-size: 12px;
+  color: var(--dark-gray);
+  margin-top: 6px;
+}
+
 .shortcut-badge {
   margin-left: 8px;
   font-size: 12px;

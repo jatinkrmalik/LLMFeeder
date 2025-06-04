@@ -78,6 +78,68 @@ const browserAPI = (function() {
   return api;
 })();
 
+// Logger utility
+class Logger {
+  constructor() {
+    this.enabled = false;
+    this.logs = [];
+    this.loadFromStorage();
+  }
+
+  setEnabled(val) {
+    this.enabled = val;
+    if (!val) this.clear();
+    this.saveToStorage();
+  }
+
+  log(...args) {
+    if (!this.enabled) return;
+    const entry = `[LOG ${new Date().toISOString()}] ${args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' ')}`;
+    this.logs.push(entry);
+    this.saveToStorage();
+  }
+
+  error(...args) {
+    if (!this.enabled) return;
+    const entry = `[ERROR ${new Date().toISOString()}] ${args.map(a => (typeof a === 'object' ? JSON.stringify(a) : a)).join(' ')}`;
+    this.logs.push(entry);
+    this.saveToStorage();
+  }
+
+  event(name, data) {
+    if (!this.enabled) return;
+    const entry = `[EVENT ${new Date().toISOString()}] ${name} ${data ? JSON.stringify(data) : ''}`;
+    this.logs.push(entry);
+    this.saveToStorage();
+  }
+
+  getLogs() {
+    return this.logs.join('\n');
+  }
+
+  clear() {
+    this.logs = [];
+    this.saveToStorage();
+  }
+
+  saveToStorage() {
+    try {
+      localStorage.setItem('llmfeeder_logs', JSON.stringify(this.logs));
+      localStorage.setItem('llmfeeder_debug', this.enabled ? '1' : '0');
+    } catch {}
+  }
+
+  loadFromStorage() {
+    try {
+      const logs = localStorage.getItem('llmfeeder_logs');
+      this.logs = logs ? JSON.parse(logs) : [];
+      this.enabled = localStorage.getItem('llmfeeder_debug') === '1';
+    } catch { this.logs = []; this.enabled = false; }
+  }
+}
+
+const logger = new Logger();
+
 // DOM elements
 const convertBtn = document.getElementById('convertBtn');
 const statusIndicator = document.getElementById('statusIndicator');
@@ -91,6 +153,10 @@ const quickConvertShortcut = document.getElementById('quickConvertShortcut');
 const themeLightBtn = document.getElementById('themeLightBtn');
 const themeDarkBtn = document.getElementById('themeDarkBtn');
 const themeSystemBtn = document.getElementById('themeSystemBtn');
+const debugModeToggle = document.getElementById('debugModeToggle');
+const exportLogsBtn = document.getElementById('exportLogsBtn');
+const copyLogsBtn = document.getElementById('copyLogsBtn');
+const debugStatus = document.getElementById('debugStatus');
 
 // Get all settings elements
 const contentScopeRadios = document.querySelectorAll('input[name="contentScope"]');
@@ -117,6 +183,41 @@ function updateShortcutDisplay() {
   }
 }
 
+// --- Logger/Debug UI ---
+function updateDebugUI() {
+  debugModeToggle.checked = logger.enabled;
+  debugStatus.textContent = logger.enabled ? `Debug mode is ON. Logs: ${logger.logs.length}` : 'Debug mode is OFF.';
+}
+
+debugModeToggle.addEventListener('change', () => {
+  logger.setEnabled(debugModeToggle.checked);
+  updateDebugUI();
+  logger.event('debug_mode_toggled', { enabled: logger.enabled });
+});
+
+exportLogsBtn.addEventListener('click', () => {
+  const blob = new Blob([logger.getLogs()], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `llmfeeder-logs-${Date.now()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  logger.event('logs_exported');
+});
+
+copyLogsBtn.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(logger.getLogs());
+    debugStatus.textContent = 'Logs copied to clipboard!';
+    logger.event('logs_copied');
+  } catch (e) {
+    debugStatus.textContent = 'Failed to copy logs.';
+    logger.error('copy_logs_failed', e);
+  }
+});
+
 // Load user settings
 async function loadSettings() {
   try {
@@ -130,8 +231,9 @@ async function loadSettings() {
     document.querySelector(`input[name="contentScope"][value="${data.contentScope}"]`).checked = true;
     preserveTablesCheckbox.checked = data.preserveTables;
     includeImagesCheckbox.checked = data.includeImages;
+    logger.log('Settings loaded', data);
   } catch (error) {
-    console.error('Error loading settings:', error);
+    logger.error('Error loading settings', error);
     statusIndicator.textContent = 'Error loading settings';
     statusIndicator.classList.add('error');
   }
@@ -150,9 +252,9 @@ async function saveSettings() {
       includeImages
     });
     
-    console.log('Settings saved');
+    logger.log('Settings saved', { contentScope, preserveTables, includeImages });
   } catch (error) {
-    console.error('Error saving settings:', error);
+    logger.error('Error saving settings', error);
   }
 }
 
@@ -161,11 +263,12 @@ async function convertToMarkdown() {
   statusIndicator.textContent = 'Converting...';
   statusIndicator.className = 'status processing';
   previewContainer.classList.add('hidden');
-  
+  logger.event('convert_btn_clicked');
   try {
     // Get current tab
     const tabs = await browserAPI.tabs.query({active: true, currentWindow: true});
     if (!tabs || tabs.length === 0) {
+      logger.error('No active tab found');
       throw new Error('No active tab found');
     }
     
@@ -173,6 +276,7 @@ async function convertToMarkdown() {
     const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
+    logger.log('Sending convertToMarkdown', { contentScope, preserveTables, includeImages });
     
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
@@ -185,6 +289,7 @@ async function convertToMarkdown() {
     });
     
     if (!response.success) {
+      logger.error('Conversion failed', response.error);
       throw new Error(response.error || 'Unknown error');
     }
     
@@ -201,9 +306,10 @@ async function convertToMarkdown() {
     
     // Save settings
     saveSettings();
+    logger.log('Conversion success', { length: response.markdown.length });
     
   } catch (error) {
-    console.error('Conversion error:', error);
+    logger.error('Conversion error', error);
     statusIndicator.textContent = `Error: ${error.message || 'Failed to convert page'}`;
     statusIndicator.className = 'status error';
   }
@@ -228,7 +334,8 @@ async function loadTheme() {
   try {
     const data = await browserAPI.storage.sync.get({ theme: 'system' });
     theme = data.theme || 'system';
-  } catch {}
+    logger.log('Theme loaded', theme);
+  } catch (e) { logger.error('Theme load error', e); }
   if (theme === 'system') {
     applyTheme(detectSystemTheme());
   } else {
@@ -238,20 +345,8 @@ async function loadTheme() {
 
 async function saveTheme(theme) {
   await browserAPI.storage.sync.set({ theme });
+  logger.log('Theme saved', theme);
 }
-
-themeLightBtn.addEventListener('click', async () => {
-  applyTheme('light');
-  await saveTheme('light');
-});
-themeDarkBtn.addEventListener('click', async () => {
-  applyTheme('dark');
-  await saveTheme('dark');
-});
-themeSystemBtn.addEventListener('click', async () => {
-  applyTheme(detectSystemTheme());
-  await saveTheme('system');
-});
 
 // Listen for system theme changes if system is selected
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
@@ -266,7 +361,8 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
 document.addEventListener('DOMContentLoaded', () => {
   updateShortcutDisplay();
   loadSettings();
-  loadTheme(); // Load theme on startup
+  loadTheme();
+  updateDebugUI();
   
   // Convert button click
   convertBtn.addEventListener('click', convertToMarkdown);
