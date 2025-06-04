@@ -79,6 +79,29 @@
             </div>
           </div>
         </div>
+        
+        <div class="setting-group">
+          <h3>Theme</h3>
+          <div class="theme-toggle-group">
+            <button type="button" class="theme-btn" id="themeLightBtn">Light</button>
+            <button type="button" class="theme-btn" id="themeDarkBtn">Dark</button>
+            <button type="button" class="theme-btn" id="themeSystemBtn">System</button>
+          </div>
+        </div>
+        
+        <!-- Debug/Logger Section -->
+        <div class="setting-group">
+          <h3>Debug & Logging</h3>
+          <label class="setting-option">
+            <input type="checkbox" id="debugModeToggle">
+            <span>Enable Debug Mode (collect logs)</span>
+          </label>
+          <div class="debug-actions">
+            <button id="exportLogsBtn" class="secondary-btn" type="button">Export Logs</button>
+            <button id="copyLogsBtn" class="secondary-btn" type="button">Copy Logs</button>
+          </div>
+          <div id="debugStatus" class="debug-status"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -90,4 +113,4 @@
   <script src="libs/browser-polyfill.js"></script>
   <script src="popup.js"></script>
 </body>
-</html> 
+</html>
