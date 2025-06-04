@@ -177,7 +177,6 @@
       
       // Add page title as H1 if enabled and title is non-empty
       if (settings.includeTitle) {
-        debugger;
         const pageTitle = document.title.trim();
         if (pageTitle.length > 0) {
           markdown = `# ${pageTitle}\n\n${markdown}`;
