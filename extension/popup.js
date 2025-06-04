@@ -88,6 +88,9 @@ const previewContent = document.getElementById('previewContent');
 const convertShortcut = document.getElementById('convertShortcut');
 const popupShortcut = document.getElementById('popupShortcut');
 const quickConvertShortcut = document.getElementById('quickConvertShortcut');
+const themeLightBtn = document.getElementById('themeLightBtn');
+const themeDarkBtn = document.getElementById('themeDarkBtn');
+const themeSystemBtn = document.getElementById('themeSystemBtn');
 
 // Get all settings elements
 const contentScopeRadios = document.querySelectorAll('input[name="contentScope"]');
@@ -206,10 +209,64 @@ async function convertToMarkdown() {
   }
 }
 
+// Theme handling
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  // Update button active state
+  [themeLightBtn, themeDarkBtn, themeSystemBtn].forEach(btn => btn.classList.remove('active'));
+  if (theme === 'light') themeLightBtn.classList.add('active');
+  else if (theme === 'dark') themeDarkBtn.classList.add('active');
+  else themeSystemBtn.classList.add('active');
+}
+
+function detectSystemTheme() {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+async function loadTheme() {
+  let theme = 'system';
+  try {
+    const data = await browserAPI.storage.sync.get({ theme: 'system' });
+    theme = data.theme || 'system';
+  } catch {}
+  if (theme === 'system') {
+    applyTheme(detectSystemTheme());
+  } else {
+    applyTheme(theme);
+  }
+}
+
+async function saveTheme(theme) {
+  await browserAPI.storage.sync.set({ theme });
+}
+
+themeLightBtn.addEventListener('click', async () => {
+  applyTheme('light');
+  await saveTheme('light');
+});
+themeDarkBtn.addEventListener('click', async () => {
+  applyTheme('dark');
+  await saveTheme('dark');
+});
+themeSystemBtn.addEventListener('click', async () => {
+  applyTheme(detectSystemTheme());
+  await saveTheme('system');
+});
+
+// Listen for system theme changes if system is selected
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  browserAPI.storage.sync.get({ theme: 'system' }).then(data => {
+    if ((data.theme || 'system') === 'system') {
+      applyTheme(e.matches ? 'dark' : 'light');
+    }
+  });
+});
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
   updateShortcutDisplay();
   loadSettings();
+  loadTheme(); // Load theme on startup
   
   // Convert button click
   convertBtn.addEventListener('click', convertToMarkdown);
@@ -228,4 +285,4 @@ document.addEventListener('DOMContentLoaded', () => {
   
   preserveTablesCheckbox.addEventListener('change', saveSettings);
   includeImagesCheckbox.addEventListener('change', saveSettings);
-}); 
+});

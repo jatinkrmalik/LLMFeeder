@@ -203,8 +203,16 @@ browserAPI.commands.onCommand.addListener(async (command) => {
             action: "copyToClipboard",
             text: response.markdown
           });
-          
-          await showNotificationInTab("Success", "Content converted to Markdown and copied to clipboard");
+
+          // Show persistent banner notification
+          await browserAPI.tabs.sendMessage(activeTab.id, {
+            action: "showPersistentBanner",
+            message: "Content converted to Markdown and copied to clipboard!",
+            type: "success"
+          });
+
+          // Optionally, keep the old notification for fallback/compatibility
+          // await showNotificationInTab("Success", "Content converted to Markdown and copied to clipboard");
           console.log("Markdown conversion successful");
         } else {
           await showNotificationInTab("Conversion Failed", response?.error || "Unknown error");
@@ -257,4 +265,4 @@ function textToClipboard(text) {
   
   // Clean up
   document.body.removeChild(textarea);
-} 
+}
