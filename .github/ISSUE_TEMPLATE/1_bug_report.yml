@@ -28,7 +28,7 @@ body:
     type: textarea
     attributes:
       label: How to replicate the issue + URL
-      description: ‼️‼️‼️ Every bug report MUST include A REAL URL where the bug appears.
+      description: Please include a valid URL where the bug can be observed. This is required for us to investigate the issue effectively.
     validations:
       required: true
   - id: version
