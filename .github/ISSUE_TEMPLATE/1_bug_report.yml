@@ -1,21 +1,23 @@
 name: 🐛 Report a bug
-description: ———
+description: Use this template when reporting bugs or unexpected behavior in LLMFeeder.
 labels: bug
 body:
   - type: markdown
     attributes:
       value: |
-        # Thanks for reporting a bug! ⛰
+        # Thanks for reporting a bug! 🐛
 
         Help us replicate the issue by filling in this form.
 
         Please ensure:
 
         - The bug is caused by LLMFeeder. It doesn't happen if I disable the extension.
+        - You have cleared your browser cache and tried again.
+        - You have tested in incognito/private mode.
 
         Include in this issue:
 
-        - Screenshots/video/gif demonstrating the bug, if it’s visual
+        - Screenshots/video/gif demonstrating the bug, if it's visual
         - Console errors, if any
 
   - id: description

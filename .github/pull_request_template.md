@@ -1,7 +1,5 @@
 <!--
 
-Thanks for contributing! 🍄 Do not ignore this, please.
-
 1. Does this PR close/fix an existing issue? Write something like: Closes #10
 
 Help us test and visualize this PR:
@@ -15,6 +13,8 @@ Lastly:
 
 -->
 
+
+## Changes Made
 
 
 ## Test URLs
