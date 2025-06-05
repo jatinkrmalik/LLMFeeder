@@ -9,6 +9,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/releases)
 [![Last Commit](https://img.shields.io/github/last-commit/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/commits/main)
 [![GitHub issues](https://img.shields.io/github/issues/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/issues)
+[![Contributors](https://img.shields.io/github/contributors/jatinkrmalik/llmfeeder)](https://github.com/jatinkrmalik/LLMFeeder/graphs/contributors)
 [![GitHub stars](https://img.shields.io/github/stars/jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/stargazers)
 
 </div>
