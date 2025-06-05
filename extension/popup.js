@@ -93,6 +93,7 @@ const quickConvertShortcut = document.getElementById('quickConvertShortcut');
 const contentScopeRadios = document.querySelectorAll('input[name="contentScope"]');
 const preserveTablesCheckbox = document.getElementById('preserveTables');
 const includeImagesCheckbox = document.getElementById('includeImages');
+const includeTitleCheckbox = document.getElementById('includeTitle');
 
 // Show proper keyboard shortcuts based on OS
 function updateShortcutDisplay() {
@@ -120,13 +121,15 @@ async function loadSettings() {
     const data = await browserAPI.storage.sync.get({
       contentScope: 'mainContent',
       preserveTables: true,
-      includeImages: true
+      includeImages: true,
+      includeTitle: true
     });
     
     // Apply settings to UI
     document.querySelector(`input[name="contentScope"][value="${data.contentScope}"]`).checked = true;
     preserveTablesCheckbox.checked = data.preserveTables;
     includeImagesCheckbox.checked = data.includeImages;
+    includeTitleCheckbox.checked = data.includeTitle;
   } catch (error) {
     console.error('Error loading settings:', error);
     statusIndicator.textContent = 'Error loading settings';
@@ -140,11 +143,13 @@ async function saveSettings() {
     const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
+    const includeTitle = includeTitleCheckbox.checked;
     
     await browserAPI.storage.sync.set({
       contentScope,
       preserveTables,
-      includeImages
+      includeImages,
+      includeTitle
     });
     
     console.log('Settings saved');
@@ -170,6 +175,7 @@ async function convertToMarkdown() {
     const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
+    const includeTitle = includeTitleCheckbox.checked;
     
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
@@ -177,7 +183,8 @@ async function convertToMarkdown() {
       settings: {
         contentScope,
         preserveTables,
-        includeImages
+        includeImages,
+        includeTitle
       }
     });
     
@@ -228,4 +235,5 @@ document.addEventListener('DOMContentLoaded', () => {
   
   preserveTablesCheckbox.addEventListener('change', saveSettings);
   includeImagesCheckbox.addEventListener('change', saveSettings);
+  includeTitleCheckbox.addEventListener('change', saveSettings);
 }); 
