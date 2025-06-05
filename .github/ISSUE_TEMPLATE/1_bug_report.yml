@@ -1,0 +1,45 @@
+name: 🐛 Report a bug
+description: ———
+labels: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Thanks for reporting a bug! ⛰
+
+        Help us replicate the issue by filling in this form.
+
+        Please ensure:
+
+        - The bug is caused by LLMFeeder. It doesn't happen if I disable the extension.
+
+        Include in this issue:
+
+        - Screenshots/video/gif demonstrating the bug, if it’s visual
+        - Console errors, if any
+
+  - id: description
+    type: textarea
+    attributes:
+      label: Description
+    validations:
+      required: true
+  - id: repro
+    type: textarea
+    attributes:
+      label: How to replicate the issue + URL
+      description: ‼️‼️‼️ Every bug report MUST include A REAL URL where the bug appears.
+    validations:
+      required: true
+  - id: version
+    type: input
+    attributes:
+      label: Extension version
+    validations:
+      required: true
+  - id: browser
+    type: input
+    attributes:
+      label: Browser(s) used
+    validations:
+      required: true
