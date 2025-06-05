@@ -342,4 +342,107 @@ input[type="checkbox"] {
   background-color: #e8eaed;
   color: var(--primary-color);
   text-decoration: none;
-} 
+}
+
+.theme-toggle-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.theme-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: 1px solid var(--border-color);
+  background: var(--light-gray);
+  color: var(--text-color);
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.theme-btn.active, .theme-btn:focus {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+/* Dark theme variables */
+[data-theme="dark"] {
+  --primary-color: #8ab4f8;
+  --primary-hover: #669df6;
+  --secondary-color: #81c995;
+  --text-color: #e8eaed;
+  --background-color: #202124;
+  --border-color: #3c4043;
+  --light-gray: #292a2d;
+  --dark-gray: #9aa0a6;
+  --success-color: #81c995;
+  --error-color: #f28b82;
+  --warning-color: #fbbc04;
+}
+
+[data-theme="dark"] body {
+  background: var(--background-color);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .container,
+[data-theme="dark"] .preview-container,
+[data-theme="dark"] .settings-container,
+[data-theme="dark"] .shortcut-info {
+  background: var(--light-gray);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .primary-btn {
+  background: var(--primary-color);
+  color: #202124;
+}
+[data-theme="dark"] .primary-btn:hover {
+  background: var(--primary-hover);
+}
+[data-theme="dark"] .preview-content {
+  background: #23272b;
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+[data-theme="dark"] .theme-btn {
+  background: #23272b;
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+[data-theme="dark"] .theme-btn.active, [data-theme="dark"] .theme-btn:focus {
+  background: var(--primary-color);
+  color: #202124;
+  border-color: var(--primary-color);
+}
+
+/* --- DARK THEME FIXES FOR SETTINGS & SHORTCUTS --- */
+[data-theme="dark"] .settings-container,
+[data-theme="dark"] .setting-group,
+[data-theme="dark"] .setting-option span,
+[data-theme="dark"] .settings-toggle-btn,
+[data-theme="dark"] .settings-toggle-btn .btn-text,
+[data-theme="dark"] .settings-toggle-btn .toggle-icon {
+  color: var(--text-color) !important;
+}
+[data-theme="dark"] .settings-toggle-btn {
+  background: var(--light-gray);
+  border-color: var(--border-color);
+}
+[data-theme="dark"] .settings-toggle-btn:hover {
+  background: #23272b;
+}
+[data-theme="dark"] .shortcut-info {
+  background: #23272b;
+  color: var(--text-color);
+}
+[data-theme="dark"] .shortcut-row code {
+  background: #18191c;
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+[data-theme="dark"] .shortcut-customize code {
+  background: #23272b;
+  color: var(--text-color);
+}
