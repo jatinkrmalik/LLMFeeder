@@ -86,8 +86,16 @@ This architecture ensures that your content remains exclusively on your device t
    ```
    git clone git@github.com:jatinkrmalik/LLMFeeder.git
    ```
-
-2. Follow the browser-specific instructions from Option 2 above to load the extension.
+   (If you've already cloned, ensure you are on the desired branch/commit.)
+2. Navigate to the cloned directory:
+   ```
+   cd LLMFeeder
+   ```
+3. Open Chrome and navigate to `chrome://extensions/`
+4. Enable "Developer mode" by toggling the switch in the top right
+5. Click "Load unpacked" and select the `extension` directory within the cloned repository.
+6. The LLMFeeder extension should now appear in your extensions list.
+7. Click the puzzle piece icon in Chrome toolbar and pin LLMFeeder for easy access.
 
 #### For Firefox
 
@@ -95,10 +103,20 @@ This architecture ensures that your content remains exclusively on your device t
    ```
    git clone git@github.com:jatinkrmalik/LLMFeeder.git
    ```
-2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
-3. Click "Load Temporary Add-on..."
-4. Select the `manifest.json` file inside the `extension` directory.
-5. The extension will appear in your Firefox extensions list for the current session.
+   (If you've already cloned, ensure you are on the desired branch/commit.)
+2. Navigate to the cloned directory:
+   ```
+   cd LLMFeeder
+   ```
+3. Run the build script to prepare the Firefox-specific files:
+   ```bash
+   ./scripts/build.sh firefox
+   ```
+   This will create a temporary build directory `.tmp-build/firefox` with the correct manifest and files.
+4. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
+5. Click "Load Temporary Add-on..."
+6. Select the `manifest.json` file located inside the `.tmp-build/firefox` directory (NOT the one in the `extension` directory).
+7. The LLMFeeder extension should now appear in your Firefox extensions list for the current session.
 
 ### Usage
 
