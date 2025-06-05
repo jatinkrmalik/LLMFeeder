@@ -171,8 +171,6 @@ async function saveSettings() {
       includeImages,
       includeTitle,
     });
-
-    console.log("Settings saved");
   } catch (error) {
     console.error("Error saving settings:", error);
   }
@@ -277,7 +275,6 @@ document.addEventListener("DOMContentLoaded", () => {
       downloadStatusIndicator.classList.remove("success", "hidden");
       // Clear message after a delay
       setTimeout(() => {
-        console.log("setTimeout triggered");
         downloadStatusIndicator.textContent = "";
         downloadStatusIndicator.classList.add("success", "hidden");
         downloadStatusIndicator.classList.remove("error");
