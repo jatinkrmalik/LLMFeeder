@@ -1,6 +1,6 @@
 <!--
 
-Thanks for contributing! 🍄 Do not ignore this, plz.
+Thanks for contributing! 🍄 Do not ignore this, please.
 
 1. Does this PR close/fix an existing issue? Write something like: Closes #10
 
