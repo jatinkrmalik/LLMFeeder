@@ -99,10 +99,12 @@ const downloadStatusIndicator = document.getElementById(
 );
 
 // Get all settings elements
-const contentScopeRadios = document.querySelectorAll('input[name="contentScope"]');
-const preserveTablesCheckbox = document.getElementById('preserveTables');
-const includeImagesCheckbox = document.getElementById('includeImages');
-const includeTitleCheckbox = document.getElementById('includeTitle');
+const contentScopeRadios = document.querySelectorAll(
+  'input[name="contentScope"]'
+);
+const preserveTablesCheckbox = document.getElementById("preserveTables");
+const includeImagesCheckbox = document.getElementById("includeImages");
+const includeTitleCheckbox = document.getElementById("includeTitle");
 
 // Show proper keyboard shortcuts based on OS
 function updateShortcutDisplay() {
@@ -136,7 +138,7 @@ async function loadSettings() {
       contentScope: "mainContent",
       preserveTables: true,
       includeImages: true,
-      includeTitle: true
+      includeTitle: true,
     });
 
     // Apply settings to UI
@@ -162,12 +164,12 @@ async function saveSettings() {
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
-    
+
     await browserAPI.storage.sync.set({
       contentScope,
       preserveTables,
       includeImages,
-      includeTitle
+      includeTitle,
     });
 
     console.log("Settings saved");
@@ -199,7 +201,7 @@ async function convertToMarkdown() {
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
-    
+
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
       action: "convertToMarkdown",
@@ -207,8 +209,8 @@ async function convertToMarkdown() {
         contentScope,
         preserveTables,
         includeImages,
-        includeTitle
-      }
+        includeTitle,
+      },
     });
 
     if (!response.success) {
@@ -225,7 +227,9 @@ async function convertToMarkdown() {
     // Show preview
     previewContent.textContent = response.markdown;
     previewContainer.classList.remove("hidden");
-    downloadMarkdownFileContainer.classList.remove("hidden");
+    if (downloadMarkdownFileContainer) {
+      downloadMarkdownFileContainer.classList.remove("hidden");
+    }
 
     // Save settings
     saveSettings();
@@ -262,30 +266,67 @@ document.addEventListener("DOMContentLoaded", () => {
 
   preserveTablesCheckbox.addEventListener("change", saveSettings);
   includeImagesCheckbox.addEventListener("change", saveSettings);
-  includeTitleCheckbox.addEventListener('change', saveSettings);
-  
-  downloadMarkdownFileBtn.addEventListener("click", () => {
+  includeTitleCheckbox.addEventListener("change", saveSettings);
+
+  downloadMarkdownFileBtn.addEventListener("click", async () => {
     const markdownContent = previewContent.textContent;
-    downloadMarkdownFile("llmfeeder.md", markdownContent);
+
+    if (!markdownContent || markdownContent.trim() === "") {
+      downloadStatusIndicator.textContent = "Markdown content is empty.";
+      downloadStatusIndicator.classList.add("error");
+      downloadStatusIndicator.classList.remove("success", "hidden");
+      // Clear message after a delay
+      setTimeout(() => {
+        console.log("setTimeout triggered");
+        downloadStatusIndicator.textContent = "";
+        downloadStatusIndicator.classList.add("success", "hidden");
+        downloadStatusIndicator.classList.remove("error");
+      }, 2000);
+      return;
+    }
+
+    let baseFilename = "llmfeeder"; // Default filename
+    try {
+      const tabs = await browserAPI.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      if (tabs && tabs.length > 0 && tabs[0].title) {
+        let pageTitle = tabs[0].title.trim();
+        if (pageTitle) {
+          // Sanitize the title to be a valid filename
+          let sanitizedTitle = pageTitle
+            .replace(/[<>:"/\\|?*\x00-\x1F]/g, "") // Remove invalid characters
+            .replace(/[\s./]+/g, "_") // Replace spaces, dots, slashes with underscores
+            .replace(/_+/g, "_") // Consolidate multiple underscores
+            .replace(/^_+|_+$/g, ""); // Trim leading/trailing underscores
+
+          if (sanitizedTitle.length > 100) {
+            // Limit length
+            sanitizedTitle = sanitizedTitle
+              .substring(0, 20)
+              .replace(/_+$/g, "");
+          }
+          if (sanitizedTitle) baseFilename = sanitizedTitle;
+        }
+      }
+    } catch (error) {
+      console.error("Error getting tab title for filename:", error);
+      // Silently use default filename if error occurs, or show a non-critical error
+    }
+    downloadMarkdownFile(baseFilename, markdownContent);
   });
 });
 
 function downloadMarkdownFile(filename, content) {
   try {
-    if (!content || content.trim() === "") {
-      downloadStatusIndicator.textContent = "Markdown content is empty.";
-      downloadStatusIndicator.classList.add("error");
-      downloadStatusIndicator.classList.remove("hidden");
-      return;
-    }
-
     // Create a blob and download
     const blob = new Blob([content], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename.endsWith(".md") ? filename : `${filename}.md`;
+    a.download = `${filename}.md`;
     document.body.appendChild(a);
     a.click();
 
@@ -293,18 +334,26 @@ function downloadMarkdownFile(filename, content) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     downloadStatusIndicator.textContent = "Download complete!";
-    downloadStatusIndicator.className = "status success";
+    downloadStatusIndicator.classList.remove("hidden");
+    downloadStatusIndicator.classList.add("status", "success");
 
-    // change the text to Empty after 2 seconds.
+    // change the text to Empty after 5 seconds.
     setTimeout(() => {
       downloadStatusIndicator.textContent = "";
-      downloadStatusIndicator.className = "hidden";
-    }, 5000);
+      downloadStatusIndicator.classList.add("hidden");
+      downloadStatusIndicator.classList.remove("status", "success");
+    }, 2000);
   } catch (error) {
     console.error("Error downloading file:", error);
     downloadStatusIndicator.textContent = `Error: ${
       error.message || "Failed to download file"
     }`;
+    downloadStatusIndicator.classList.remove("hidden");
     downloadStatusIndicator.classList.add("error");
+    setTimeout(() => {
+      downloadStatusIndicator.textContent = "";
+      downloadStatusIndicator.classList.add("success", "hidden");
+      downloadStatusIndicator.classList.remove("error");
+    }, 2000);
   }
 }
