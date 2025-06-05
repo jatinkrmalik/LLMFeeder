@@ -1,0 +1,25 @@
+name: 🆕 Suggest an improvement or new feature
+description: Use this template to suggest new features or improvements to existing functionality.
+labels: enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        🏞️ You can provide screenshots/mockups to better visualize your idea. Files can be dropped in this field
+
+        ---
+        👋 Consider contributing by fixing some [easy bugs](https://github.com/jatinkrmalik/LLMFeeder/issues?q=sort%3Aupdated-desc%20is%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22%20OR%20label%3Amedium%20OR%20label%3Asmall).
+  - id: description
+    type: textarea
+    attributes:
+      label: Description
+    validations:
+      required: true
+  - id: urls
+    type: textarea
+    attributes:
+      label: Example URLs
+      description: Include a REAL URL where the feature should appear. e.g. Do you want a feature to appear on the main page of a repo? Paste a link to a repo
+      placeholder: https://github.com/jatinkrmalik/LLMFeeder
+    validations:
+      required: true
