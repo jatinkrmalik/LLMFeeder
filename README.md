@@ -202,10 +202,18 @@ LLMFeeder is designed to work on all modern browsers with complete feature parit
 
 ## Build Instructions
 
+### Prerequisites
+- `zip` installed (required for packaging)
+- `jq` installed (optional but recommended for JSON processing)
+- For Make approach: GNU Make (usually pre-installed on Linux/macOS)
+
+---
+
+### Using Scripts
+
 To build the extension packages for distribution:
 
-1. Make sure you have `zip` and `jq` installed (optional but recommended)
-2. Run the build script:
+1. Run the build script:
    ```bash
    ./scripts/build.sh
    ```
@@ -228,6 +236,35 @@ You can also build specific packages:
 
 # Specify version number
 ./scripts/build.sh --version 1.1.0 all
+```
+
+### Using Make
+
+To build the extension packages for distribution:
+
+- Common Targets
+```bash
+make all           # Build all (chrome, firefox, source)
+make chrome        # Build Chrome only
+make firefox       # Build Firefox only
+make source        # Build source zip only
+make full-build    # Full build via ./scripts/build.sh
+```
+
+- Versioned Builds
+```bash
+make versioned-chrome version=1.0.0
+make versioned-full version=1.0.0
+make versioned-firefox version=1.0.0
+make versioned-source version=1.0.0
+```
+
+> Note: ❗ These require a `version=x.y.z` flag or will throw an error.
+
+- Utilities
+```bash
+make clean         # Remove dist/ artifacts
+make help          # Show help message
 ```
 
 ## License
