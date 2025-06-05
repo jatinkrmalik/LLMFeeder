@@ -86,16 +86,23 @@ This architecture ensures that your content remains exclusively on your device t
    ```
    git clone git@github.com:jatinkrmalik/LLMFeeder.git
    ```
-   (If you've already cloned, ensure you are on the desired branch/commit.)
-2. Navigate to the cloned directory:
-   ```
+2. Build the extension:
+- Using the provided build script:
+   ```bash
    cd LLMFeeder
+   ./scripts/build.sh chrome
    ```
-3. Open Chrome and navigate to `chrome://extensions/`
-4. Enable "Developer mode" by toggling the switch in the top right
-5. Click "Load unpacked" and select the `extension` directory within the cloned repository.
-6. The LLMFeeder extension should now appear in your extensions list.
-7. Click the puzzle piece icon in Chrome toolbar and pin LLMFeeder for easy access.
+- Using Makefile (if you have `make` installed):
+   ```bash
+   cd LLMFeeder
+   make chrome
+   ```
+   This will create a Chrome-compatible package in the `dist/` directory.
+3. Unzip the generated `LLMFeeder-Chrome-*.zip` file in the `dist` directory to a directory of your choice
+4. Open Chrome and navigate to `chrome://extensions/`
+5. Enable "Developer mode" by toggling the switch in the top right
+6. Click "Load unpacked" and select the `extension` directory from the unzipped package
+7. The extension will appear in your Chrome extensions list
 
 #### For Firefox
 
@@ -103,20 +110,30 @@ This architecture ensures that your content remains exclusively on your device t
    ```
    git clone git@github.com:jatinkrmalik/LLMFeeder.git
    ```
+   
    (If you've already cloned, ensure you are on the desired branch/commit.)
+
 2. Navigate to the cloned directory:
    ```
    cd LLMFeeder
    ```
-3. Run the build script to prepare the Firefox-specific files:
+   
+3. Build the extension:
+
+- Using the provided build script:
    ```bash
    ./scripts/build.sh firefox
    ```
-   This will create a temporary build directory `.tmp-build/firefox` with the correct manifest and files.
-4. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
-5. Click "Load Temporary Add-on..."
-6. Select the `manifest.json` file located inside the `.tmp-build/firefox` directory (NOT the one in the `extension` directory).
-7. The LLMFeeder extension should now appear in your Firefox extensions list for the current session.
+- Using Makefile (if you have `make` installed):
+   ```bash
+   make firefox
+   ```
+   This will create a Firefox-compatible package in the `dist/` directory.
+4. Unzip the generated `LLMFeeder-Firefox-*.zip` file in the `dist` directory to a directory of your choice
+5. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
+6. Click "Load Temporary Add-on..."
+7. Select the `manifest.json` file inside the `extension` directory from the unzipped package
+8. The extension will appear in your Firefox extensions list
 
 ### Usage
 
