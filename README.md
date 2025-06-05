@@ -86,7 +86,6 @@ This architecture ensures that your content remains exclusively on your device t
    ```
    git clone git@github.com:jatinkrmalik/LLMFeeder.git
    ```
-
 2. Build the extension:
 - Using the provided build script:
    ```bash
@@ -111,24 +110,30 @@ This architecture ensures that your content remains exclusively on your device t
    ```
    git clone git@github.com:jatinkrmalik/LLMFeeder.git
    ```
-2. Build the extension:
+   
+   (If you've already cloned, ensure you are on the desired branch/commit.)
+
+2. Navigate to the cloned directory:
+   ```
+   cd LLMFeeder
+   ```
+   
+3. Build the extension:
 
 - Using the provided build script:
    ```bash
-   cd LLMFeeder
    ./scripts/build.sh firefox
    ```
 - Using Makefile (if you have `make` installed):
    ```bash
-   cd LLMFeeder
    make firefox
    ```
    This will create a Firefox-compatible package in the `dist/` directory.
-3. Unzip the generated `LLMFeeder-Firefox-*.zip` file in the `dist` directory to a directory of your choice
-4. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
-5. Click "Load Temporary Add-on..."
-6. Select the `manifest.json` file inside the `extension` directory from the unzipped package
-7. The extension will appear in your Firefox extensions list
+4. Unzip the generated `LLMFeeder-Firefox-*.zip` file in the `dist` directory to a directory of your choice
+5. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
+6. Click "Load Temporary Add-on..."
+7. Select the `manifest.json` file inside the `extension` directory from the unzipped package
+8. The extension will appear in your Firefox extensions list
 
 ### Usage
 
