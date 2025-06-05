@@ -1,17 +1,38 @@
 /* LLMFeeder Styles */
 /* Created by @jatinkrmalik (https://github.com/jatinkrmalik) */
-:root {
+:root{
   --primary-color: #4285f4;
   --primary-hover: #3367d6;
   --secondary-color: #34a853;
   --text-color: #202124;
   --background-color: #ffffff;
   --border-color: #dadce0;
-  --light-gray: #f1f3f4;
-  --dark-gray: #5f6368;
+  --gray-color: #5f6368;
   --success-color: #34a853;
   --error-color: #ea4335;
   --warning-color: #fbbc04;
+}
+
+@media (prefers-color-scheme: dark) {
+:root {
+  --primary-color: #4285f4;
+  --primary-hover: #3367d6;
+  --secondary-color: #34a853;
+  --text-color: #ffffff;
+  --background-color: #323232;
+  --border-color: #dcdcde;
+  --gray-color: #afbac0;
+  --success-color: #34a853;
+  --error-color: #ea4335;
+  --warning-color: #fbbc04;
+  }
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin: 0 0 8px 0;
 }
 
 body {
@@ -30,13 +51,7 @@ body {
 
 .header {
   margin-bottom: 20px;
-}
-
-h1 {
-  font-size: 24px;
-  font-weight: 600;
   color: var(--primary-color);
-  margin: 0 0 8px 0;
 }
 
 h2 {
@@ -44,16 +59,15 @@ h2 {
   font-weight: 600;
   margin: 16px 0 12px 0;
 }
-
 h3 {
   font-size: 15px;
   font-weight: 500;
   margin: 12px 0 8px 0;
-  color: var(--dark-gray);
+  color: var(--gray-color);
 }
 
 .tagline {
-  color: var(--dark-gray);
+  color: var(--gray-color);
   margin: 0 0 16px 0;
   font-size: 14px;
   line-height: 1.6;
@@ -67,7 +81,7 @@ h3 {
 
 .primary-btn {
   background-color: var(--primary-color);
-  color: white;
+  color: var(--text-color);
   border: none;
   border-radius: 8px;
   padding: 12px 20px;
@@ -106,7 +120,7 @@ h3 {
 .status {
   margin-top: 12px;
   font-size: 14px;
-  color: var(--dark-gray);
+  color: var(--text-color);
   text-align: center;
 }
 
@@ -161,13 +175,14 @@ h3 {
   text-align: center;
   border-radius: 50%;
   background-color: var(--error-color);
-  color: white;
+  color: var(--text-color);
   font-size: 12px;
 }
 
 .preview-container {
-  background-color: var(--light-gray);
+  background-color: var(--background-color);
   border-radius: 8px;
+  color: var(--text-color);
   padding: 16px;
   margin-bottom: 20px;
   animation: slideDown 0.3s ease-out;
@@ -181,13 +196,14 @@ h3 {
 
 .preview-content {
   font-family: 'Roboto Mono', monospace;
+  color: var(--text-color);
   font-size: 12px;
   max-height: 120px;
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-word;
   padding: 8px;
-  background-color: white;
+  background-color: var(--background-color);
   border-radius: 4px;
   border: 1px solid var(--border-color);
 }
@@ -198,8 +214,9 @@ h3 {
 
 .settings-toggle-btn {
   width: 100%;
-  background-color: var(--light-gray);
+  background-color: var(--background-color);
   border: 1px solid var(--border-color);
+  color: var(--text-color);
   border-radius: 6px;
   padding: 10px 16px;
   font-size: 14px;
@@ -212,7 +229,7 @@ h3 {
 }
 
 .settings-toggle-btn:hover {
-  background-color: #e8eaed;
+  background-color: var(--background-color);
 }
 
 .toggle-icon {
@@ -255,16 +272,19 @@ h3 {
 .setting-option span {
   margin-left: 8px;
   font-size: 14px;
+  color: var(--text-color);
 }
 
 input[type="radio"],
 input[type="checkbox"] {
   margin: 0;
   cursor: pointer;
+  background-color: var(--background-color);
 }
 
 .shortcut-info {
-  background-color: var(--light-gray);
+  background-color: var(--background-color);
+  color:var(--text-color);
   border-radius: 6px;
   padding: 12px;
   font-size: 13px;
@@ -277,7 +297,8 @@ input[type="checkbox"] {
 }
 
 .shortcut-row code {
-  background-color: white;
+  background-color: var(--gray-color);
+  color: var(--text-color);
   padding: 2px 5px;
   border-radius: 3px;
   font-family: 'Roboto Mono', monospace;
@@ -292,7 +313,7 @@ input[type="checkbox"] {
 }
 
 .shortcut-customize code {
-  background-color: #f5f5f5;
+  background-color: var(--background-color);
   padding: 1px 4px;
   border-radius: 3px;
   font-family: 'Roboto Mono', monospace;
@@ -306,7 +327,7 @@ input[type="checkbox"] {
 .footer {
   text-align: center;
   font-size: 12px;
-  color: var(--dark-gray);
+  color: var(--gray-color);
   margin-top: 16px;
   padding: 12px 0;
   border-top: 1px solid var(--border-color);
