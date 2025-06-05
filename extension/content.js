@@ -135,7 +135,7 @@
   function convertToMarkdown(settings) {
     // Clone the document to avoid modifying the original
     const docClone = document.cloneNode(true);
-    
+
     // Get content based on scope setting
     let content;
     switch (settings.contentScope) {
@@ -168,11 +168,19 @@
     const turndownService = configureTurndownService(settings);
     
     try {
-      const markdown = turndownService.turndown(content);
+      let markdown = turndownService.turndown(content);
       
       // Validate markdown output
       if (!markdown || markdown.trim() === '') {
         throw new Error('Conversion resulted in empty markdown');
+      }
+      
+      // Add page title as H1 if enabled and title is non-empty
+      if (settings.includeTitle) {
+        const pageTitle = document.title.trim();
+        if (pageTitle.length > 0) {
+          markdown = `# ${pageTitle}\n\n${markdown}`;
+        }
       }
       
       // Post-process the markdown
@@ -253,12 +261,6 @@
       const container = document.createElement('div');
       container.innerHTML = article.content;
       
-      // Add the title as an H1 if available
-      if (article.title) {
-        const titleElement = document.createElement('h1');
-        titleElement.textContent = article.title;
-        container.insertBefore(titleElement, container.firstChild);
-      }
       
       return container;
     } catch (error) {
@@ -276,22 +278,14 @@
   function fallbackContentExtraction(doc) {
     // Try to find the main content area
     const container = document.createElement('div');
-    
-    // Add the title
-    const titleElement = document.createElement('h1');
-    titleElement.textContent = doc.title || 'Extracted Content';
-    container.appendChild(titleElement);
-    
     // Look for common content containers
     const mainContent = doc.querySelector('main') || 
                         doc.querySelector('article') || 
                         doc.querySelector('.content') || 
                         doc.querySelector('#content') ||
                         doc.body;
-    
     // Clone the content to avoid modifying the original
     container.appendChild(mainContent.cloneNode(true));
-    
     return container;
   }
   
