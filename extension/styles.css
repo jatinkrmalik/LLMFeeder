@@ -302,6 +302,14 @@ input[type="checkbox"] {
   display: none;
 }
 
+.download-markdown-file-container {
+  margin-bottom: 20px;
+}
+
+#downloadMarkdownFileBtn{
+  width: 100%;
+}
+
 /* Footer */
 .footer {
   text-align: center;
