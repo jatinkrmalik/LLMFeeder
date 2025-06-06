@@ -14,7 +14,7 @@
 
 </div>
 
-A browser extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs). Available for both Chrome and Firefox.
+A browser extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs). Available for both [Chrome](https://chromewebstore.google.com/detail/llmfeeder-webpage-to-mark/cjjfhhapabcpcokkfldbiiojiphbifdk) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/).
 
 ## Demo
 
