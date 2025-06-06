@@ -23,14 +23,14 @@ body:
   - id: description
     type: textarea
     attributes:
-      label: Description
+      label: Summary
     validations:
       required: true
   - id: repro
     type: textarea
     attributes:
-      label: How to replicate the issue + URL
-      description: Please include a valid URL where the bug can be observed. This is required for us to investigate the issue effectively.
+      label: Steps to reproduce the issue?
+      description: Please include detailed steps to reproduce the bug. It would be great if you can attach a screen recording or screenshots.
     validations:
       required: true
   - id: version
@@ -38,10 +38,11 @@ body:
     attributes:
       label: Extension version
     validations:
-      required: true
+      required: false
   - id: browser
     type: input
     attributes:
       label: Browser(s) used
+      description: Chrome / Firefox / Other
     validations:
       required: true
