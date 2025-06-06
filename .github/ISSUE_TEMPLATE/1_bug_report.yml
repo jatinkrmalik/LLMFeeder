@@ -9,16 +9,18 @@ body:
 
         Help us replicate the issue by filling in this form.
 
-        Please ensure:
 
-        - The bug is caused by LLMFeeder. It doesn't happen if I disable the extension.
-        - You have cleared your browser cache and tried again.
-        - You have tested in incognito/private mode.
+        ## Please ensure:
 
-        Include in this issue:
+        ✅ The bug is caused by LLMFeeder. It doesn't happen if I disable the extension.
+        ✅ You have cleared your browser cache and tried again.
+        ✅ You have tested in incognito/private mode.
 
-        - Screenshots/video/gif demonstrating the bug, if it's visual
-        - Console errors, if any
+        
+        ## Please try to include:
+
+        - Screenshots/video/gif demonstrating the bug, if it's visual bug.
+        - Console errors, if any (just paste them here in a `codeblock`).
 
   - id: description
     type: textarea
