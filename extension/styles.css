@@ -30,6 +30,27 @@ body {
 
 .header {
   margin-bottom: 20px;
+  position: relative;
+}
+.active{
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  width: fit-content;
+  height: fit-content;
+  padding: 3px 3px 3px 3px;
+  cursor: pointer;
+}
+#lightTheme{
+  display: none;
+  width: 25px;
+  height: 25px;
+}
+
+#darkTheme{
+  display: flex;
+  width: 25px;
+  height: 25px;
 }
 
 h1 {
