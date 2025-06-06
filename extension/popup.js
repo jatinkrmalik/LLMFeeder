@@ -1,6 +1,9 @@
 // LLMFeeder Popup Script
 // Created by @jatinkrmalik (https://github.com/jatinkrmalik)
 
+const MAX_FILENAME_LENGTH = 100;
+const DOWNLOAD_STATUS_INDICATOR_DURATION = 4000;
+
 // Create a proper browserAPI wrapper for the popup
 const browserAPI = (function () {
   // Check if we're in Firefox (browser is defined) or Chrome (chrome is defined)
@@ -270,50 +273,48 @@ document.addEventListener("DOMContentLoaded", () => {
     const markdownContent = previewContent.textContent;
 
     if (!markdownContent || markdownContent.trim() === "") {
-      downloadStatusIndicator.textContent = "Markdown content is empty.";
-      downloadStatusIndicator.classList.add("error");
-      downloadStatusIndicator.classList.remove("success", "hidden");
-      // Clear message after a delay
-      setTimeout(() => {
-        downloadStatusIndicator.textContent = "";
-        downloadStatusIndicator.classList.add("success", "hidden");
-        downloadStatusIndicator.classList.remove("error");
-      }, 2000);
+      updateDownloadStatus("Markdown content is empty.", "error");
       return;
     }
 
-    let baseFilename = "llmfeeder"; // Default filename
-    try {
-      const tabs = await browserAPI.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-      if (tabs && tabs.length > 0 && tabs[0].title) {
-        let pageTitle = tabs[0].title.trim();
-        if (pageTitle) {
-          // Sanitize the title to be a valid filename
-          let sanitizedTitle = pageTitle
-            .replace(/[<>:"/\\|?*\x00-\x1F]/g, "") // Remove invalid characters
-            .replace(/[\s./]+/g, "_") // Replace spaces, dots, slashes with underscores
-            .replace(/_+/g, "_") // Consolidate multiple underscores
-            .replace(/^_+|_+$/g, ""); // Trim leading/trailing underscores
-
-          if (sanitizedTitle.length > 100) {
-            // Limit length
-            sanitizedTitle = sanitizedTitle
-              .substring(0, 20)
-              .replace(/_+$/g, "");
-          }
-          if (sanitizedTitle) baseFilename = sanitizedTitle;
-        }
-      }
-    } catch (error) {
-      console.error("Error getting tab title for filename:", error);
-      // Silently use default filename if error occurs, or show a non-critical error
-    }
-    downloadMarkdownFile(baseFilename, markdownContent);
+    const filename = await generateFileNameFromPageTitle();
+    downloadMarkdownFile(filename, markdownContent);
   });
 });
+
+async function generateFileNameFromPageTitle() {
+  let baseFilename = "llmfeeder"; // Default filename
+  try {
+    const tabs = await browserAPI.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (tabs && tabs.length > 0 && tabs[0].title) {
+      let pageTitle = tabs[0].title.trim();
+      if (pageTitle) {
+        // Sanitize the title to be a valid filename
+        let sanitizedTitle = pageTitle
+          .replace(/[<>:"/\\|?*\x00-\x1F]/g, "") // Remove invalid characters
+          .replace(/[\s./]+/g, "_") // Replace spaces, dots, slashes with underscores
+          .replace(/_+/g, "_") // Consolidate multiple underscores
+          .replace(/^_+|_+$/g, ""); // Trim leading/trailing underscores
+
+        if (sanitizedTitle.length > MAX_FILENAME_LENGTH) {
+          // Limit length
+          sanitizedTitle = sanitizedTitle
+            .substring(0, MAX_FILENAME_LENGTH)
+            .replace(/_+$/g, "");
+        }
+        if (sanitizedTitle) baseFilename = sanitizedTitle;
+      }
+    }
+  } catch (error) {
+    console.error("Error getting tab title for filename:", error);
+    // Silently use default filename if error occurs, or show a non-critical error
+  } finally {
+    return baseFilename;
+  }
+}
 
 function downloadMarkdownFile(filename, content) {
   try {
@@ -327,30 +328,31 @@ function downloadMarkdownFile(filename, content) {
     document.body.appendChild(a);
     a.click();
 
-    // Clean up
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    downloadStatusIndicator.textContent = "Download complete!";
-    downloadStatusIndicator.classList.remove("hidden");
-    downloadStatusIndicator.classList.add("status", "success");
-
-    // change the text to Empty after 5 seconds.
-    setTimeout(() => {
-      downloadStatusIndicator.textContent = "";
-      downloadStatusIndicator.classList.add("hidden");
-      downloadStatusIndicator.classList.remove("status", "success");
-    }, 2000);
+    updateDownloadStatus('Download complete!', "success");
   } catch (error) {
     console.error("Error downloading file:", error);
-    downloadStatusIndicator.textContent = `Error: ${
-      error.message || "Failed to download file"
-    }`;
-    downloadStatusIndicator.classList.remove("hidden");
-    downloadStatusIndicator.classList.add("error");
-    setTimeout(() => {
-      downloadStatusIndicator.textContent = "";
-      downloadStatusIndicator.classList.add("success", "hidden");
-      downloadStatusIndicator.classList.remove("error");
-    }, 2000);
+
+    updateDownloadStatus(`Error: ${error.message || "Failed to download file"}`, "error");
+  } finally {
+    // Clean up, ensuring 'a' and 'url' are defined if an error occurred before their assignment
+    if (a && a.parentElement) {
+      document.body.removeChild(a);
+    }
+    if (url) {
+      URL.revokeObjectURL(url);
+    }
   }
+}
+
+// Helper function to update and reset the download status indicator
+function updateDownloadStatus(message, type = "success") {
+  downloadStatusIndicator.textContent = message;
+  downloadStatusIndicator.className = `status ${type}`; // Reset classes and add new ones
+  downloadStatusIndicator.classList.remove("hidden");
+
+  setTimeout(() => {
+    downloadStatusIndicator.textContent = "";
+    downloadStatusIndicator.classList.add("hidden");
+    downloadStatusIndicator.classList.remove("status", type);
+  }, DOWNLOAD_STATUS_INDICATOR_DURATION);
 }
