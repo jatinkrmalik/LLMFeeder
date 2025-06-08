@@ -101,113 +101,22 @@ const downloadStatusIndicator = document.getElementById(
   "downloadStatusIndicator"
 );
 
-
 // DOM elements (theme)
-const lightTheme = document.getElementById("lightTheme");
-const darkTheme = document.getElementById("darkTheme");
-const container = document.querySelector(".container");
-const tagLine = document.querySelector(".tagline");
-const tags = document.querySelectorAll("h3");
-const shortcutInfo = document.querySelector(".shortcut-info");
-const codeTags = document.querySelectorAll("code");
-const smallTag = document.querySelector("small");
-const footer = document.querySelector(".footer");
+const lightIcon = document.querySelector(".light-icon");
+const darkIcon = document.querySelector(".dark-icon");
 const bodyTag = document.querySelector("body");
-const githubLink = document.querySelector(".github-link a");
-
-// theme toggle
-lightTheme.addEventListener("click", () => {
-  lightTheme.style.display = "none";
-  darkTheme.style.display = "flex";
-  container.style.backgroundColor = "white";
-  container.style.color = "black";
-  tagLine.style.color = "var(--dark-gray)";
-  settingsToggleBtn.style.backgroundColor = "#313131";
-  tags.forEach((tag) => (tag.style.color = "var(--dark-gray)"));
-  settingsToggleBtn.style.backgroundColor = "#f1f3f4";
-  settingsToggleBtn.style.color = "black";
-  shortcutInfo.style.backgroundColor = "#f1f3f4";
-  shortcutInfo.style.color = "black";
-  shortcutInfo.style.borderColor = "#f1f3f4";
-  shortcutInfo.style.borderStyle = "solid";
-  shortcutInfo.style.borderWidth = "1px";
-  codeTags.forEach((tag) => {
-    tag.style.backgroundColor = "#f1f3f4";
-    tag.style.color = "black";
-  });
-  smallTag.style.color = "#5f6368";
-  previewContainer.style.backgroundColor = "#f1f3f4";
-  previewContainer.style.color = "black";
-  previewContainer.style.borderWidth = "1px";
-  previewContainer.style.borderStyle = "soild";
-  previewContent.style.color = "black";
-  previewContent.style.backgroundColor = "white";
-  previewContent.style.borderColor = "#f1f3f4";
-  previewContent.style.borderWidth = "1px";
-  previewContent.style.borderStyle = "solid";
-  footer.style.backgroundColor = "white";
-  footer.style.color = "#5f6368";
-  bodyTag.style.backgroundColor = "white";
-  githubLink.style.backgroundColor = "#f1f3f4";
-  githubLink.style.color = "#5f6368";
-  githubLink.style.borderColor = "#f1f3f4";
-  githubLink.style.borderStyle = "solid";
-  githubLink.style.borderWidth = "1px";
-  githubLink.addEventListener("mouseenter", () => {
-    githubLink.style.color = "#4285f4";
-  });
-  githubLink.addEventListener("mouseleave", () => {
-    githubLink.style.color = "#5f6368";
-  });
+darkIcon.addEventListener("click", () => {
+  bodyTag.classList.remove("light-theme");
+  bodyTag.classList.add("dark-theme");
+  darkIcon.classList.add("hidden");
+  lightIcon.classList.remove("hidden");
 });
-
-darkTheme.addEventListener("click", () => {
-  darkTheme.style.display = "none";
-  lightTheme.style.display = "flex";
-  container.style.backgroundColor = "#313131";
-  container.style.color = "white";
-  tagLine.style.color = "white";
-  tags.forEach((tag) => (tag.style.color = "white"));
-  settingsToggleBtn.style.backgroundColor = "#313131";
-  settingsToggleBtn.style.color = "white";
-  shortcutInfo.style.backgroundColor = "#313131";
-  shortcutInfo.style.color = "white";
-  shortcutInfo.style.borderColor = "#f1f3f4";
-  shortcutInfo.style.borderStyle = "solid";
-  shortcutInfo.style.borderWidth = "1px";
-  codeTags.forEach((tag) => {
-    tag.style.backgroundColor = "#313131";
-    tag.style.color = "white";
-  });
-  smallTag.style.color = "white";
-  previewContainer.style.backgroundColor = "#313131";
-  previewContainer.style.color = "white";
-  previewContainer.style.borderColor = "#f1f3f4";
-  previewContainer.style.borderStyle = "solid";
-  previewContainer.style.borderWidth = "1px";
-  previewContent.style.color = "white";
-  previewContent.style.backgroundColor = "#313131";
-  previewContent.style.borderColor = "#f1f3f4";
-  previewContent.style.borderStyle = "solid";
-  previewContent.style.borderWidth = "1px";
-  footer.style.backgroundColor = "#313131";
-  footer.style.color = "white";
-  bodyTag.style.backgroundColor = "#313131";
-  githubLink.style.backgroundColor = "#313131";
-  githubLink.style.color = "white";
-  githubLink.style.borderColor = "#f1f3f4";
-  githubLink.style.borderStyle = "solid";
-  githubLink.style.borderWidth = "1px";
-  githubLink.addEventListener("mouseenter", () => {
-    githubLink.style.color = "#4285f4";
-  });
-  githubLink.addEventListener("mouseleave", () => {
-    githubLink.style.color = "white";
-  });
+lightIcon.addEventListener("click", () => {
+  bodyTag.classList.remove("dark-theme");
+  bodyTag.classList.add("light-theme");
+  lightIcon.classList.add("hidden");
+  darkIcon.classList.remove("hidden");
 });
-
-
-
 
 // Get all settings elements
 const contentScopeRadios = document.querySelectorAll(
@@ -436,11 +345,14 @@ function downloadMarkdownFile(filename, content) {
     document.body.appendChild(a);
     a.click();
 
-    updateDownloadStatus('Download complete!', "success");
+    updateDownloadStatus("Download complete!", "success");
   } catch (error) {
     console.error("Error downloading file:", error);
 
-    updateDownloadStatus(`Error: ${error.message || "Failed to download file"}`, "error");
+    updateDownloadStatus(
+      `Error: ${error.message || "Failed to download file"}`,
+      "error"
+    );
   } finally {
     // Clean up, ensuring 'a' and 'url' are defined if an error occurred before their assignment
     if (a && a.parentElement) {

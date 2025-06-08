@@ -12,6 +12,30 @@
   --success-color: #34a853;
   --error-color: #ea4335;
   --warning-color: #fbbc04;
+  --setting-hover: #e8eaed;
+  --github-link-hover: #e8eaed;
+  --github-link-border: rgb(229, 227, 227);
+}
+
+.light-theme {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --light-gray: #f1f3f4;
+  --dark-gray: #5f6368;
+  --setting-hover: #e8eaed;
+  --github-link-hover: #e8eaed;
+  --github-link-border: rgb(229, 227, 227);
+}
+
+.dark-theme {
+  --background-color: #313131;
+  --text-color: #f1f1f1;
+  --light-gray: #313131;
+  --dark-gray: #f1f1f1;
+  --setting-hover: #8c8989;
+  --github-link-border: #f1f1f1;
+  --github-link-hover: rgb(70, 68, 68);
+  --preview-containter-border: #ffffff;
 }
 
 body {
@@ -21,6 +45,7 @@ body {
   color: var(--text-color);
   background-color: var(--background-color);
   line-height: 1.5;
+  transition: all 0.3s ease;
 }
 
 .container {
@@ -32,25 +57,23 @@ body {
   margin-bottom: 20px;
   position: relative;
 }
-.active{
+.theme-container{
   position: absolute;
-  top: 4px;
   right: 2px;
-  width: fit-content;
-  height: fit-content;
-  padding: 3px 3px 3px 3px;
+  top:2px;
   cursor: pointer;
 }
-#lightTheme{
-  display: none;
-  width: 25px;
-  height: 25px;
+.dark-icon{
+  width: 35px;
+  height: 35px;
 }
 
-#darkTheme{
-  display: flex;
-  width: 25px;
-  height: 25px;
+.light-icon{
+  width: 35px;
+  height: 35px;
+}
+.hidden{
+  display: none;
 }
 
 h1 {
@@ -188,9 +211,11 @@ h3 {
 
 .preview-container {
   background-color: var(--light-gray);
+  color: var(--text-color);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 20px;
+  border:1px solid var(--border-color);
   animation: slideDown 0.3s ease-out;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -208,9 +233,10 @@ h3 {
   white-space: pre-wrap;
   word-break: break-word;
   padding: 8px;
-  background-color: white;
   border-radius: 4px;
   border: 1px solid var(--border-color);
+  color:var(--text-color);
+  background-color: var(--background-color)
 }
 
 .settings-section {
@@ -230,10 +256,11 @@ h3 {
   align-items: center;
   justify-content: space-between;
   transition: background-color 0.2s;
+  color: var(--text-color);
 }
 
 .settings-toggle-btn:hover {
-  background-color: #e8eaed;
+  background-color: var(--setting-hover);
 }
 
 .toggle-icon {
@@ -298,7 +325,7 @@ input[type="checkbox"] {
 }
 
 .shortcut-row code {
-  background-color: white;
+  background-color: var(--background-color);
   padding: 2px 5px;
   border-radius: 3px;
   font-family: 'Roboto Mono', monospace;
@@ -313,7 +340,7 @@ input[type="checkbox"] {
 }
 
 .shortcut-customize code {
-  background-color: #f5f5f5;
+  background-color: var(--background-color);
   padding: 1px 4px;
   border-radius: 3px;
   font-family: 'Roboto Mono', monospace;
@@ -364,11 +391,12 @@ input[type="checkbox"] {
   background-color: var(--light-gray);
   padding: 3px 8px;
   border-radius: 12px;
+  border:1px solid var(--github-link-border);
   transition: all 0.2s ease;
 }
 
 .github-link a:hover {
-  background-color: #e8eaed;
+  background-color: var(--github-link-hover);
   color: var(--primary-color);
   text-decoration: none;
 } 

@@ -11,28 +11,12 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
     />
   </head>
-  <body>
+  <body class="light-theme">
     <div class="container">
       <header class="header">
         <h1>LLMFeeder</h1>
-        <div class="active">
-          <div id="lightTheme">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="size-6"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
-              />
-            </svg>
-          </div>
-          <div id="darkTheme">
+        <div class="theme-container">
+          <div class="dark-icon">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -48,13 +32,28 @@
               />
             </svg>
           </div>
+          <div class="light-icon hidden">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-6"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+              />
+            </svg>
+          </div>
         </div>
         <p class="tagline">
           Convert web pages to clean Markdown and copy to clipboard so you can
           feed it to your favorite LLM model as context.
         </p>
       </header>
-
       <div class="main-controls">
         <button id="convertBtn" class="primary-btn">
           <span class="btn-text">Convert & Copy</span>
@@ -78,7 +77,6 @@
 
         <div id="downloadStatusIndicator" class="status"></div>
       </div>
-
       <div class="settings-section">
         <button id="settingsToggleBtn" class="settings-toggle-btn">
           <span class="btn-text">Settings</span>
@@ -145,7 +143,6 @@
         </div>
       </div>
     </div>
-
     <div class="footer">
       <div>
         Made with ❤️ by
