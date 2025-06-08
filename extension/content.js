@@ -88,6 +88,13 @@
       }
       return true; // Indicates we will send a response asynchronously
     }
+    
+    // Show notification handler
+    if (request.action === 'showNotification') {
+      showNotification(request.title, request.message);
+      sendResponse({ success: true });
+      return true;
+    }
   });
   
   /**
@@ -457,5 +464,56 @@
         }
       });
     };
+  }
+
+  /**
+   * Show notification in the current tab
+   * @param {string} title - Notification title
+   * @param {string} message - Notification message
+   */
+  function showNotification(title, message) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.backgroundColor = '#fff';
+    notification.style.border = '1px solid #ccc';
+    notification.style.borderRadius = '4px';
+    notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+    notification.style.padding = '10px 15px';
+    notification.style.zIndex = '9999';
+    notification.style.maxWidth = '300px';
+    notification.style.fontFamily = 'Roboto, Arial, sans-serif';
+    
+    // Add title
+    const titleElement = document.createElement('h3');
+    titleElement.textContent = title;
+    titleElement.style.margin = '0 0 5px 0';
+    titleElement.style.fontSize = '16px';
+    notification.appendChild(titleElement);
+    
+    // Add message
+    const messageElement = document.createElement('p');
+    messageElement.textContent = message;
+    messageElement.style.margin = '0';
+    messageElement.style.fontSize = '14px';
+    notification.appendChild(messageElement);
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Set transition property for smooth fade-out
+    notification.style.transition = 'opacity 0.5s';
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 500);
+    }, 3000);
   }
 })(); 

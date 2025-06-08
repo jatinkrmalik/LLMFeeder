@@ -89,7 +89,7 @@ async function ensureContentScriptLoaded(tabId) {
     // Try sending a ping message to check if content script is loaded
     await browserAPI.tabs.sendMessage(tabId, { action: "ping" }).catch(() => {
       // If error, inject the content script
-      return chrome.scripting.executeScript({
+      return browserAPI.scripting.executeScript({
         target: { tabId: tabId },
         files: ["libs/readability.js", "libs/turndown.js", "content.js"]
       });
@@ -108,48 +108,12 @@ async function showNotificationInTab(title, message) {
     if (!tabs || !tabs.length) return;
     
     const tab = tabs[0];
-    await browserAPI.scripting.executeScript({
-      target: { tabId: tab.id },
-      function: (title, message) => {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.style.position = 'fixed';
-        notification.style.top = '20px';
-        notification.style.right = '20px';
-        notification.style.backgroundColor = '#fff';
-        notification.style.border = '1px solid #ccc';
-        notification.style.borderRadius = '4px';
-        notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-        notification.style.padding = '10px 15px';
-        notification.style.zIndex = '9999';
-        notification.style.maxWidth = '300px';
-        notification.style.fontFamily = 'Roboto, Arial, sans-serif';
-        
-        // Add title
-        const titleElement = document.createElement('h3');
-        titleElement.textContent = title;
-        titleElement.style.margin = '0 0 5px 0';
-        titleElement.style.fontSize = '16px';
-        notification.appendChild(titleElement);
-        
-        // Add message
-        const messageElement = document.createElement('p');
-        messageElement.textContent = message;
-        messageElement.style.margin = '0';
-        messageElement.style.fontSize = '14px';
-        notification.appendChild(messageElement);
-        
-        // Add to page
-        document.body.appendChild(notification);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-          notification.style.opacity = '0';
-          notification.style.transition = 'opacity 0.5s';
-          setTimeout(() => notification.remove(), 500);
-        }, 3000);
-      },
-      args: [title, message]
+    
+    // Send message to content script to show notification
+    await browserAPI.tabs.sendMessage(tab.id, {
+      action: 'showNotification',
+      title: title,
+      message: message
     });
   } catch (error) {
     console.error('Failed to show notification:', error);
