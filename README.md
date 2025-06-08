@@ -309,3 +309,9 @@ MIT
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Our Wonderful Contributors 💪 
+
+Thanks a lot for spending your time helping LLMFeeder grow.🍻
+
+[![Contributors](https://contrib.rocks/image?repo=jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/graphs/contributors)
