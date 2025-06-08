@@ -58,19 +58,32 @@ body {
   position: relative;
 }
 .theme-container{
+  all:unset;
+  width: 40px;
+  height: 40px;
   position: absolute;
   right: 2px;
   top:2px;
+}
+.toggle-dark{
+  all:unset;
+  width: 35px;
+  height: 35px;
+  position: absolute;
+  right:4px;
+  top: 4px;
   cursor: pointer;
 }
-.dark-icon{
-  width: 35px;
-  height: 35px;
-}
 
-.light-icon{
+.toggle-light{
+  all:unset;
   width: 35px;
   height: 35px;
+  position: absolute;
+  right:4px;
+  top: 4px;
+  cursor: pointer;
+
 }
 .hidden{
   display: none;

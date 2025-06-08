@@ -102,20 +102,37 @@ const downloadStatusIndicator = document.getElementById(
 );
 
 // DOM elements (theme)
-const lightIcon = document.querySelector(".light-icon");
-const darkIcon = document.querySelector(".dark-icon");
+const toogleLight = document.querySelector(".toggle-light");
+const toggleDark = document.querySelector(".toggle-dark");
 const bodyTag = document.querySelector("body");
-darkIcon.addEventListener("click", () => {
+
+toggleDark.addEventListener("click", () => {
   bodyTag.classList.remove("light-theme");
   bodyTag.classList.add("dark-theme");
-  darkIcon.classList.add("hidden");
-  lightIcon.classList.remove("hidden");
+  toggleDark.classList.add("hidden");
+  toogleLight.classList.remove("hidden");
+  localStorage.setItem("llmfeeder-theme", "dark");
 });
-lightIcon.addEventListener("click", () => {
+toogleLight.addEventListener("click", () => {
   bodyTag.classList.remove("dark-theme");
   bodyTag.classList.add("light-theme");
-  lightIcon.classList.add("hidden");
-  darkIcon.classList.remove("hidden");
+  toogleLight.classList.add("hidden");
+  toggleDark.classList.remove("hidden");
+  localStorage.setItem("llmfeeder-theme", "light");
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  if (localStorage.getItem("llmfeeder-theme")) {
+    if (localStorage.getItem("llmfeeder-theme") == "dark") {
+      bodyTag.classList.add("dark-theme");
+      toggleDark.classList.add("hidden");
+      toogleLight.classList.remove("hidden");
+    } else {
+      bodyTag.classList.add("light-theme");
+      toogleLight.classList.add("hidden");
+      toggleDark.classList.remove("hidden");
+    }
+  }
 });
 
 // Get all settings elements
