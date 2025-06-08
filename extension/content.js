@@ -503,10 +503,12 @@
     // Add to page
     document.body.appendChild(notification);
     
+    // Set transition property for smooth fade-out
+    notification.style.transition = 'opacity 0.5s';
+    
     // Remove after 3 seconds
     setTimeout(() => {
       notification.style.opacity = '0';
-      notification.style.transition = 'opacity 0.5s';
       setTimeout(() => {
         if (notification.parentNode) {
           notification.parentNode.removeChild(notification);
