@@ -111,7 +111,7 @@ var TurndownService = (function () {
         return raw.charAt(0).toUpperCase() + raw.slice(1);
       }
     } catch (e) {
-      console.error(e);
+      console.warn('Failed to parse image URL for alt text inference:', img.src, e);
     }
 
     // 4) Fallback
