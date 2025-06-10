@@ -102,37 +102,33 @@ const downloadStatusIndicator = document.getElementById(
 );
 
 // DOM elements (theme)
-const toogleLight = document.querySelector(".toggle-light");
+const toggleLight = document.querySelector(".toggle-light");
 const toggleDark = document.querySelector(".toggle-dark");
 const bodyTag = document.querySelector("body");
 
+const THEME_KEY = "llmfeeder-theme";
+const THEMES = { DARK: "dark", LIGHT: "light" };
+
+function setTheme(theme) {
+  const isDark = theme === THEMES.DARK;
+  bodyTag.classList.toggle("dark-theme", isDark);
+  bodyTag.classList.toggle("light-theme", !isDark);
+  toggleDark.classList.toggle("hidden", isDark);
+  toggleLight.classList.toggle("hidden", !isDark);
+  localStorage.setItem(THEME_KEY, theme);
+}
+
 toggleDark.addEventListener("click", () => {
-  bodyTag.classList.remove("light-theme");
-  bodyTag.classList.add("dark-theme");
-  toggleDark.classList.add("hidden");
-  toogleLight.classList.remove("hidden");
-  localStorage.setItem("llmfeeder-theme", "dark");
+  setTheme("dark");
 });
-toogleLight.addEventListener("click", () => {
-  bodyTag.classList.remove("dark-theme");
-  bodyTag.classList.add("light-theme");
-  toogleLight.classList.add("hidden");
-  toggleDark.classList.remove("hidden");
-  localStorage.setItem("llmfeeder-theme", "light");
+toggleLight.addEventListener("click", () => {
+  setTheme("light");
 });
 
+let userThemePreference = localStorage.getItem("llmfeeder-theme");
 window.addEventListener("DOMContentLoaded", () => {
-  if (localStorage.getItem("llmfeeder-theme")) {
-    if (localStorage.getItem("llmfeeder-theme") == "dark") {
-      bodyTag.classList.add("dark-theme");
-      toggleDark.classList.add("hidden");
-      toogleLight.classList.remove("hidden");
-    } else {
-      bodyTag.classList.add("light-theme");
-      toogleLight.classList.add("hidden");
-      toggleDark.classList.remove("hidden");
-    }
-  }
+  if (userThemePreference === "dark" || userThemePreference === "light")
+    setTheme(userThemePreference);
 });
 
 // Get all settings elements
