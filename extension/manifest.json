@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "LLMFeeder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Convert web pages to clean Markdown and copy to clipboard for LLM consumption",
-  "author": "Jatin Malik (jatinkrmalik)",
+  "author": "@jatinkrmalik",
   "browser_specific_settings": {
     "gecko": {
       "id": "llmfeeder@j47.in",
