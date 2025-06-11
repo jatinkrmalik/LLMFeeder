@@ -101,6 +101,36 @@ const downloadStatusIndicator = document.getElementById(
   "downloadStatusIndicator"
 );
 
+// DOM elements (theme)
+const toggleLight = document.querySelector(".toggle-light");
+const toggleDark = document.querySelector(".toggle-dark");
+const bodyTag = document.querySelector("body");
+
+const THEME_KEY = "llmfeeder-theme";
+const THEMES = { DARK: "dark", LIGHT: "light" };
+
+function setTheme(theme) {
+  const isDark = theme === THEMES.DARK;
+  bodyTag.classList.toggle("dark-theme", isDark);
+  bodyTag.classList.toggle("light-theme", !isDark);
+  toggleDark.classList.toggle("hidden", isDark);
+  toggleLight.classList.toggle("hidden", !isDark);
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+toggleDark.addEventListener("click", () => {
+  setTheme("dark");
+});
+toggleLight.addEventListener("click", () => {
+  setTheme("light");
+});
+
+let userThemePreference = localStorage.getItem("llmfeeder-theme");
+window.addEventListener("DOMContentLoaded", () => {
+  if (userThemePreference === "dark" || userThemePreference === "light")
+    setTheme(userThemePreference);
+});
+
 // Get all settings elements
 const contentScopeRadios = document.querySelectorAll(
   'input[name="contentScope"]'
@@ -328,11 +358,14 @@ function downloadMarkdownFile(filename, content) {
     document.body.appendChild(a);
     a.click();
 
-    updateDownloadStatus('Download complete!', "success");
+    updateDownloadStatus("Download complete!", "success");
   } catch (error) {
     console.error("Error downloading file:", error);
 
-    updateDownloadStatus(`Error: ${error.message || "Failed to download file"}`, "error");
+    updateDownloadStatus(
+      `Error: ${error.message || "Failed to download file"}`,
+      "error"
+    );
   } finally {
     // Clean up, ensuring 'a' and 'url' are defined if an error occurred before their assignment
     if (a && a.parentElement) {
