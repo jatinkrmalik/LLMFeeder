@@ -16,6 +16,14 @@
 
 A browser extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs). Available for both [Chrome](https://chromewebstore.google.com/detail/llmfeeder-webpage-to-mark/cjjfhhapabcpcokkfldbiiojiphbifdk) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/).
 
+## ✨ What's New in v1.0.2
+
+- 🖼️ **Enhanced Image Processing** - Smart alt text generation with intelligent fallbacks
+- 📥 **Download as File** - Save converted Markdown directly as .md files  
+- 📄 **Page Title Integration** - Option to include webpage titles in output
+- 🔔 **Cross-Browser Notifications** - Improved feedback across all browsers
+- 🏗️ **Build System Enhancement** - Added Makefile for easier development
+
 ## Demo
 
 <div align="center">
@@ -42,12 +50,15 @@ This architecture ensures that your content remains exclusively on your device t
 ## Features
 
 - **Smart Content Extraction**: Uses Readability algorithm to focus on main content
+- **Enhanced Image Processing**: Smart alt text generation with intelligent fallbacks for better image descriptions
 - **One-Click Simplicity**: Single action to process and copy content
+- **Download as File**: Save converted Markdown directly as .md files to your device
+- **Page Title Integration**: Option to include webpage titles in your Markdown output
 - **LLM-Optimized Output**: Clean, structured Markdown perfect for AI consumption
-- **Visual Feedback**: Clear indication of successful copying
+- **Cross-Browser Notifications**: Clear visual feedback for successful operations across all browsers
 - **Customizable**: Configure content scope and formatting options
-- **Keyboard Shortcuts**: Convert content without opening the popup
-- **Multi-Browser Support**: Works on both Chrome and Firefox
+- **Keyboard Shortcuts**: Convert content without opening the popup (Alt+Shift+M)
+- **Multi-Browser Support**: Works seamlessly on both Chrome and Firefox
 
 ## Installation
 
@@ -139,9 +150,11 @@ This architecture ensures that your content remains exclusively on your device t
 
 1. Navigate to any web page you want to convert to Markdown
 2. Click the LLMFeeder icon in your browser toolbar
-3. Click the "Convert & Copy" button
-4. The content will be processed and copied to your clipboard
-5. Paste the Markdown content into your LLM tool of choice
+3. Configure your preferences (content scope, include page title, etc.)
+4. Choose your action:
+   - **"Convert & Copy"** - Process content and copy to clipboard
+   - **"Download as .md"** - Save content directly as a Markdown file
+5. Paste the clipboard content into your LLM tool or use the downloaded file
 
 ### Keyboard Shortcuts
 
@@ -162,9 +175,17 @@ Users can customize keyboard shortcuts by following these steps:
   - Full page content
   - Selected text only
 
+- **Content Options**:
+  - Include page title in output
+  - Enhanced image alt text generation
+
 - **Formatting Options**:
   - Preserve table formatting
   - Include/exclude images
+
+- **Output Options**:
+  - Copy to clipboard
+  - Download as .md file
 
 ## Project Structure
 
@@ -218,8 +239,11 @@ LLMFeeder/
 1. User triggers conversion (via popup UI or keyboard shortcut)
 2. Request is sent from popup.js or background.js to content.js
 3. content.js extracts content using readability.js
-4. Content is converted to Markdown using turndown.js
-5. Markdown is copied to clipboard and success feedback is shown
+4. Enhanced image alt text generation processes images with smart fallbacks
+5. Optional page title is prepended if enabled
+6. Content is converted to Markdown using turndown.js
+7. Output is either copied to clipboard or downloaded as .md file
+8. Cross-browser notification provides success feedback
 
 ## Browser Compatibility
 
