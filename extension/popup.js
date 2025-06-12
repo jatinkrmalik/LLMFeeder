@@ -102,8 +102,8 @@ const downloadStatusIndicator = document.getElementById(
 );
 
 // DOM elements (theme)
-const toggleLight = document.querySelector(".toggle-light");
-const toggleDark = document.querySelector(".toggle-dark");
+const toggleToDark = document.querySelector(".toggle-to-dark");
+const toggleToLight = document.querySelector(".toggle-to-light");
 const bodyTag = document.querySelector("body");
 
 const THEME_KEY = "llmfeeder-theme";
@@ -113,15 +113,16 @@ function setTheme(theme) {
   const isDark = theme === THEMES.DARK;
   bodyTag.classList.toggle("dark-theme", isDark);
   bodyTag.classList.toggle("light-theme", !isDark);
-  toggleDark.classList.toggle("hidden", isDark);
-  toggleLight.classList.toggle("hidden", !isDark);
+  // Show moon in light mode (to switch to dark), sun in dark mode (to switch to light)
+  toggleToDark.classList.toggle("hidden", isDark);
+  toggleToLight.classList.toggle("hidden", !isDark);
   localStorage.setItem(THEME_KEY, theme);
 }
 
-toggleDark.addEventListener("click", () => {
+toggleToDark.addEventListener("click", () => {
   setTheme("dark");
 });
-toggleLight.addEventListener("click", () => {
+toggleToLight.addEventListener("click", () => {
   setTheme("light");
 });
 
