@@ -49,7 +49,106 @@
             </svg>
           </div>
         </button>
+        <div id="settingsToggleBtn" class="settings-toggle-btn">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <g clip-path="url(#clip0_69_9)">
+              <path
+                d="M13.7667 5.756C14.3347 3.41467 17.6653 3.41467 18.2333 5.756C18.3186 6.10773 18.4856 6.43437 18.7209 6.70933C18.9563 6.98429 19.2532 7.19981 19.5875 7.33833C19.9219 7.47685 20.2842 7.53447 20.645 7.50649C21.0059 7.47852 21.355 7.36574 21.664 7.17733C23.7213 5.924 26.0773 8.27867 24.824 10.3373C24.6359 10.6462 24.5233 10.9951 24.4954 11.3557C24.4674 11.7163 24.525 12.0784 24.6634 12.4125C24.8017 12.7467 25.017 13.0434 25.2916 13.2787C25.5663 13.514 25.8926 13.6812 26.244 13.7667C28.5853 14.3347 28.5853 17.6653 26.244 18.2333C25.8923 18.3186 25.5656 18.4856 25.2907 18.7209C25.0157 18.9563 24.8002 19.2532 24.6617 19.5875C24.5232 19.9219 24.4655 20.2842 24.4935 20.645C24.5215 21.0059 24.6343 21.355 24.8227 21.664C26.076 23.7213 23.7213 26.0773 21.6627 24.824C21.3538 24.6359 21.0049 24.5233 20.6443 24.4954C20.2837 24.4674 19.9216 24.525 19.5875 24.6634C19.2533 24.8017 18.9566 25.017 18.7213 25.2916C18.486 25.5663 18.3188 25.8926 18.2333 26.244C17.6653 28.5853 14.3347 28.5853 13.7667 26.244C13.6814 25.8923 13.5144 25.5656 13.2791 25.2907C13.0437 25.0157 12.7468 24.8002 12.4125 24.6617C12.0781 24.5232 11.7158 24.4655 11.355 24.4935C10.9941 24.5215 10.645 24.6343 10.336 24.8227C8.27867 26.076 5.92267 23.7213 7.176 21.6627C7.36414 21.3538 7.47673 21.0049 7.50465 20.6443C7.53256 20.2837 7.47499 19.9216 7.33663 19.5875C7.19827 19.2533 6.98301 18.9566 6.70836 18.7213C6.43371 18.486 6.10742 18.3188 5.756 18.2333C3.41467 17.6653 3.41467 14.3347 5.756 13.7667C6.10773 13.6814 6.43437 13.5144 6.70933 13.2791C6.98429 13.0437 7.19981 12.7468 7.33833 12.4125C7.47685 12.0781 7.53447 11.7158 7.50649 11.355C7.47852 10.9941 7.36574 10.645 7.17733 10.336C5.924 8.27867 8.27867 5.92267 10.3373 7.176C11.6707 7.98667 13.3987 7.26933 13.7667 5.756Z"
+                stroke="#4285F4"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M16 20C18.2091 20 20 18.2091 20 16C20 13.7909 18.2091 12 16 12C13.7909 12 12 13.7909 12 16C12 18.2091 13.7909 20 16 20Z"
+                stroke="#4285F4"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </g>
+            <defs>
+              <clipPath id="clip0_69_9">
+                <rect width="32" height="32" style="fill: none" />
+              </clipPath>
+            </defs>
+          </svg>
+        </div>
       </header>
+      <div class="settings-section">
+        <div id="settingsContainer" class="settings-container hidden">
+          <div class="setting-group">
+            <h3>Content Scope</h3>
+            <div class="radio-group">
+              <label class="setting-option radio">
+                <img src="./assets/article.png" width="32" />
+                <input
+                  type="radio"
+                  name="contentScope"
+                  value="mainContent"
+                  checked
+                />
+                <span> Main article content only </span>
+              </label>
+
+              <label class="setting-option radio">
+                <img src="./assets/fullpage.png" width="32" />
+                <input type="radio" name="contentScope" value="fullPage" />
+                <span> Full page content </span>
+              </label>
+
+              <label class="setting-option radio">
+                <img src="./assets/text.png" width="32" />
+                <input type="radio" name="contentScope" value="selection" />
+                <span> Selected text only </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h3>Formatting Options</h3>
+
+            <label class="setting-option">
+              <input type="checkbox" id="preserveTables" checked />
+              <span> Preserve table formatting </span>
+            </label>
+
+            <label class="setting-option">
+              <input type="checkbox" id="includeImages" checked />
+              <span> Include images </span>
+            </label>
+            <label class="setting-option">
+              <input type="checkbox" id="includeTitle" checked />
+              <span> Include page Title as heading </span>
+            </label>
+          </div>
+          <div class="shortcut-container">
+            <h3 style="text-align: center">Keyboard Shortcuts</h3>
+            <div class="shortcut-info">
+              <div class="shortcut-row">
+                <span>Open Extension:</span>
+                <code id="popupShortcut">Alt+Shift+L</code>
+              </div>
+              <div class="shortcut-row">
+                <span>Quick Convert:</span>
+                <code id="quickConvertShortcut">Alt+Shift+M</code>
+              </div>
+              <div class="shortcut-customize">
+                <small
+                  >Customize at
+                  <code>chrome://extensions/shortcuts</code></small
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <p class="tagline">
         Convert web pages to clean Markdown and copy to clipboard so you can
         feed it to your favorite LLM model as context.
@@ -77,76 +176,13 @@
 
         <div id="downloadStatusIndicator" class="status"></div>
       </div>
-      <div class="settings-section">
-        <button id="settingsToggleBtn" class="settings-toggle-btn">
-          <span class="btn-text">Settings</span>
-          <span class="toggle-icon">▼</span>
-        </button>
-
-        <div id="settingsContainer" class="settings-container hidden">
-          <div class="setting-group">
-            <h3>Content Scope</h3>
-            <label class="setting-option">
-              <input
-                type="radio"
-                name="contentScope"
-                value="mainContent"
-                checked
-              />
-              <span>Main article content only</span>
-            </label>
-            <label class="setting-option">
-              <input type="radio" name="contentScope" value="fullPage" />
-              <span>Full page content</span>
-            </label>
-            <label class="setting-option">
-              <input type="radio" name="contentScope" value="selection" />
-              <span>Selected text only</span>
-            </label>
-          </div>
-
-          <div class="setting-group">
-            <h3>Formatting Options</h3>
-            <label class="setting-option">
-              <input type="checkbox" id="preserveTables" checked />
-              <span>Preserve table formatting</span>
-            </label>
-            <label class="setting-option">
-              <input type="checkbox" id="includeImages" checked />
-              <span>Include images</span>
-            </label>
-            <label class="setting-option">
-              <input type="checkbox" id="includeTitle" checked />
-              <span>Include page title as heading</span>
-            </label>
-          </div>
-
-          <div class="setting-group">
-            <h3>Keyboard Shortcuts</h3>
-            <div class="shortcut-info">
-              <div class="shortcut-row">
-                <span>Open Extension:</span>
-                <code id="popupShortcut">Alt+Shift+L</code>
-              </div>
-              <div class="shortcut-row">
-                <span>Quick Convert:</span>
-                <code id="quickConvertShortcut">Alt+Shift+M</code>
-              </div>
-              <div class="shortcut-customize">
-                <small
-                  >Customize at
-                  <code>chrome://extensions/shortcuts</code></small
-                >
-              </div>
-            </div>
-          </div>
+      <div class="footer">
+        <div>
+          Made with ❤️ by
+          <a href="https://github.com/jatinkrmalik/LLMFeeder/" target="_blank"
+            >our contributors</a
+          >
         </div>
-      </div>
-    </div>
-    <div class="footer">
-      <div>
-        Made with ❤️ by 
-        <a href="https://github.com/jatinkrmalik/LLMFeeder/" target="_blank">our contributors</a>
       </div>
     </div>
     <script src="libs/browser-polyfill.js"></script>

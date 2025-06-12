@@ -6,7 +6,7 @@
   --secondary-color: #34a853;
   --text-color: #202124;
   --background-color: #ffffff;
-  --border-color: #dadce0;
+  --border-color: #dadce07c;
   --light-gray: #f1f3f4;
   --dark-gray: #5f6368;
   --success-color: #34a853;
@@ -25,6 +25,7 @@
   --setting-hover: #e8eaed;
   --github-link-hover: #e8eaed;
   --github-link-border: rgb(229, 227, 227);
+  --border-color: #adadad49;
 }
 
 .dark-theme {
@@ -36,10 +37,12 @@
   --github-link-border: #f1f1f1;
   --github-link-hover: rgb(70, 68, 68);
   --preview-containter-border: #ffffff;
+  --border-color: #494949a9;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
   margin: 0;
   padding: 0;
   color: var(--text-color);
@@ -49,8 +52,10 @@ body {
 }
 
 .container {
-  width: 400px;
-  padding: 20px;
+  width: 420px;
+  padding: 10px;
+  box-shadow: 0 0 4px var(--border-color);
+  border-radius: 10px;
 }
 
 .header {
@@ -68,32 +73,28 @@ h1 {
   flex: 1;
 }
 
-.theme-container{
+.theme-container {
   all: unset;
+  padding: 8px;
+  border-radius: 50%;
   width: 24px;
   height: 24px;
-  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  margin-bottom: 8px;
 }
 
 .theme-container:hover {
-  background-color: var(--light-gray);
+  background-color: var(--setting-hover);
 }
 
 .toggle-to-dark,
 .toggle-to-light {
-  all: unset;
   width: 24px;
   height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
   color: var(--dark-gray);
   transition: all 0.2s ease;
@@ -104,7 +105,7 @@ h1 {
   height: 24px;
 }
 
-.hidden{
+.hidden {
   display: none;
 }
 
@@ -195,10 +196,21 @@ h3 {
 
 /* Success animation */
 @keyframes fadeInOut {
-  0% { opacity: 0; transform: scale(0.9); }
-  20% { opacity: 1; transform: scale(1.1); }
-  40% { opacity: 1; transform: scale(1); }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .success-animation {
@@ -208,16 +220,33 @@ h3 {
 }
 
 @keyframes popIn {
-  0% { opacity: 0; transform: scale(0); }
-  70% { transform: scale(1.2); }
-  100% { opacity: 1; transform: scale(1); }
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Error animation */
 @keyframes shakeError {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-5px); }
-  40%, 80% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
 }
 
 .error-icon {
@@ -235,33 +264,39 @@ h3 {
 }
 
 .preview-container {
-  background-color: var(--light-gray);
   color: var(--text-color);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-  border:1px solid var(--border-color);
+  text-align: center;
   animation: slideDown 0.3s ease-out;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .preview-content {
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Roboto Mono", monospace;
   font-size: 12px;
+  margin-bottom: 16px;
   max-height: 120px;
   overflow-y: auto;
+  text-align: left;
   white-space: pre-wrap;
   word-break: break-word;
   padding: 8px;
-  border-radius: 4px;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
-  color:var(--text-color);
-  background-color: var(--background-color);
+  color: var(--text-color);
+  background-color: var(--light-gray);
+}
+.preview-content::-webkit-scrollbar {
+  display: none;
 }
 
 .settings-section {
@@ -269,19 +304,13 @@ h3 {
 }
 
 .settings-toggle-btn {
-  width: 100%;
-  background-color: var(--light-gray);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
   display: flex;
+  padding: 8px;
   align-items: center;
   justify-content: space-between;
-  transition: background-color 0.2s;
-  color: var(--text-color);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
 }
 
 .settings-toggle-btn:hover {
@@ -293,51 +322,109 @@ h3 {
   transition: transform 0.3s ease;
 }
 
-.settings-toggle-btn.active .toggle-icon {
-  transform: rotate(180deg);
-}
-
 .settings-container {
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 16px;
+  padding: 8px 16px;
   animation: fadeIn 0.3s ease-in;
   margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .setting-group {
   margin-bottom: 20px;
 }
 
+.setting-group h3 {
+  margin-bottom: 8px;
+}
 .setting-group:last-child {
   margin-bottom: 0;
 }
 
+.setting-option input {
+  display: none;
+}
+
 .setting-option {
-  display: flex;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
   align-items: center;
-  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   cursor: pointer;
+  margin-bottom: 8px;
+  overflow: hidden;
+  user-select: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.setting-option:has(input[type="checkbox"]) {
+  padding: 8px 16px;
+}
+.setting-option:has(input[type="radio"]) {
+  padding: 12px 8px;
+}
+.radio-group {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.radio {
+  width: 26%;
+  display: flex;
+  box-shadow: 0 0 4px var(--border-color);
+}
+.radio:hover {
+  background: var(--light-gray);
+}
+.setting-option .radio span {
+  white-space: wrap;
+}
+
+.setting-option:has(input[type="checkbox"]) {
+  border-radius: 30px;
 }
 
 .setting-option span {
-  margin-left: 8px;
-  font-size: 14px;
+  font-size: 12px;
+  line-height: 14px;
+  font-weight: 500;
+  padding: 4px;
 }
 
-input[type="radio"],
-input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
+/* .setting-option input:checked + * {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+} */
+
+.setting-option:has(input:checked) {
+  background-color: #007bff;
+  color: white;
+}
+
+.shortcut-container {
+  background-color: var(--light-gray);
+  border-radius: 8px;
+  padding: 12px;
+  border: 4px dashed var(--border-color);
+  margin-bottom: 16px;
 }
 
 .shortcut-info {
-  background-color: var(--light-gray);
   border-radius: 6px;
   padding: 12px;
   font-size: 13px;
@@ -353,7 +440,7 @@ input[type="checkbox"] {
   background-color: var(--background-color);
   padding: 2px 5px;
   border-radius: 3px;
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Roboto Mono", monospace;
   border: 1px solid var(--border-color);
 }
 
@@ -368,7 +455,7 @@ input[type="checkbox"] {
   background-color: var(--background-color);
   padding: 1px 4px;
   border-radius: 3px;
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Roboto Mono", monospace;
 }
 
 .hidden {
@@ -379,7 +466,7 @@ input[type="checkbox"] {
   margin-bottom: 20px;
 }
 
-#downloadMarkdownFileBtn{
+#downloadMarkdownFileBtn {
   width: 100%;
 }
 
@@ -416,7 +503,7 @@ input[type="checkbox"] {
   background-color: var(--light-gray);
   padding: 3px 8px;
   border-radius: 12px;
-  border:1px solid var(--github-link-border);
+  border: 1px solid var(--github-link-border);
   transition: all 0.2s ease;
 }
 
@@ -424,4 +511,4 @@ input[type="checkbox"] {
   background-color: var(--github-link-hover);
   color: var(--primary-color);
   text-decoration: none;
-} 
+}
