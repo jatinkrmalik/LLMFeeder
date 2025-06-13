@@ -472,48 +472,184 @@
    * @param {string} message - Notification message
    */
   function showNotification(title, message) {
-    // Create notification element
+    // Remove any existing notifications first
+    const existingNotifications = document.querySelectorAll('.llmfeeder-notification');
+    existingNotifications.forEach(notification => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    });
+
+    // Create notification container
     const notification = document.createElement('div');
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.backgroundColor = '#fff';
-    notification.style.border = '1px solid #ccc';
-    notification.style.borderRadius = '4px';
-    notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-    notification.style.padding = '10px 15px';
-    notification.style.zIndex = '9999';
-    notification.style.maxWidth = '300px';
-    notification.style.fontFamily = 'Roboto, Arial, sans-serif';
+    notification.className = 'llmfeeder-notification';
     
+    // Modern styling with high contrast and accessibility
+    notification.style.cssText = `
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(66, 133, 244, 0.2);
+      padding: 20px 24px;
+      z-index: 2147483647;
+      max-width: 400px;
+      min-width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transform: translateX(100%) scale(0.8);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    `;
+
+    // Create content wrapper
+    const contentWrapper = document.createElement('div');
+    contentWrapper.style.cssText = `
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    `;
+
+    // Add icon based on title
+    const iconWrapper = document.createElement('div');
+    iconWrapper.style.cssText = `
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    `;
+
+    // Choose icon based on title
+    let iconSVG = '';
+    if (title.toLowerCase().includes('success')) {
+      iconSVG = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+    } else if (title.toLowerCase().includes('error') || title.toLowerCase().includes('failed')) {
+      iconSVG = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+      // Use red gradient for errors
+      notification.style.background = 'linear-gradient(135deg, #ea4335 0%, #d93025 100%)';
+    } else {
+      iconSVG = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13 16H12V12H11M12 8H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
+    }
+    iconWrapper.innerHTML = iconSVG;
+
+    // Create text content
+    const textWrapper = document.createElement('div');
+    textWrapper.style.cssText = `
+      flex: 1;
+      min-width: 0;
+    `;
+
     // Add title
-    const titleElement = document.createElement('h3');
+    const titleElement = document.createElement('div');
     titleElement.textContent = title;
-    titleElement.style.margin = '0 0 5px 0';
-    titleElement.style.fontSize = '16px';
-    notification.appendChild(titleElement);
-    
+    titleElement.style.cssText = `
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.3;
+      margin: 0 0 4px 0;
+      color: #ffffff;
+    `;
+
     // Add message
-    const messageElement = document.createElement('p');
+    const messageElement = document.createElement('div');
     messageElement.textContent = message;
-    messageElement.style.margin = '0';
-    messageElement.style.fontSize = '14px';
-    notification.appendChild(messageElement);
-    
+    messageElement.style.cssText = `
+      font-size: 14px;
+      line-height: 1.4;
+      margin: 0;
+      color: rgba(255, 255, 255, 0.9);
+      word-wrap: break-word;
+    `;
+
+    // Add close button
+    const closeButton = document.createElement('button');
+    closeButton.style.cssText = `
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    `;
+    closeButton.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+
+    // Close button hover effect
+    closeButton.addEventListener('mouseenter', () => {
+      closeButton.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+      closeButton.style.color = '#ffffff';
+    });
+    closeButton.addEventListener('mouseleave', () => {
+      closeButton.style.backgroundColor = 'transparent';
+      closeButton.style.color = 'rgba(255, 255, 255, 0.7)';
+    });
+
+    // Assemble the notification
+    textWrapper.appendChild(titleElement);
+    textWrapper.appendChild(messageElement);
+    contentWrapper.appendChild(iconWrapper);
+    contentWrapper.appendChild(textWrapper);
+    notification.appendChild(contentWrapper);
+    notification.appendChild(closeButton);
+
     // Add to page
     document.body.appendChild(notification);
-    
-    // Set transition property for smooth fade-out
-    notification.style.transition = 'opacity 0.5s';
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
+
+    // Trigger entrance animation
+    requestAnimationFrame(() => {
+      notification.style.transform = 'translateX(0) scale(1)';
+      notification.style.opacity = '1';
+    });
+
+    // Auto-remove function
+    const removeNotification = () => {
+      notification.style.transform = 'translateX(100%) scale(0.8)';
       notification.style.opacity = '0';
       setTimeout(() => {
         if (notification.parentNode) {
           notification.parentNode.removeChild(notification);
         }
-      }, 500);
-    }, 3000);
+      }, 400);
+    };
+
+    // Close button click handler
+    closeButton.addEventListener('click', removeNotification);
+
+    // Auto-remove after 4 seconds (increased from 3 for better readability)
+    const autoRemoveTimeout = setTimeout(removeNotification, 4000);
+
+    // Clear timeout if manually closed
+    closeButton.addEventListener('click', () => {
+      clearTimeout(autoRemoveTimeout);
+    });
   }
 })(); 
