@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "LLMFeeder",
-  "version": "1.0.2",
-  "description": "Convert web pages to clean Markdown and copy to clipboard for LLM consumption",
+  "name": "LLMFeeder - Web to Markdown Converter",
+  "version": "1.1.0",
+  "description": "Web to Markdown converter for ChatGPT, Claude & AI. Extract clean content, copy to clipboard. Perfect for LLM context with dark mode.",
   "author": "@jatinkrmalik",
   "browser_specific_settings": {
     "gecko": {
@@ -42,14 +42,14 @@
         "default": "Alt+Shift+L",
         "mac": "Alt+Shift+L"
       },
-      "description": "Open LLMFeeder popup"
+      "description": "Open Web to Markdown Converter"
     },
     "convert_to_markdown": {
       "suggested_key": {
         "default": "Alt+Shift+M",
         "mac": "Alt+Shift+M"
       },
-      "description": "Convert page to Markdown and copy to clipboard"
+      "description": "Convert webpage to Markdown for ChatGPT & AI"
     }
   },
   "background": {

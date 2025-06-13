@@ -16,13 +16,15 @@
 
 A browser extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs). Available for both [Chrome](https://chromewebstore.google.com/detail/llmfeeder-webpage-to-mark/cjjfhhapabcpcokkfldbiiojiphbifdk) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/).
 
-## ✨ What's New in v1.0.2
+## ✨ What's New in v1.1.0
 
+- 🌙 **Dark/Light Mode Toggle** - Complete theme system with automatic preference persistence
+- 🔔 **Redesigned Notifications** - Modern UI banner with improved accessibility and visual feedback
+- 🎨 **Enhanced Theme Controls** - Better icon semantics and improved alignment
+- 🤝 **Contributors Recognition** - Updated footer to acknowledge all community contributors
 - 🖼️ **Enhanced Image Processing** - Smart alt text generation with intelligent fallbacks
 - 📥 **Download as File** - Save converted Markdown directly as .md files  
 - 📄 **Page Title Integration** - Option to include webpage titles in output
-- 🔔 **Cross-Browser Notifications** - Improved feedback across all browsers
-- 🏗️ **Build System Enhancement** - Added Makefile for easier development
 
 ## Demo
 
@@ -50,12 +52,13 @@ This architecture ensures that your content remains exclusively on your device t
 ## Features
 
 - **Smart Content Extraction**: Uses Readability algorithm to focus on main content
+- **Dark/Light Mode**: Toggle between themes with automatic preference persistence
 - **Enhanced Image Processing**: Smart alt text generation with intelligent fallbacks for better image descriptions
 - **One-Click Simplicity**: Single action to process and copy content
 - **Download as File**: Save converted Markdown directly as .md files to your device
 - **Page Title Integration**: Option to include webpage titles in your Markdown output
+- **Modern Notifications**: Redesigned UI banner with improved accessibility and visual feedback
 - **LLM-Optimized Output**: Clean, structured Markdown perfect for AI consumption
-- **Cross-Browser Notifications**: Clear visual feedback for successful operations across all browsers
 - **Customizable**: Configure content scope and formatting options
 - **Keyboard Shortcuts**: Convert content without opening the popup (Alt+Shift+M)
 - **Multi-Browser Support**: Works seamlessly on both Chrome and Firefox
