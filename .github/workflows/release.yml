@@ -42,8 +42,8 @@ jobs:
         
     - name: Check if chrome extension exists
       run: |
-        if [ ! -f "dist/chrome-extension*.zip" ]; then
-          echo "❌ dist/chrome-extension.zip not found"
+        if [ ! -f "dist/LLMFeeder-Chrome-${{ github.ref_name }}.zip" ]; then
+          echo "❌ dist/LLMFeeder-Chrome-${{ github.ref_name }}.zip not found"
           echo "Available files:"
           ls -la dist/ || echo "dist/ directory not found"
           exit 1
@@ -57,8 +57,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/
-        asset_name: chrome-extension-${{ github.ref_name }}.zip
+        asset_path: dist/LLMFeeder-Chrome-${{ github.ref_name }}.zip
+        asset_name: LLMFeeder-Chrome-${{ github.ref_name }}.zip
         asset_content_type: application/zip
       if: success()
         
@@ -68,8 +68,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/
-        asset_name: firefox-extension-${{ github.ref_name }}.zip
+        asset_path: dist/LLMFeeder-Firefox-${{ github.ref_name }}.zip
+        asset_name: LLMFeeder-Firefox-${{ github.ref_name }}.zip
         asset_content_type: application/zip
       if: success()
         
@@ -79,7 +79,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/
-        asset_name: source-${{ github.ref_name }}.zip
+        asset_path: dist/LLMFeeder-Source-${{ github.ref_name }}.zip
+        asset_name: LLMFeeder-Source-${{ github.ref_name }}.zip
         asset_content_type: application/zip
       if: success()
