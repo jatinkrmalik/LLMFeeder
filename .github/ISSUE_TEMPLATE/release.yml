@@ -1,0 +1,69 @@
+name: Build and Upload Release Assets
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install build-essential
+        sudo apt-get install -y jq zip
+        
+    - name: Make build script executable
+      run: chmod +x ./scripts/build.sh
+      
+    - name: Extract version from release tag
+      id: get_version
+      run: |
+        # Extract clean version number for build process (e.g., v1.0.0 -> 1.0.0)
+        VERSION=${GITHUB_REF#refs/tags/}
+        VERSION=${VERSION#v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
+        
+    - name: Build all packages with version
+      run: make versioned-full version=${{ steps.get_version.outputs.version }}
+      
+    - name: List built artifacts
+      run: |
+        echo "Built artifacts:"
+        ls -la dist/
+        
+    - name: Upload Chrome Extension
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: dist/chrome-extension.zip
+        asset_name: chrome-extension-${{ github.ref_name }}.zip
+        asset_content_type: application/zip
+        
+    - name: Upload Firefox Extension  
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: dist/firefox-extension.zip
+        asset_name: firefox-extension-${{ github.ref_name }}.zip
+        asset_content_type: application/zip
+        
+    - name: Upload Source Package
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: dist/source.zip
+        asset_name: source-${{ github.ref_name }}.zip
+        asset_content_type: application/zip
