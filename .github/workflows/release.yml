@@ -1,0 +1,52 @@
+name: Build and Upload Release Assets
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential make jq zip 
+        
+    - name: Make build script executable
+      run: chmod +x ./scripts/build.sh
+      
+    - name: Extract version from release tag
+      id: get_version
+      run: |
+        # Extract clean version number for build process (e.g., v1.0.0 -> 1.0.0)
+        VERSION=${GITHUB_REF#refs/tags/}
+        VERSION=${VERSION#v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
+        
+    - name: Build all packages with version
+      run: make versioned-full version=${{ steps.get_version.outputs.version }}
+      
+    - name: List built artifacts
+      run: |
+        echo "Built artifacts:"
+        ls -la dist/
+        echo "Checking for specific files:"
+        find dist/ -name "*.zip" -o -name "*.tar.gz" -o -name "*.tgz" | head -10
+      if: always()
+        
+        
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/LLMFeeder-Chrome-${{ github.ref_name }}.zip
+          dist/LLMFeeder-Firefox-${{ github.ref_name }}.zip
+          dist/LLMFeeder-Source-${{ github.ref_name }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
