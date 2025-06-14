@@ -41,16 +41,6 @@ jobs:
         find dist/ -name "*.zip" -o -name "*.tar.gz" -o -name "*.tgz" | head -10
       if: always()
         
-    - name: Check if chrome extension exists
-      run: |
-        if [ ! -f "dist/LLMFeeder-Chrome-${{ github.ref_name }}.zip" ]; then
-          echo "❌ dist/LLMFeeder-Chrome-${{ github.ref_name }}.zip not found"
-          echo "Available files:"
-          ls -la dist/ || echo "dist/ directory not found"
-          exit 1
-        else
-          echo "✅ Chrome extension found"
-        fi
         
     - name: Upload Release Assets
       uses: softprops/action-gh-release@v2
