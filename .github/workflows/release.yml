@@ -16,7 +16,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install build-essential
-        sudo apt-get install -y jq zip
+        sudo apt-get install -y make jq zip
         
     - name: Make build script executable
       run: chmod +x ./scripts/build.sh
@@ -52,35 +52,12 @@ jobs:
           echo "✅ Chrome extension found"
         fi
         
-    - name: Upload Chrome Extension
-      uses: actions/upload-release-asset@v1
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/LLMFeeder-Chrome-${{ github.ref_name }}.zip
+          dist/LLMFeeder-Firefox-${{ github.ref_name }}.zip
+          dist/LLMFeeder-Source-${{ github.ref_name }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/LLMFeeder-Chrome-${{ github.ref_name }}.zip
-        asset_name: LLMFeeder-Chrome-${{ github.ref_name }}.zip
-        asset_content_type: application/zip
-      if: success()
-        
-    - name: Upload Firefox Extension  
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/LLMFeeder-Firefox-${{ github.ref_name }}.zip
-        asset_name: LLMFeeder-Firefox-${{ github.ref_name }}.zip
-        asset_content_type: application/zip
-      if: success()
-        
-    - name: Upload Source Package
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/LLMFeeder-Source-${{ github.ref_name }}.zip
-        asset_name: LLMFeeder-Source-${{ github.ref_name }}.zip
-        asset_content_type: application/zip
-      if: success()
