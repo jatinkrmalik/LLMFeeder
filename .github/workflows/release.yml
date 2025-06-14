@@ -15,8 +15,7 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install build-essential
-        sudo apt-get install -y jq zip
+        sudo apt-get install -y cmake jq zip
         
     - name: Make build script executable
       run: chmod +x ./scripts/build.sh
@@ -39,6 +38,18 @@ jobs:
         ls -la dist/
         echo "Checking for specific files:"
         find dist/ -name "*.zip" -o -name "*.tar.gz" -o -name "*.tgz" | head -10
+      if: always()
+        
+    - name: Check if chrome extension exists
+      run: |
+        if [ ! -f "dist/chrome-extension*.zip" ]; then
+          echo "❌ dist/chrome-extension.zip not found"
+          echo "Available files:"
+          ls -la dist/ || echo "dist/ directory not found"
+          exit 1
+        else
+          echo "✅ Chrome extension found"
+        fi
         
     - name: Upload Chrome Extension
       uses: actions/upload-release-asset@v1
@@ -46,9 +57,10 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/chrome-extension.zip
+        asset_path: dist/
         asset_name: chrome-extension-${{ github.ref_name }}.zip
         asset_content_type: application/zip
+      if: success()
         
     - name: Upload Firefox Extension  
       uses: actions/upload-release-asset@v1
@@ -56,9 +68,10 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/firefox-extension.zip
+        asset_path: dist/
         asset_name: firefox-extension-${{ github.ref_name }}.zip
         asset_content_type: application/zip
+      if: success()
         
     - name: Upload Source Package
       uses: actions/upload-release-asset@v1
@@ -66,6 +79,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: dist/source.zip
+        asset_path: dist/
         asset_name: source-${{ github.ref_name }}.zip
         asset_content_type: application/zip
+      if: success()
