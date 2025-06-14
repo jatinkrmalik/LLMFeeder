@@ -1,6 +1,6 @@
 name: Build and Upload Release Assets
 
-on:
+"on":
   release:
     types: [created]
 
@@ -37,6 +37,8 @@ jobs:
       run: |
         echo "Built artifacts:"
         ls -la dist/
+        echo "Checking for specific files:"
+        find dist/ -name "*.zip" -o -name "*.tar.gz" -o -name "*.tgz" | head -10
         
     - name: Upload Chrome Extension
       uses: actions/upload-release-asset@v1
