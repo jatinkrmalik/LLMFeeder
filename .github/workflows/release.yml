@@ -15,7 +15,8 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake jq zip
+        sudo apt-get install build-essential
+        sudo apt-get install -y jq zip
         
     - name: Make build script executable
       run: chmod +x ./scripts/build.sh
