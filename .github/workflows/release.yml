@@ -1,6 +1,6 @@
 name: Build and Upload Release Assets
 
-"on":
+on:
   release:
     types: [created]
 
