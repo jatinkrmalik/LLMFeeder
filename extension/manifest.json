@@ -30,6 +30,7 @@
         "<all_urls>"
       ],
       "js": [
+        "libs/browser-polyfill.js",
         "libs/readability.js",
         "libs/turndown.js",
         "content.js"

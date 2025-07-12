@@ -1,88 +1,6 @@
 // LLMFeeder Background Script
 // Handles keyboard shortcuts and background tasks
-
-// Create browser compatibility layer for service worker context
-const browserAPI = (function() {
-  // Check if we're in Firefox (browser is defined) or Chrome (chrome is defined)
-  const isBrowser = typeof browser !== 'undefined';
-  const isChrome = typeof chrome !== 'undefined';
-  
-  // Base object
-  const api = {};
-  
-  // Helper to promisify callback-based Chrome APIs
-  function promisify(chromeAPICall, context) {
-    return (...args) => {
-      return new Promise((resolve, reject) => {
-        chromeAPICall.call(context, ...args, (result) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else {
-            resolve(result);
-          }
-        });
-      });
-    };
-  }
-  
-  // Set up APIs
-  if (isBrowser) {
-    // Firefox already has promise-based APIs
-    api.tabs = browser.tabs;
-    api.runtime = browser.runtime;
-    api.storage = browser.storage;
-    api.commands = browser.commands;
-    api.scripting = browser.scripting;
-  } else if (isChrome) {
-    // Chrome needs promisification
-    api.tabs = {
-      query: promisify(chrome.tabs.query, chrome.tabs),
-      sendMessage: promisify(chrome.tabs.sendMessage, chrome.tabs),
-    };
-    
-    api.runtime = {
-      onMessage: chrome.runtime.onMessage,
-      getURL: chrome.runtime.getURL,
-      lastError: chrome.runtime.lastError
-    };
-    
-    api.storage = {
-      sync: {
-        get: function(keys) {
-          return new Promise((resolve, reject) => {
-            chrome.storage.sync.get(keys, (result) => {
-              if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-              } else {
-                resolve(result);
-              }
-            });
-          });
-        },
-        set: function(items) {
-          return new Promise((resolve, reject) => {
-            chrome.storage.sync.set(items, () => {
-              if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-              } else {
-                resolve();
-              }
-            });
-          });
-        }
-      }
-    };
-    
-    api.commands = {
-      onCommand: chrome.commands.onCommand
-    };
-    
-    api.scripting = chrome.scripting;
-  }
-  
-  return api;
-})();
-
+import './libs/browser-polyfill.js';
 // Ensure content script is injected before sending messages
 async function ensureContentScriptLoaded(tabId) {
   try {
@@ -91,7 +9,7 @@ async function ensureContentScriptLoaded(tabId) {
       // If error, inject the content script
       return browserAPI.scripting.executeScript({
         target: { tabId: tabId },
-        files: ["libs/readability.js", "libs/turndown.js", "content.js"]
+        files: ["libs/browser-polyfill.js", "libs/readability.js", "libs/turndown.js", "content.js"]
       });
     });
     return true;
