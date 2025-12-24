@@ -26,7 +26,7 @@ const browserAPI = (function () {
         return new Promise((resolve, reject) => {
           chrome.tabs.query(queryInfo, (tabs) => {
             if (chrome.runtime.lastError) {
-              reject(chrome.runtime.lastError);
+              reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
             } else {
               resolve(tabs);
             }
@@ -37,7 +37,7 @@ const browserAPI = (function () {
         return new Promise((resolve, reject) => {
           chrome.tabs.sendMessage(tabId, message, (response) => {
             if (chrome.runtime.lastError) {
-              reject(chrome.runtime.lastError);
+              reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
             } else {
               resolve(response);
             }
@@ -54,7 +54,7 @@ const browserAPI = (function () {
           return new Promise((resolve, reject) => {
             chrome.storage.sync.get(keys, (result) => {
               if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
+                reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
               } else {
                 resolve(result);
               }
@@ -65,7 +65,7 @@ const browserAPI = (function () {
           return new Promise((resolve, reject) => {
             chrome.storage.sync.set(items, () => {
               if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
+                reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
               } else {
                 resolve();
               }
@@ -267,9 +267,8 @@ async function convertToMarkdown() {
     saveSettings();
   } catch (error) {
     console.error("Conversion error:", error);
-    statusIndicator.textContent = `Error: ${
-      error.message || "Failed to convert page"
-    }`;
+    const errorMessage = error.message || error.toString() || "Failed to convert page";
+    statusIndicator.textContent = `Error: ${errorMessage}`;
     statusIndicator.className = "status error";
   }
 }
