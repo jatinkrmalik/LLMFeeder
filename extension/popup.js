@@ -348,12 +348,15 @@ async function generateFileNameFromPageTitle() {
 }
 
 function downloadMarkdownFile(filename, content) {
+  let a = null;
+  let url = null;
+  
   try {
     // Create a blob and download
     const blob = new Blob([content], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
+    url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
+    a = document.createElement("a");
     a.href = url;
     a.download = `${filename}.md`;
     document.body.appendChild(a);
