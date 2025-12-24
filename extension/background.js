@@ -151,7 +151,10 @@ browserAPI.commands.onCommand.addListener(async (command) => {
       const settings = await browserAPI.storage.sync.get({
         contentScope: 'mainContent',
         preserveTables: true,
-        includeImages: true
+        includeImages: true,
+        includeTitle: true,
+        includeMetadata: true,
+        metadataFormat: "---\nSource: [{title}]({url})"
       });
       
       // Send message to content script to perform conversion
