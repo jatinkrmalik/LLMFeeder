@@ -139,6 +139,13 @@ const contentScopeRadios = document.querySelectorAll(
 const preserveTablesCheckbox = document.getElementById("preserveTables");
 const includeImagesCheckbox = document.getElementById("includeImages");
 const includeTitleCheckbox = document.getElementById("includeTitle");
+const includeMetadataCheckbox = document.getElementById("includeMetadata");
+const metadataFormatTextarea = document.getElementById("metadataFormat");
+const metadataFormatContainer = document.getElementById("metadataFormatContainer");
+const resetMetadataFormatBtn = document.getElementById("resetMetadataFormat");
+
+// Default metadata format
+const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
 
 // Show proper keyboard shortcuts based on OS
 function updateShortcutDisplay() {
@@ -173,6 +180,8 @@ async function loadSettings() {
       preserveTables: true,
       includeImages: true,
       includeTitle: true,
+      includeMetadata: true,
+      metadataFormat: DEFAULT_METADATA_FORMAT,
     });
 
     // Apply settings to UI
@@ -182,6 +191,11 @@ async function loadSettings() {
     preserveTablesCheckbox.checked = data.preserveTables;
     includeImagesCheckbox.checked = data.includeImages;
     includeTitleCheckbox.checked = data.includeTitle;
+    includeMetadataCheckbox.checked = data.includeMetadata;
+    metadataFormatTextarea.value = data.metadataFormat;
+    
+    // Show/hide metadata format container based on checkbox state
+    updateMetadataFormatVisibility(data.includeMetadata);
   } catch (error) {
     console.error("Error loading settings:", error);
     statusIndicator.textContent = "Error loading settings";
@@ -198,15 +212,28 @@ async function saveSettings() {
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
+    const includeMetadata = includeMetadataCheckbox.checked;
+    const metadataFormat = metadataFormatTextarea.value;
 
     await browserAPI.storage.sync.set({
       contentScope,
       preserveTables,
       includeImages,
       includeTitle,
+      includeMetadata,
+      metadataFormat,
     });
   } catch (error) {
     console.error("Error saving settings:", error);
+  }
+}
+
+// Update metadata format container visibility
+function updateMetadataFormatVisibility(isVisible) {
+  if (isVisible) {
+    metadataFormatContainer.classList.remove("hidden");
+  } else {
+    metadataFormatContainer.classList.add("hidden");
   }
 }
 
@@ -233,6 +260,8 @@ async function convertToMarkdown() {
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
+    const includeMetadata = includeMetadataCheckbox.checked;
+    const metadataFormat = metadataFormatTextarea.value;
 
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
@@ -242,6 +271,8 @@ async function convertToMarkdown() {
         preserveTables,
         includeImages,
         includeTitle,
+        includeMetadata,
+        metadataFormat,
       },
     });
 
@@ -298,6 +329,19 @@ document.addEventListener("DOMContentLoaded", () => {
   preserveTablesCheckbox.addEventListener("change", saveSettings);
   includeImagesCheckbox.addEventListener("change", saveSettings);
   includeTitleCheckbox.addEventListener("change", saveSettings);
+  
+  // Metadata format settings
+  includeMetadataCheckbox.addEventListener("change", () => {
+    updateMetadataFormatVisibility(includeMetadataCheckbox.checked);
+    saveSettings();
+  });
+  
+  metadataFormatTextarea.addEventListener("input", saveSettings);
+  
+  resetMetadataFormatBtn.addEventListener("click", () => {
+    metadataFormatTextarea.value = DEFAULT_METADATA_FORMAT;
+    saveSettings();
+  });
 
   downloadMarkdownFileBtn.addEventListener("click", async () => {
     const markdownContent = previewContent.textContent;

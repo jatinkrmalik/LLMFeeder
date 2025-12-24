@@ -122,6 +122,28 @@
           </div>
 
           <div class="setting-group">
+            <h3>Metadata Format</h3>
+            <label class="setting-option">
+              <input type="checkbox" id="includeMetadata" checked />
+              <span>Include source metadata at end</span>
+            </label>
+            <div id="metadataFormatContainer" class="metadata-format-container">
+              <label for="metadataFormat" class="metadata-format-label">
+                <span>Custom Format:</span>
+                <small>Use variables: {title}, {url}, {date}, {author}, {siteName}</small>
+              </label>
+              <textarea
+                id="metadataFormat"
+                class="metadata-format-input"
+                rows="4"
+                placeholder="---&#10;Title: {title}&#10;Author: {author}&#10;Date: {date}&#10;Source: {url}"
+              >---
+Source: [{title}]({url})</textarea>
+              <button id="resetMetadataFormat" class="reset-btn">Reset to Default</button>
+            </div>
+          </div>
+
+          <div class="setting-group">
             <h3>Keyboard Shortcuts</h3>
             <div class="shortcut-info">
               <div class="shortcut-row">

@@ -371,6 +371,72 @@ input[type="checkbox"] {
   font-family: 'Roboto Mono', monospace;
 }
 
+/* Metadata Format Styles */
+.metadata-format-container {
+  margin-top: 12px;
+  margin-left: 24px;
+}
+
+.metadata-format-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  cursor: default;
+}
+
+.metadata-format-label small {
+  color: var(--dark-gray);
+  font-size: 11px;
+  font-style: italic;
+}
+
+.metadata-format-input {
+  width: 100%;
+  min-height: 80px;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  font-size: 12px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.metadata-format-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.metadata-format-input::placeholder {
+  color: var(--dark-gray);
+  opacity: 0.6;
+}
+
+.reset-btn {
+  margin-top: 8px;
+  padding: 6px 12px;
+  background-color: var(--light-gray);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-btn:hover {
+  background-color: var(--setting-hover);
+}
+
+.reset-btn:active {
+  transform: scale(0.98);
+}
+
 .hidden {
   display: none;
 }

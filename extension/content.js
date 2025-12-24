@@ -145,6 +145,7 @@
 
     // Get content based on scope setting
     let content;
+    let articleData = null;
     switch (settings.contentScope) {
       case 'fullPage':
         content = extractFullPageContent(docClone);
@@ -154,7 +155,9 @@
         break;
       case 'mainContent':
       default:
-        content = extractMainContent(docClone);
+        const result = extractMainContent(docClone);
+        content = result.content;
+        articleData = result.articleData;
         break;
     }
     
@@ -190,8 +193,8 @@
         }
       }
       
-      // Post-process the markdown
-      return postProcessMarkdown(markdown);
+      // Post-process the markdown with metadata
+      return postProcessMarkdown(markdown, settings, articleData);
     } catch (error) {
       console.error('Turndown conversion error:', error);
       
@@ -250,7 +253,7 @@
   /**
    * Extract the main content using Readability
    * @param {Document} doc - Cloned document
-   * @returns {HTMLElement} Content element
+   * @returns {Object} Object containing content element and article data
    */
   function extractMainContent(doc) {
     try {
@@ -268,12 +271,24 @@
       const container = document.createElement('div');
       container.innerHTML = article.content;
       
-      
-      return container;
+      // Return both content and article metadata
+      return {
+        content: container,
+        articleData: {
+          title: article.title || document.title,
+          author: article.byline || extractAuthorFromMeta(),
+          siteName: article.siteName || extractSiteNameFromMeta(),
+          publishedTime: article.publishedTime || extractPublishedDateFromMeta(),
+          excerpt: article.excerpt || ''
+        }
+      };
     } catch (error) {
       console.error('Readability error:', error);
       // Fallback to a simple extraction
-      return fallbackContentExtraction(doc);
+      return {
+        content: fallbackContentExtraction(doc),
+        articleData: null
+      };
     }
   }
   
@@ -294,6 +309,95 @@
     // Clone the content to avoid modifying the original
     container.appendChild(mainContent.cloneNode(true));
     return container;
+  }
+  
+  /**
+   * Extract author from meta tags
+   * @returns {string} Author name or empty string
+   */
+  function extractAuthorFromMeta() {
+    // Try various meta tags for author
+    const authorSelectors = [
+      'meta[name="author"]',
+      'meta[property="article:author"]',
+      'meta[name="dcterms.creator"]',
+      'meta[name="DC.creator"]',
+      'meta[property="og:author"]'
+    ];
+    
+    for (const selector of authorSelectors) {
+      const metaTag = document.querySelector(selector);
+      if (metaTag && metaTag.content) {
+        return metaTag.content.trim();
+      }
+    }
+    
+    return '';
+  }
+  
+  /**
+   * Extract site name from meta tags
+   * @returns {string} Site name or empty string
+   */
+  function extractSiteNameFromMeta() {
+    const siteNameSelectors = [
+      'meta[property="og:site_name"]',
+      'meta[name="application-name"]',
+      'meta[name="apple-mobile-web-app-title"]'
+    ];
+    
+    for (const selector of siteNameSelectors) {
+      const metaTag = document.querySelector(selector);
+      if (metaTag && metaTag.content) {
+        return metaTag.content.trim();
+      }
+    }
+    
+    // Fallback to domain name
+    try {
+      return new URL(window.location.href).hostname;
+    } catch {
+      return '';
+    }
+  }
+  
+  /**
+   * Extract published date from meta tags
+   * @returns {string} Published date or empty string
+   */
+  function extractPublishedDateFromMeta() {
+    const dateSelectors = [
+      'meta[property="article:published_time"]',
+      'meta[name="dcterms.created"]',
+      'meta[name="DC.date.created"]',
+      'meta[name="date"]',
+      'meta[property="og:published_time"]',
+      'time[datetime]',
+      'time[pubdate]'
+    ];
+    
+    for (const selector of dateSelectors) {
+      const element = document.querySelector(selector);
+      if (element) {
+        const dateValue = element.getAttribute('content') || 
+                         element.getAttribute('datetime') || 
+                         element.textContent;
+        if (dateValue) {
+          try {
+            // Try to format the date nicely
+            const date = new Date(dateValue.trim());
+            if (!isNaN(date.getTime())) {
+              return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+            }
+          } catch {
+            // If parsing fails, return the raw value
+            return dateValue.trim();
+          }
+        }
+      }
+    }
+    
+    return '';
   }
   
   /**
@@ -413,9 +517,11 @@
   /**
    * Post-process the markdown output
    * @param {string} markdown - Raw markdown
+   * @param {Object} settings - User settings
+   * @param {Object} articleData - Extracted article metadata
    * @returns {string} Processed markdown
    */
-  function postProcessMarkdown(markdown) {
+  function postProcessMarkdown(markdown, settings, articleData) {
     // Remove excessive blank lines (more than 2 in a row)
     markdown = markdown.replace(/\n{3,}/g, '\n\n');
     
@@ -425,10 +531,44 @@
     // Fix list item spacing
     markdown = markdown.replace(/(\n[*\-+] [^\n]+)(\n[*\-+] )/g, '$1\n$2');
     
-    // Add URL source at the end
-    markdown = markdown + '\n\n---\nSource: [' + document.title + '](' + window.location.href + ')';
+    // Add custom metadata format if enabled
+    if (settings.includeMetadata && settings.metadataFormat) {
+      const metadataText = formatMetadata(settings.metadataFormat, articleData);
+      if (metadataText) {
+        markdown = markdown + '\n\n' + metadataText;
+      }
+    }
     
     return markdown;
+  }
+  
+  /**
+   * Format metadata using custom template
+   * @param {string} template - Format template with placeholders
+   * @param {Object} articleData - Extracted article metadata
+   * @returns {string} Formatted metadata string
+   */
+  function formatMetadata(template, articleData) {
+    // Prepare metadata values
+    const metadata = {
+      title: articleData?.title || document.title || 'Untitled',
+      url: window.location.href,
+      date: articleData?.publishedTime || '',
+      author: articleData?.author || '',
+      siteName: articleData?.siteName || new URL(window.location.href).hostname,
+      excerpt: articleData?.excerpt || ''
+    };
+    
+    // Replace placeholders in template
+    let formatted = template;
+    formatted = formatted.replace(/\{title\}/g, metadata.title);
+    formatted = formatted.replace(/\{url\}/g, metadata.url);
+    formatted = formatted.replace(/\{date\}/g, metadata.date);
+    formatted = formatted.replace(/\{author\}/g, metadata.author);
+    formatted = formatted.replace(/\{siteName\}/g, metadata.siteName);
+    formatted = formatted.replace(/\{excerpt\}/g, metadata.excerpt);
+    
+    return formatted;
   }
   
   // This function would normally be provided by the TurndownService-tables plugin
