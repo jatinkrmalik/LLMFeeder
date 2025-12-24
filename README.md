@@ -56,6 +56,7 @@ This architecture ensures that your content remains exclusively on your device t
 - **One-Click Simplicity**: Single action to process and copy content
 - **Download as File**: Save converted Markdown directly as .md files to your device
 - **Page Title Integration**: Option to include webpage titles in your Markdown output
+- **Customizable Metadata Format**: Template-based system with 6 variables for flexible citation styles
 - **Modern Notifications**: Redesigned UI banner with improved accessibility and visual feedback
 - **LLM-Optimized Output**: Clean, structured Markdown perfect for AI consumption
 - **Customizable**: Configure content scope and formatting options
@@ -184,6 +185,12 @@ Users can customize keyboard shortcuts by following these steps:
 - **Formatting Options**:
   - Preserve table formatting
   - Include/exclude images
+
+- **Metadata Format**:
+  - Toggle metadata inclusion on/off
+  - Customize metadata template with 6 variables: `{title}`, `{url}`, `{date}`, `{author}`, `{siteName}`, `{excerpt}`
+  - Reset to default format with one click
+  - Predictable WYSIWYG formatting
 
 - **Output Options**:
   - Copy to clipboard
