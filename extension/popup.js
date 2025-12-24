@@ -26,7 +26,7 @@ const browserAPI = (function () {
         return new Promise((resolve, reject) => {
           chrome.tabs.query(queryInfo, (tabs) => {
             if (chrome.runtime.lastError) {
-              reject(chrome.runtime.lastError);
+              reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
             } else {
               resolve(tabs);
             }
@@ -37,7 +37,7 @@ const browserAPI = (function () {
         return new Promise((resolve, reject) => {
           chrome.tabs.sendMessage(tabId, message, (response) => {
             if (chrome.runtime.lastError) {
-              reject(chrome.runtime.lastError);
+              reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
             } else {
               resolve(response);
             }
@@ -54,7 +54,7 @@ const browserAPI = (function () {
           return new Promise((resolve, reject) => {
             chrome.storage.sync.get(keys, (result) => {
               if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
+                reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
               } else {
                 resolve(result);
               }
@@ -65,7 +65,7 @@ const browserAPI = (function () {
           return new Promise((resolve, reject) => {
             chrome.storage.sync.set(items, () => {
               if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
+                reject(new Error(chrome.runtime.lastError.message || 'Unknown error'));
               } else {
                 resolve();
               }
@@ -267,9 +267,8 @@ async function convertToMarkdown() {
     saveSettings();
   } catch (error) {
     console.error("Conversion error:", error);
-    statusIndicator.textContent = `Error: ${
-      error.message || "Failed to convert page"
-    }`;
+    const errorMessage = error.message || error.toString() || "Failed to convert page";
+    statusIndicator.textContent = `Error: ${errorMessage}`;
     statusIndicator.className = "status error";
   }
 }
@@ -348,12 +347,15 @@ async function generateFileNameFromPageTitle() {
 }
 
 function downloadMarkdownFile(filename, content) {
+  let a = null;
+  let url = null;
+  
   try {
     // Create a blob and download
     const blob = new Blob([content], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
+    url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
+    a = document.createElement("a");
     a.href = url;
     a.download = `${filename}.md`;
     document.body.appendChild(a);
