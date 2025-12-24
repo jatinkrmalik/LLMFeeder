@@ -26,6 +26,10 @@ var TurndownService = (function () {
     return string.substring(0, indexEnd)
   }
 
+  function trimNewlines (string) {
+    return trimTrailingNewlines(trimLeadingNewlines(string))
+  }
+
   var blockElements = [
     'ADDRESS', 'ARTICLE', 'ASIDE', 'AUDIO', 'BLOCKQUOTE', 'BODY', 'CANVAS',
     'CENTER', 'DD', 'DIR', 'DIV', 'DL', 'DT', 'FIELDSET', 'FIGCAPTION', 'FIGURE',
@@ -75,47 +79,7 @@ var TurndownService = (function () {
       tagNames.some(function (tagName) {
         return node.getElementsByTagName(tagName).length
       })
-    );
-  }
-
-  function inferAlt(img) {
-    // 1) Keep existing alt
-    const existing = img.getAttribute("alt");
-    if (existing && existing.trim()) {
-      return existing.trim();
-    }
-
-    // 2) Pull from a <figcaption> if inside a <figure>
-    const figcap = img.closest("figure")?.querySelector("figcaption");
-    if (figcap && figcap.textContent.trim()) {
-      return figcap.textContent.trim();
-    }
-
-    // 3) filename fallback & special “avatar” case
-    try {
-      const url = new URL(img.src, location.href);
-      const raw = url.pathname
-        .split("/")
-        .pop()
-        .replace(/\.\w+$/, "")
-        .replace(/[-_]+/g, " ")
-        .trim();
-
-      // if it mentions “avatar” in the URL path or host, treat it as an avatar
-      if (/avatar/i.test(url.pathname) || /avatar/i.test(url.hostname)) {
-        return "Avatar";
-      }
-
-      // skip pure numbers — otherwise use the humanized filename
-      if (raw && !/^\d+$/.test(raw)) {
-        return raw.charAt(0).toUpperCase() + raw.slice(1);
-      }
-    } catch (e) {
-      console.warn('Failed to parse image URL for alt text inference:', img.src, e);
-    }
-
-    // 4) Fallback
-    return "Image";
+    )
   }
 
   var rules = {};
@@ -157,8 +121,7 @@ var TurndownService = (function () {
     filter: 'blockquote',
 
     replacement: function (content) {
-      content = content.replace(/^\n+|\n+$/g, '');
-      content = content.replace(/^/gm, '> ');
+      content = trimNewlines(content).replace(/^/gm, '> ');
       return '\n\n' + content + '\n\n'
     }
   };
@@ -180,10 +143,6 @@ var TurndownService = (function () {
     filter: 'li',
 
     replacement: function (content, node, options) {
-      content = content
-        .replace(/^\n+/, '') // remove leading newlines
-        .replace(/\n+$/, '\n') // replace trailing newlines with just a single one
-        .replace(/\n/gm, '\n    '); // indent
       var prefix = options.bulletListMarker + '   ';
       var parent = node.parentNode;
       if (parent.nodeName === 'OL') {
@@ -191,8 +150,11 @@ var TurndownService = (function () {
         var index = Array.prototype.indexOf.call(parent.children, node);
         prefix = (start ? Number(start) + index : index + 1) + '.  ';
       }
+      var isParagraph = /\n$/.test(content);
+      content = trimNewlines(content) + (isParagraph ? '\n' : '');
+      content = content.replace(/\n/gm, '\n' + ' '.repeat(prefix.length)); // indent
       return (
-        prefix + content + (node.nextSibling && !/\n$/.test(content) ? '\n' : '')
+        prefix + content + (node.nextSibling ? '\n' : '')
       )
     }
   };
@@ -368,7 +330,7 @@ var TurndownService = (function () {
     filter: 'img',
 
     replacement: function (content, node) {
-      var alt = inferAlt(node);
+      var alt = cleanAttribute(node.getAttribute('alt'));
       var src = node.getAttribute('src') || '';
       var title = cleanAttribute(node.getAttribute('title'));
       var titlePart = title ? ' "' + title + '"' : '';
@@ -499,7 +461,7 @@ var TurndownService = (function () {
     var isVoid = options.isVoid;
     var isPre = options.isPre || function (node) {
       return node.nodeName === 'PRE'
-      };
+    };
 
     if (!element.firstChild || isPre(element)) return
 
@@ -920,14 +882,14 @@ var TurndownService = (function () {
   function process (parentNode) {
     var self = this;
     return reduce.call(parentNode.childNodes, function (output, node) {
-        node = new Node(node, self.options);
+      node = new Node(node, self.options);
 
       var replacement = '';
-        if (node.nodeType === 3) {
+      if (node.nodeType === 3) {
         replacement = node.isCode ? node.nodeValue : self.escape(node.nodeValue);
-        } else if (node.nodeType === 1) {
-          replacement = replacementForNode.call(self, node);
-        }
+      } else if (node.nodeType === 1) {
+        replacement = replacementForNode.call(self, node);
+      }
 
       return join(output, replacement)
     }, '')
