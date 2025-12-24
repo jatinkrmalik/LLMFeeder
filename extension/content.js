@@ -550,7 +550,7 @@
    */
   function formatMetadata(template, articleData) {
     try {
-      // Prepare metadata values
+      // Prepare metadata values with predictable placeholders
       const metadata = {
         title: articleData?.title || document.title || 'Untitled',
         url: window.location.href,
@@ -563,22 +563,13 @@
       // Replace placeholders in template
       let formatted = template;
       
-      // Replace each placeholder, handling empty values gracefully
+      // Replace each placeholder - preserves user's format exactly
       Object.entries(metadata).forEach(([key, value]) => {
         const placeholder = new RegExp(`\\{${key}\\}`, 'g');
-        formatted = formatted.replace(placeholder, value || '');
+        formatted = formatted.replace(placeholder, value);
       });
       
-      // Remove lines that are empty or only contain punctuation/whitespace after replacement
-      // This cleans up lines like "Author: " when author is empty
-      const lines = formatted.split('\n');
-      const cleanedLines = lines.filter(line => {
-        const trimmed = line.trim();
-        // Keep the line if it has actual content beyond labels and punctuation
-        return trimmed && !/^[\w\s]*:\s*$/.test(trimmed);
-      });
-      
-      return cleanedLines.join('\n');
+      return formatted;
     } catch (error) {
       console.error('Error formatting metadata:', error);
       // Fallback to simple source line
