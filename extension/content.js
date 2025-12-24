@@ -549,26 +549,41 @@
    * @returns {string} Formatted metadata string
    */
   function formatMetadata(template, articleData) {
-    // Prepare metadata values
-    const metadata = {
-      title: articleData?.title || document.title || 'Untitled',
-      url: window.location.href,
-      date: articleData?.publishedTime || '',
-      author: articleData?.author || '',
-      siteName: articleData?.siteName || new URL(window.location.href).hostname,
-      excerpt: articleData?.excerpt || ''
-    };
-    
-    // Replace placeholders in template
-    let formatted = template;
-    formatted = formatted.replace(/\{title\}/g, metadata.title);
-    formatted = formatted.replace(/\{url\}/g, metadata.url);
-    formatted = formatted.replace(/\{date\}/g, metadata.date);
-    formatted = formatted.replace(/\{author\}/g, metadata.author);
-    formatted = formatted.replace(/\{siteName\}/g, metadata.siteName);
-    formatted = formatted.replace(/\{excerpt\}/g, metadata.excerpt);
-    
-    return formatted;
+    try {
+      // Prepare metadata values
+      const metadata = {
+        title: articleData?.title || document.title || 'Untitled',
+        url: window.location.href,
+        date: articleData?.publishedTime || '',
+        author: articleData?.author || '',
+        siteName: articleData?.siteName || new URL(window.location.href).hostname,
+        excerpt: articleData?.excerpt || ''
+      };
+      
+      // Replace placeholders in template
+      let formatted = template;
+      
+      // Replace each placeholder, handling empty values gracefully
+      Object.entries(metadata).forEach(([key, value]) => {
+        const placeholder = new RegExp(`\\{${key}\\}`, 'g');
+        formatted = formatted.replace(placeholder, value || '');
+      });
+      
+      // Remove lines that are empty or only contain punctuation/whitespace after replacement
+      // This cleans up lines like "Author: " when author is empty
+      const lines = formatted.split('\n');
+      const cleanedLines = lines.filter(line => {
+        const trimmed = line.trim();
+        // Keep the line if it has actual content beyond labels and punctuation
+        return trimmed && !/^[\w\s]*:\s*$/.test(trimmed);
+      });
+      
+      return cleanedLines.join('\n');
+    } catch (error) {
+      console.error('Error formatting metadata:', error);
+      // Fallback to simple source line
+      return `---\nSource: [${document.title || 'Untitled'}](${window.location.href})`;
+    }
   }
   
   // This function would normally be provided by the TurndownService-tables plugin
