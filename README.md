@@ -60,7 +60,7 @@ This architecture ensures that your content remains exclusively on your device t
 - **Modern Notifications**: Redesigned UI banner with improved accessibility and visual feedback
 - **LLM-Optimized Output**: Clean, structured Markdown perfect for AI consumption
 - **Customizable**: Configure content scope and formatting options
-- **Keyboard Shortcuts**: Convert content without opening the popup (Alt+Shift+M)
+- **Keyboard Shortcuts**: Quick convert (Alt+Shift+M) and download (Alt+Shift+D) without opening popup
 - **Multi-Browser Support**: Works seamlessly on both Chrome and Firefox
 
 ## Installation
@@ -163,6 +163,7 @@ This architecture ensures that your content remains exclusively on your device t
 
 - **Open Extension Popup**: `Alt+Shift+L` (Windows/Linux) or `⌥⇧L` (Mac)
 - **Convert & Copy without Opening Popup**: `Alt+Shift+M` (Windows/Linux) or `⌥⇧M` (Mac)
+- **Download as Markdown File**: `Alt+Shift+D` (Windows/Linux) or `⌥⇧D` (Mac)
 
 #### Customizing Shortcuts
 

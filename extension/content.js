@@ -95,7 +95,60 @@
       sendResponse({ success: true });
       return true;
     }
+    
+    // Download markdown handler
+    if (request.action === 'downloadMarkdown') {
+      try {
+        downloadMarkdownFile(request.markdown, request.title);
+        sendResponse({ success: true });
+      } catch (error) {
+        console.error('Download error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+      return true;
+    }
   });
+  
+  /**
+   * Download markdown content as a file
+   * @param {string} markdown - Markdown content to download
+   * @param {string} title - Page title for filename
+   */
+  function downloadMarkdownFile(markdown, title) {
+    const MAX_FILENAME_LENGTH = 100;
+    
+    // Sanitize the title to be a valid filename
+    let filename = title
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '') // Remove invalid characters
+      .replace(/[\s./]+/g, '_') // Replace spaces, dots, slashes with underscores
+      .replace(/_+/g, '_') // Consolidate multiple underscores
+      .replace(/^_+|_+$/g, ''); // Trim leading/trailing underscores
+    
+    if (filename.length > MAX_FILENAME_LENGTH) {
+      filename = filename.substring(0, MAX_FILENAME_LENGTH).replace(/_+$/g, '');
+    }
+    
+    if (!filename) {
+      filename = 'llmfeeder';
+    }
+    
+    // Create blob and download
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.md`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
   
   /**
    * Copy text to clipboard

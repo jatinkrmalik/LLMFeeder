@@ -50,6 +50,13 @@
         "mac": "Alt+Shift+M"
       },
       "description": "Convert webpage to Markdown for ChatGPT & AI"
+    },
+    "download_markdown": {
+      "suggested_key": {
+        "default": "Alt+Shift+D",
+        "mac": "Alt+Shift+D"
+      },
+      "description": "Download webpage as Markdown file"
     }
   },
   "background": {

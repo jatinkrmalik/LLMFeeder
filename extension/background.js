@@ -122,7 +122,7 @@ async function showNotificationInTab(title, message) {
 
 // Handle keyboard shortcuts
 browserAPI.commands.onCommand.addListener(async (command) => {
-  if (command === "convert_to_markdown") {
+  if (command === "convert_to_markdown" || command === "download_markdown") {
     try {
       // Get current active tab
       const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
@@ -165,13 +165,23 @@ browserAPI.commands.onCommand.addListener(async (command) => {
         });
         
         if (response && response.success) {
-          // Copy to clipboard via content script
-          await browserAPI.tabs.sendMessage(activeTab.id, {
-            action: "copyToClipboard",
-            text: response.markdown
-          });
-          
-          await showNotificationInTab("Success", "Content converted to Markdown and copied to clipboard");
+          if (command === "download_markdown") {
+            // Download as file
+            const pageTitle = activeTab.title || "llmfeeder";
+            await browserAPI.tabs.sendMessage(activeTab.id, {
+              action: "downloadMarkdown",
+              markdown: response.markdown,
+              title: pageTitle
+            });
+            await showNotificationInTab("Success", "Markdown file downloaded");
+          } else {
+            // Copy to clipboard via content script
+            await browserAPI.tabs.sendMessage(activeTab.id, {
+              action: "copyToClipboard",
+              text: response.markdown
+            });
+            await showNotificationInTab("Success", "Content converted to Markdown and copied to clipboard");
+          }
           console.log("Markdown conversion successful");
         } else {
           await showNotificationInTab("Conversion Failed", response?.error || "Unknown error");

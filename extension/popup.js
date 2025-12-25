@@ -2,7 +2,6 @@
 // Created by @jatinkrmalik (https://github.com/jatinkrmalik)
 
 const MAX_FILENAME_LENGTH = 100;
-const DOWNLOAD_STATUS_INDICATOR_DURATION = 4000;
 
 // Create a proper browserAPI wrapper for the popup
 const browserAPI = (function () {
@@ -81,61 +80,67 @@ const browserAPI = (function () {
   return api;
 })();
 
-// DOM elements
+// DOM elements - Main view
 const convertBtn = document.getElementById("convertBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const downloadBtnShortcut = document.getElementById("downloadBtnShortcut");
 const statusIndicator = document.getElementById("statusIndicator");
-const settingsToggleBtn = document.getElementById("settingsToggleBtn");
-const settingsContainer = document.getElementById("settingsContainer");
-const previewContainer = document.getElementById("previewContainer");
-const previewContent = document.getElementById("previewContent");
 const convertShortcut = document.getElementById("convertShortcut");
+
+// DOM elements - Views
+const mainView = document.getElementById("mainView");
+const settingsView = document.getElementById("settingsView");
+const openSettingsBtn = document.getElementById("openSettingsBtn");
+const backToMainBtn = document.getElementById("backToMainBtn");
+
+// DOM elements - Theme
+const lightThemeBtn = document.getElementById("lightThemeBtn");
+const darkThemeBtn = document.getElementById("darkThemeBtn");
+const bodyTag = document.querySelector("body");
+
+// DOM elements - Settings
 const popupShortcut = document.getElementById("popupShortcut");
 const quickConvertShortcut = document.getElementById("quickConvertShortcut");
-const downloadMarkdownFileBtn = document.getElementById(
-  "downloadMarkdownFileBtn"
-);
-const downloadMarkdownFileContainer = document.getElementById(
-  "downloadMarkdownFileContainer"
-);
-const downloadStatusIndicator = document.getElementById(
-  "downloadStatusIndicator"
-);
-
-// DOM elements (theme)
-const toggleToDark = document.querySelector(".toggle-to-dark");
-const toggleToLight = document.querySelector(".toggle-to-light");
-const bodyTag = document.querySelector("body");
+const downloadShortcut = document.getElementById("downloadShortcut");
 
 const THEME_KEY = "llmfeeder-theme";
 const THEMES = { DARK: "dark", LIGHT: "light" };
 
+// View navigation
+function showSettingsView() {
+  mainView.classList.add("slide-out");
+  settingsView.classList.add("active");
+}
+
+function showMainView() {
+  mainView.classList.remove("slide-out");
+  settingsView.classList.remove("active");
+}
+
+// Theme management
 function setTheme(theme) {
   const isDark = theme === THEMES.DARK;
   bodyTag.classList.toggle("dark-theme", isDark);
   bodyTag.classList.toggle("light-theme", !isDark);
-  // Show moon in light mode (to switch to dark), sun in dark mode (to switch to light)
-  toggleToDark.classList.toggle("hidden", isDark);
-  toggleToLight.classList.toggle("hidden", !isDark);
+  
+  // Update theme buttons
+  lightThemeBtn.classList.toggle("active", !isDark);
+  darkThemeBtn.classList.toggle("active", isDark);
+  
   localStorage.setItem(THEME_KEY, theme);
 }
 
-toggleToDark.addEventListener("click", () => {
-  setTheme("dark");
-});
-toggleToLight.addEventListener("click", () => {
-  setTheme("light");
-});
-
-let userThemePreference = localStorage.getItem("llmfeeder-theme");
-window.addEventListener("DOMContentLoaded", () => {
-  if (userThemePreference === "dark" || userThemePreference === "light")
+function initTheme() {
+  const userThemePreference = localStorage.getItem(THEME_KEY);
+  if (userThemePreference === THEMES.DARK || userThemePreference === THEMES.LIGHT) {
     setTheme(userThemePreference);
-});
+  } else {
+    setTheme(THEMES.LIGHT);
+  }
+}
 
 // Get all settings elements
-const contentScopeRadios = document.querySelectorAll(
-  'input[name="contentScope"]'
-);
+const contentScopeRadios = document.querySelectorAll('input[name="contentScope"]');
 const preserveTablesCheckbox = document.getElementById("preserveTables");
 const includeImagesCheckbox = document.getElementById("includeImages");
 const includeTitleCheckbox = document.getElementById("includeTitle");
@@ -157,18 +162,36 @@ function updateShortcutDisplay() {
   popupShortcut.textContent = `${modifier}L`;
   quickConvertShortcut.textContent = `${modifier}M`;
   convertShortcut.textContent = `${modifier}M`;
+  
+  // Update download shortcut in settings
+  if (downloadShortcut) {
+    downloadShortcut.textContent = `${modifier}D`;
+  }
+  
+  // Update download button shortcut
+  if (downloadBtnShortcut) {
+    downloadBtnShortcut.textContent = `${modifier}D`;
+  }
 
-  // Update shortcut customization instruction
-  const shortcutCustomizeText = document.querySelector(
-    ".shortcut-customize small"
-  );
-  if (shortcutCustomizeText) {
-    const browserName = typeof browser !== "undefined" ? "Firefox" : "Chrome";
-    const shortcutPage =
-      browserName === "Firefox"
-        ? "about:addons"
-        : "chrome://extensions/shortcuts";
-    shortcutCustomizeText.textContent = `Customize at ${shortcutPage}`;
+  // Detect browser - check for Firefox-specific APIs
+  // browser-polyfill defines 'browser' in Chrome too, so we need a different check
+  const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
+
+  // Update shortcut customization link
+  const shortcutLink = document.getElementById("shortcutLink");
+  if (shortcutLink) {
+    const shortcutPage = isFirefox ? "about:addons" : "chrome://extensions/shortcuts";
+    shortcutLink.textContent = shortcutPage;
+    
+    // Handle click to open the shortcuts page
+    shortcutLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (isFirefox) {
+        browser.tabs.create({ url: "about:addons" });
+      } else {
+        chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
+      }
+    });
   }
 }
 
@@ -185,9 +208,7 @@ async function loadSettings() {
     });
 
     // Apply settings to UI
-    document.querySelector(
-      `input[name="contentScope"][value="${data.contentScope}"]`
-    ).checked = true;
+    document.querySelector(`input[name="contentScope"][value="${data.contentScope}"]`).checked = true;
     preserveTablesCheckbox.checked = data.preserveTables;
     includeImagesCheckbox.checked = data.includeImages;
     includeTitleCheckbox.checked = data.includeTitle;
@@ -206,9 +227,7 @@ async function loadSettings() {
 // Save user settings
 async function saveSettings() {
   try {
-    const contentScope = document.querySelector(
-      'input[name="contentScope"]:checked'
-    ).value;
+    const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
@@ -241,7 +260,6 @@ function updateMetadataFormatVisibility(isVisible) {
 async function convertToMarkdown() {
   statusIndicator.textContent = "Converting...";
   statusIndicator.className = "status processing";
-  previewContainer.classList.add("hidden");
 
   try {
     // Get current tab
@@ -254,9 +272,7 @@ async function convertToMarkdown() {
     }
 
     // Get current settings
-    const contentScope = document.querySelector(
-      'input[name="contentScope"]:checked'
-    ).value;
+    const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
@@ -287,13 +303,6 @@ async function convertToMarkdown() {
     statusIndicator.textContent = "Copied to clipboard!";
     statusIndicator.className = "status success";
 
-    // Show preview
-    previewContent.textContent = response.markdown;
-    previewContainer.classList.remove("hidden");
-    if (downloadMarkdownFileContainer) {
-      downloadMarkdownFileContainer.classList.remove("hidden");
-    }
-
     // Save settings
     saveSettings();
   } catch (error) {
@@ -304,22 +313,83 @@ async function convertToMarkdown() {
   }
 }
 
+// Download markdown file
+async function downloadMarkdown() {
+  statusIndicator.textContent = "Converting...";
+  statusIndicator.className = "status processing";
+
+  try {
+    // Get current tab
+    const tabs = await browserAPI.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (!tabs || tabs.length === 0) {
+      throw new Error("No active tab found");
+    }
+
+    // Get current settings
+    const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
+    const preserveTables = preserveTablesCheckbox.checked;
+    const includeImages = includeImagesCheckbox.checked;
+    const includeTitle = includeTitleCheckbox.checked;
+    const includeMetadata = includeMetadataCheckbox.checked;
+    const metadataFormat = metadataFormatTextarea.value;
+
+    // Send message to content script
+    const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
+      action: "convertToMarkdown",
+      settings: {
+        contentScope,
+        preserveTables,
+        includeImages,
+        includeTitle,
+        includeMetadata,
+        metadataFormat,
+      },
+    });
+
+    if (!response.success) {
+      throw new Error(response.error || "Unknown error");
+    }
+
+    // Download the file
+    const filename = await generateFileNameFromPageTitle();
+    downloadMarkdownFile(filename, response.markdown);
+
+    // Update UI
+    statusIndicator.textContent = "Downloaded!";
+    statusIndicator.className = "status success";
+
+    // Save settings
+    saveSettings();
+  } catch (error) {
+    console.error("Download error:", error);
+    const errorMessage = error.message || error.toString() || "Failed to download";
+    statusIndicator.textContent = `Error: ${errorMessage}`;
+    statusIndicator.className = "status error";
+  }
+}
+
 // Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
   updateShortcutDisplay();
   loadSettings();
 
   // Convert button click
   convertBtn.addEventListener("click", convertToMarkdown);
+  
+  // Download button click
+  downloadBtn.addEventListener("click", downloadMarkdown);
 
-  // Settings toggle
-  settingsToggleBtn.addEventListener("click", () => {
-    const isHidden = settingsContainer.classList.contains("hidden");
-    settingsContainer.classList.toggle("hidden");
-    settingsToggleBtn.querySelector(".toggle-icon").textContent = isHidden
-      ? "▲"
-      : "▼";
-  });
+  // View navigation
+  openSettingsBtn.addEventListener("click", showSettingsView);
+  backToMainBtn.addEventListener("click", showMainView);
+
+  // Theme buttons
+  lightThemeBtn.addEventListener("click", () => setTheme(THEMES.LIGHT));
+  darkThemeBtn.addEventListener("click", () => setTheme(THEMES.DARK));
 
   // Save settings when changed
   contentScopeRadios.forEach((radio) => {
@@ -341,18 +411,6 @@ document.addEventListener("DOMContentLoaded", () => {
   resetMetadataFormatBtn.addEventListener("click", () => {
     metadataFormatTextarea.value = DEFAULT_METADATA_FORMAT;
     saveSettings();
-  });
-
-  downloadMarkdownFileBtn.addEventListener("click", async () => {
-    const markdownContent = previewContent.textContent;
-
-    if (!markdownContent || markdownContent.trim() === "") {
-      updateDownloadStatus("Markdown content is empty.", "error");
-      return;
-    }
-
-    const filename = await generateFileNameFromPageTitle();
-    downloadMarkdownFile(filename, markdownContent);
   });
 });
 
@@ -404,15 +462,8 @@ function downloadMarkdownFile(filename, content) {
     a.download = `${filename}.md`;
     document.body.appendChild(a);
     a.click();
-
-    updateDownloadStatus("Download complete!", "success");
   } catch (error) {
     console.error("Error downloading file:", error);
-
-    updateDownloadStatus(
-      `Error: ${error.message || "Failed to download file"}`,
-      "error"
-    );
   } finally {
     // Clean up, ensuring 'a' and 'url' are defined if an error occurred before their assignment
     if (a && a.parentElement) {
@@ -422,17 +473,4 @@ function downloadMarkdownFile(filename, content) {
       URL.revokeObjectURL(url);
     }
   }
-}
-
-// Helper function to update and reset the download status indicator
-function updateDownloadStatus(message, type = "success") {
-  downloadStatusIndicator.textContent = message;
-  downloadStatusIndicator.className = `status ${type}`; // Reset classes and add new ones
-  downloadStatusIndicator.classList.remove("hidden");
-
-  setTimeout(() => {
-    downloadStatusIndicator.textContent = "";
-    downloadStatusIndicator.classList.add("hidden");
-    downloadStatusIndicator.classList.remove("status", type);
-  }, DOWNLOAD_STATUS_INDICATOR_DURATION);
 }
