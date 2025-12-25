@@ -14,7 +14,19 @@
 
 A browser extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs). Available for both [Chrome](https://chromewebstore.google.com/detail/llmfeeder-webpage-to-mark/cjjfhhapabcpcokkfldbiiojiphbifdk) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/).
 
-## ✨ What's New in v1.1.0
+## ✨ What's New in v2.0.0
+
+- 🎨 **Complete UI Redesign** - Modern, cleaner interface with dedicated Settings view and improved layout
+- 📝 **Customizable Metadata Format** - Template-based system with 6 variables ({title}, {url}, {date}, {author}, {siteName}, {excerpt}) for flexible citation styles
+- ⌨️ **Keyboard Shortcut Badges** - Visual shortcut indicators on action buttons for better discoverability
+- 💡 **Action Button Tooltips** - Hover tooltips on all action buttons for improved accessibility
+- 🔧 **Dedicated Settings Panel** - Separate settings view with organized sections for appearance, content, and formatting
+- 📚 **Updated Libraries** - Latest versions of Readability.js, Turndown.js, and browser-polyfill.js
+- 🐛 **Bug Fixes** - Fixed ReferenceError and improved error message display in popup
+- 🚀 **GitHub Actions Integration** - Automated release artifact uploads
+- ❓ **Help & FAQ Link** - Quick access to community discussions and support
+
+### Previous Release (v1.1.0)
 
 - 🌙 **Dark/Light Mode Toggle** - Complete theme system with automatic preference persistence
 - 📥 **Download as File** - Save converted Markdown directly as .md files  
