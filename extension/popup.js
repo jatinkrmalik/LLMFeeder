@@ -93,6 +93,14 @@ const downloadBtnShortcut = document.getElementById("downloadBtnShortcut");
 const statusIndicator = document.getElementById("statusIndicator");
 const convertShortcut = document.getElementById("convertShortcut");
 
+// DOM elements - Multi-tab mode
+const singleTabActions = document.getElementById("singleTabActions");
+const multiTabActions = document.getElementById("multiTabActions");
+const selectedTabCount = document.getElementById("selectedTabCount");
+const copyAllBtn = document.getElementById("copyAllBtn");
+const downloadMergedBtn = document.getElementById("downloadMergedBtn");
+const downloadZipBtn = document.getElementById("downloadZipBtn");
+
 // DOM elements - Views
 const mainView = document.getElementById("mainView");
 const settingsView = document.getElementById("settingsView");
@@ -112,39 +120,6 @@ const downloadShortcut = document.getElementById("downloadShortcut");
 const THEME_KEY = "llmfeeder-theme";
 const THEMES = { DARK: "dark", LIGHT: "light" };
 
-// View navigation
-function showSettingsView() {
-  mainView.classList.add("slide-out");
-  settingsView.classList.add("active");
-}
-
-function showMainView() {
-  mainView.classList.remove("slide-out");
-  settingsView.classList.remove("active");
-}
-
-// Theme management
-function setTheme(theme) {
-  const isDark = theme === THEMES.DARK;
-  bodyTag.classList.toggle("dark-theme", isDark);
-  bodyTag.classList.toggle("light-theme", !isDark);
-  
-  // Update theme buttons
-  lightThemeBtn.classList.toggle("active", !isDark);
-  darkThemeBtn.classList.toggle("active", isDark);
-  
-  localStorage.setItem(THEME_KEY, theme);
-}
-
-function initTheme() {
-  const userThemePreference = localStorage.getItem(THEME_KEY);
-  if (userThemePreference === THEMES.DARK || userThemePreference === THEMES.LIGHT) {
-    setTheme(userThemePreference);
-  } else {
-    setTheme(THEMES.LIGHT);
-  }
-}
-
 // Get all settings elements
 const contentScopeRadios = document.querySelectorAll('input[name="contentScope"]');
 const preserveTablesCheckbox = document.getElementById("preserveTables");
@@ -157,22 +132,6 @@ const resetMetadataFormatBtn = document.getElementById("resetMetadataFormat");
 const debugModeCheckbox = document.getElementById("debugMode");
 const copyLogsBtn = document.getElementById("copyLogsBtn");
 
-<<<<<<< HEAD
-// Token Counter DOM elements
-const tokenCounter = document.getElementById("tokenCounter");
-const tokenCountValue = document.getElementById("tokenCountValue");
-const tokenLimitValue = document.getElementById("tokenLimitValue");
-const tokenProgressBar = document.getElementById("tokenProgressBar");
-const tokenWarning = document.getElementById("tokenWarning");
-const showTokenCountCheckbox = document.getElementById("showTokenCount");
-const tokenContextLimitSelect = document.getElementById("tokenContextLimit");
-
-// Tagline element
-const tagline = document.getElementById("tagline");
-
-// Current token count for display
-let currentTokenCount = 0;
-=======
 // Token Counter DOM elements
 const tokenCounter = document.getElementById("tokenCounter");
 const tokenCountValue = document.getElementById("tokenCountValue");
@@ -200,14 +159,44 @@ const storeNameSpan = document.getElementById("storeName");
 const ratingCta = document.getElementById("ratingCta");
 const dismissRatingCta = document.getElementById("dismissRatingCta");
 
-// Default metadata format
-const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
-
 // Default token counter settings
 const DEFAULT_TOKEN_SETTINGS = {
   showTokenCount: true,
   tokenContextLimit: 8192
 };
+
+// View navigation
+function showSettingsView() {
+  mainView.classList.add("slide-out");
+  settingsView.classList.add("active");
+}
+
+function showMainView() {
+  mainView.classList.remove("slide-out");
+  settingsView.classList.remove("active");
+}
+
+// Theme management
+function setTheme(theme) {
+  const isDark = theme === THEMES.DARK;
+  bodyTag.classList.toggle("dark-theme", isDark);
+  bodyTag.classList.toggle("light-theme", !isDark);
+
+  // Update theme buttons
+  lightThemeBtn.classList.toggle("active", !isDark);
+  darkThemeBtn.classList.toggle("active", isDark);
+
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function initTheme() {
+  const userThemePreference = localStorage.getItem(THEME_KEY);
+  if (userThemePreference === THEMES.DARK || userThemePreference === THEMES.LIGHT) {
+    setTheme(userThemePreference);
+  } else {
+    setTheme(THEMES.LIGHT);
+  }
+}
 
 /**
  * Format large numbers for display (e.g., 128000 -> "128K")
@@ -230,15 +219,15 @@ function formatTokenLimit(num) {
  */
 function updateTokenDisplay(count, limit) {
   currentTokenCount = count;
-  
+
   // Update values
   tokenCountValue.textContent = count.toLocaleString();
   tokenLimitValue.textContent = formatTokenLimit(limit);
-  
+
   // Calculate percentage
   const percentage = Math.min((count / limit) * 100, 100);
   tokenProgressBar.style.width = percentage + '%';
-  
+
   // Update progress bar color based on percentage
   tokenProgressBar.classList.remove('warning', 'error');
   if (percentage >= 100) {
@@ -246,7 +235,7 @@ function updateTokenDisplay(count, limit) {
   } else if (percentage >= 75) {
     tokenProgressBar.classList.add('warning');
   }
-  
+
   // Show/hide counter and tagline
   if (showTokenCountCheckbox.checked) {
     tokenCounter.classList.remove('hidden');
@@ -261,7 +250,7 @@ function updateTokenDisplay(count, limit) {
       tagline.classList.remove('hidden');
     }
   }
-  
+
   // Update warning message
   tokenWarning.classList.remove('hidden', 'error');
   if (percentage >= 100) {
@@ -293,19 +282,34 @@ function updateShortcutDisplay() {
   const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
   const modifier = isMac ? "⌥⇧" : "Alt+Shift+";
 
-  // Update shortcut badges
+  // Update shortcut badges - Single-tab mode
   popupShortcut.textContent = `${modifier}L`;
   quickConvertShortcut.textContent = `${modifier}M`;
   convertShortcut.textContent = `${modifier}M`;
-  
+
   // Update download shortcut in settings
   if (downloadShortcut) {
     downloadShortcut.textContent = `${modifier}D`;
   }
-  
+
   // Update download button shortcut
   if (downloadBtnShortcut) {
     downloadBtnShortcut.textContent = `${modifier}D`;
+  }
+
+  // Update shortcut badges - Multi-tab mode
+  const copyAllShortcut = document.getElementById("copyAllShortcut");
+  const downloadMergedShortcut = document.getElementById("downloadMergedShortcut");
+  const downloadZipShortcut = document.getElementById("downloadZipShortcut");
+
+  if (copyAllShortcut) {
+    copyAllShortcut.textContent = `${modifier}M`;
+  }
+  if (downloadMergedShortcut) {
+    downloadMergedShortcut.textContent = `${modifier}D`;
+  }
+  if (downloadZipShortcut) {
+    downloadZipShortcut.textContent = `${modifier}Z`;
   }
 
   // Detect browser - check for Firefox-specific APIs
@@ -317,7 +321,7 @@ function updateShortcutDisplay() {
   if (shortcutLink) {
     const shortcutPage = isFirefox ? "about:addons" : "chrome://extensions/shortcuts";
     shortcutLink.textContent = shortcutPage;
-    
+
     // Handle click to open the shortcuts page
     shortcutLink.addEventListener("click", (e) => {
       e.preventDefault();
@@ -338,14 +342,10 @@ function updateShortcutDisplay() {
 // Load user settings
 async function loadSettings() {
   try {
-    const data = await browserAPI.storage.sync.get({
-      contentScope: "mainContent",
-      preserveTables: true,
-      includeImages: true,
-      includeTitle: true,
-      includeMetadata: true,
-      metadataFormat: DEFAULT_METADATA_FORMAT,
-      debugMode: false,
+    const data = await SettingsUtils.getUserSettings(browserAPI);
+
+    // Also get token settings
+    const tokenSettings = await browserAPI.storage.sync.get({
       showTokenCount: DEFAULT_TOKEN_SETTINGS.showTokenCount,
       tokenContextLimit: DEFAULT_TOKEN_SETTINGS.tokenContextLimit,
     });
@@ -358,8 +358,8 @@ async function loadSettings() {
     includeMetadataCheckbox.checked = data.includeMetadata;
     metadataFormatTextarea.value = data.metadataFormat;
     debugModeCheckbox.checked = data.debugMode;
-    showTokenCountCheckbox.checked = data.showTokenCount;
-    tokenContextLimitSelect.value = data.tokenContextLimit.toString();
+    showTokenCountCheckbox.checked = tokenSettings.showTokenCount;
+    tokenContextLimitSelect.value = tokenSettings.tokenContextLimit.toString();
 
     // Show/hide metadata format container based on checkbox state
     updateMetadataFormatVisibility(data.includeMetadata);
@@ -491,8 +491,8 @@ async function trackConversion() {
 
     const newCount = data.conversionCount + 1;
     const isSnoozed = data.snoozeThreshold !== null;
-    const shouldShowBanner = !data.reviewPromptDismissed && 
-                             (newCount === REVIEW_TRIGGER_COUNT || 
+    const shouldShowBanner = !data.reviewPromptDismissed &&
+                             (newCount === REVIEW_TRIGGER_COUNT ||
                               (data.snoozeThreshold && newCount === data.snoozeThreshold));
 
     await browserAPI.storage.sync.set({ conversionCount: newCount });
@@ -568,8 +568,8 @@ async function initReviewBanner() {
     });
 
     const isSnoozed = data.snoozeThreshold !== null;
-    const shouldShow = !data.reviewPromptDismissed && 
-                      (data.conversionCount === REVIEW_TRIGGER_COUNT || 
+    const shouldShow = !data.reviewPromptDismissed &&
+                      (data.conversionCount === REVIEW_TRIGGER_COUNT ||
                        (data.snoozeThreshold && data.conversionCount === data.snoozeThreshold));
 
     if (shouldShow) {
@@ -615,7 +615,7 @@ async function initSettingsRatingCta() {
 async function handleDismissSettingsRatingCta() {
   try {
     const now = Date.now();
-    await browserAPI.storage.sync.set({ 
+    await browserAPI.storage.sync.set({
       settingsRatingCtaDismissed: true,
       settingsRatingCtaDismissedAt: now
     });
@@ -649,12 +649,157 @@ async function shouldResetSettingsRatingCta() {
     // Check if 60 days have passed
     const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
     const timeSinceDismissal = Date.now() - data.settingsRatingCtaDismissedAt;
-    
+
     return timeSinceDismissal >= SIXTY_DAYS_MS;
   } catch (error) {
     console.error("Error checking settings rating CTA reset:", error);
     return false;
   }
+}
+
+// Multi-tab functionality
+
+// Detect highlighted tabs and update UI
+async function detectSelectedTabsAndUpdateUI() {
+  // Start with single-tab mode as default (immediate render)
+  showSingleTabUI();
+
+  try {
+    const validTabs = await MultiTabUtils.getHighlightedTabs(browserAPI);
+
+    if (validTabs.length > 1) {
+      // Multi-tab mode - switch to multi-tab UI
+      showMultiTabUI(validTabs.length);
+      return validTabs;
+    } else {
+      // Single-tab mode (already showing)
+      return null;
+    }
+  } catch (error) {
+    console.error('Error detecting tabs:', error);
+    // Already showing single-tab UI, just return
+    return null;
+  }
+}
+
+function showMultiTabUI(count) {
+  singleTabActions.classList.add('hidden');
+  multiTabActions.classList.remove('hidden');
+  selectedTabCount.textContent = count;
+}
+
+function showSingleTabUI() {
+  singleTabActions.classList.remove('hidden');
+  multiTabActions.classList.add('hidden');
+}
+
+// Progress callback for status updates
+function updateStatus(message) {
+  statusIndicator.textContent = message;
+  statusIndicator.className = "status processing";
+}
+
+// Get current settings from UI
+function getCurrentSettings() {
+  return {
+    contentScope: document.querySelector('input[name="contentScope"]:checked').value,
+    preserveTables: preserveTablesCheckbox.checked,
+    includeImages: includeImagesCheckbox.checked,
+    includeTitle: includeTitleCheckbox.checked,
+    includeMetadata: includeMetadataCheckbox.checked,
+    metadataFormat: metadataFormatTextarea.value,
+  };
+}
+
+// Check if user confirms large tab operation
+// Returns true to proceed, false to cancel
+function confirmLargeTabCount(tabs) {
+    if (MultiTabUtils.shouldWarnAboutLargeTabCount(tabs.length)) {
+        return confirm(MultiTabUtils.getLargeTabCountWarning(tabs.length));
+    }
+    return true; // Proceed if below threshold
+}
+
+// Shared helper for multi-tab actions (copy, download merged, download ZIP)
+async function processMultiTabAction(actionFn) {
+  statusIndicator.textContent = "Converting...";
+  statusIndicator.className = "status processing";
+
+  try {
+    const tabs = await detectSelectedTabsAndUpdateUI();
+    if (!tabs || tabs.length < 2) {
+      throw new Error('Please select multiple tabs');
+    }
+
+    if (!confirmLargeTabCount(tabs)) {
+      statusIndicator.textContent = "Operation cancelled";
+      statusIndicator.className = "status";
+      return;
+    }
+
+    const settings = getCurrentSettings();
+    const results = await MultiTabUtils.processMultipleTabs(tabs, settings, browserAPI, updateStatus);
+
+    const { prefix, suffix } = await actionFn(results);
+
+    let totalTokenCount = 0;
+    results.forEach(result => {
+      if (result.success && result.tokenCount) {
+        totalTokenCount += result.tokenCount;
+      }
+    });
+
+    const { message } = MultiTabUtils.getResultsSummary(results);
+
+    statusIndicator.textContent = `${prefix || ''}${message}${suffix}`;
+    statusIndicator.className = "status success";
+
+    if (totalTokenCount > 0) {
+      const contextLimit = parseInt(tokenContextLimitSelect.value, 10);
+      updateTokenDisplay(totalTokenCount, contextLimit);
+    }
+
+    await saveSettings();
+
+    const bannerState = await trackConversion();
+    if (bannerState.show) {
+      showReviewBanner(bannerState.isSnoozed);
+    }
+  } catch (error) {
+    console.error('Multi-tab action error:', error);
+    statusIndicator.textContent = `Error: ${error.message}`;
+    statusIndicator.className = "status error";
+    hideTokenDisplay();
+  }
+}
+
+// Copy All button handler
+async function copyAllTabs() {
+  await processMultiTabAction(async (results) => {
+    const merged = MultiTabUtils.mergeMarkdownResults(results);
+    await navigator.clipboard.writeText(merged);
+    return { suffix: " copied to clipboard" };
+  });
+}
+
+// Download Merged button handler
+async function downloadMergedFile() {
+  await processMultiTabAction(async (results) => {
+    const merged = MultiTabUtils.mergeMarkdownResults(results);
+    const filename = `llmfeeder-merged-${MultiTabUtils.getDateString()}`;
+    downloadMarkdownFile(filename, merged);
+    return { suffix: " downloaded" };
+  });
+}
+
+// Download ZIP button handler
+async function downloadZipArchive() {
+  await processMultiTabAction(async (results) => {
+    statusIndicator.textContent = "Creating ZIP archive...";
+    const { blob, filename } = await MultiTabUtils.createZipArchive(results);
+    downloadFile(filename, blob, 'application/zip');
+    return { prefix: "ZIP with ", suffix: " downloaded" };
+  });
 }
 
 // Convert current page to Markdown
@@ -701,7 +846,7 @@ async function convertToMarkdown() {
 
     // Use token count from content script response for consistency
     let tokenCount = response.tokenCount || 0;
-    
+
     // Fallback to TokenCounter if needed (shouldn't happen)
     if (tokenCount === 0 && typeof TokenCounter !== 'undefined') {
       try {
@@ -783,7 +928,7 @@ async function downloadMarkdown() {
 
     // Use token count from content script response for consistency
     let tokenCount = response.tokenCount || 0;
-    
+
     // Fallback to TokenCounter if needed (shouldn't happen)
     if (tokenCount === 0 && typeof TokenCounter !== 'undefined') {
       try {
@@ -823,18 +968,27 @@ async function downloadMarkdown() {
 }
 
 // Event Listeners
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   updateShortcutDisplay();
-  loadSettings();
+  await loadSettings();
   initReviewBanner();
   initSettingsRatingCta();
 
-  // Convert button click
+  // Detect multi-tab selection (non-blocking, runs in background)
+  // UI defaults to single-tab mode, then switches if multiple tabs detected
+  detectSelectedTabsAndUpdateUI().catch(error => {
+    console.error('Error detecting multi-tab selection:', error);
+  });
+
+  // Single-tab button clicks
   convertBtn.addEventListener("click", convertToMarkdown);
-  
-  // Download button click
   downloadBtn.addEventListener("click", downloadMarkdown);
+
+  // Multi-tab button clicks
+  copyAllBtn.addEventListener("click", copyAllTabs);
+  downloadMergedBtn.addEventListener("click", downloadMergedFile);
+  downloadZipBtn.addEventListener("click", downloadZipArchive);
 
   // View navigation
   openSettingsBtn.addEventListener("click", showSettingsView);
@@ -866,14 +1020,13 @@ document.addEventListener("DOMContentLoaded", () => {
   metadataFormatTextarea.addEventListener("input", saveSettings);
 
   resetMetadataFormatBtn.addEventListener("click", () => {
-    metadataFormatTextarea.value = DEFAULT_METADATA_FORMAT;
+    metadataFormatTextarea.value = SettingsUtils.DEFAULT_METADATA_FORMAT;
     saveSettings();
   });
 
   // Copy logs button
   copyLogsBtn.addEventListener("click", copyLogs);
 
-<<<<<<< HEAD
   // Token counter settings
   showTokenCountCheckbox.addEventListener("change", () => {
     saveSettings();
@@ -971,18 +1124,19 @@ async function generateFileNameFromPageTitle() {
   }
 }
 
-function downloadMarkdownFile(filename, content) {
+// Generic file download function
+function downloadFile(filename, content, mimeType = "text/markdown") {
   let a = null;
   let url = null;
-  
+
   try {
     // Create a blob and download
-    const blob = new Blob([content], { type: "text/markdown" });
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType });
     url = URL.createObjectURL(blob);
 
     a = document.createElement("a");
     a.href = url;
-    a.download = `${filename}.md`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
   } catch (error) {
@@ -996,4 +1150,9 @@ function downloadMarkdownFile(filename, content) {
       URL.revokeObjectURL(url);
     }
   }
+}
+
+// Helper for markdown file downloads
+function downloadMarkdownFile(filename, content) {
+  downloadFile(`${filename}.md`, content, "text/markdown");
 }
