@@ -68,20 +68,52 @@
           </div>
           <div class="center-section">
             <div class="main-controls">
-              <button id="convertBtn" class="primary-btn" title="Convert this page to Markdown and copy to clipboard">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
-                </svg>
-                <span class="btn-text">Convert & Copy</span>
-                <span id="convertShortcut" class="shortcut-badge"></span>
-              </button>
-              <button id="downloadBtn" class="secondary-btn" title="Convert this page to Markdown and download as a file">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                <span class="btn-text">Download Markdown</span>
-                <span id="downloadBtnShortcut" class="shortcut-badge"></span>
-              </button>
+              <!-- Single-tab actions -->
+              <div id="singleTabActions" class="action-buttons">
+                <button id="convertBtn" class="primary-btn" title="Convert this page to Markdown and copy to clipboard">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                  </svg>
+                  <span class="btn-text">Convert & Copy</span>
+                  <span id="convertShortcut" class="shortcut-badge"></span>
+                </button>
+                <button id="downloadBtn" class="secondary-btn" title="Convert this page to Markdown and download as a file">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  <span class="btn-text">Download Markdown</span>
+                  <span id="downloadBtnShortcut" class="shortcut-badge"></span>
+                </button>
+              </div>
+
+              <!-- Multi-tab actions (hidden by default) -->
+              <div id="multiTabActions" class="multi-tab-actions hidden">
+                <div class="tab-count-badge">
+                  <span id="selectedTabCount">0</span> tabs selected
+                </div>
+                <button id="copyAllBtn" class="primary-btn" title="Merge all selected tabs and copy to clipboard">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                  </svg>
+                  <span class="btn-text">Copy All</span>
+                  <span id="copyAllShortcut" class="shortcut-badge"></span>
+                </button>
+                <button id="downloadMergedBtn" class="secondary-btn" title="Merge all selected tabs and download as single file">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  <span class="btn-text">Download Merged</span>
+                  <span id="downloadMergedShortcut" class="shortcut-badge"></span>
+                </button>
+                <button id="downloadZipBtn" class="secondary-btn" title="Download each tab as separate file in ZIP archive">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                  </svg>
+                  <span class="btn-text">Download ZIP</span>
+                  <span id="downloadZipShortcut" class="shortcut-badge"></span>
+                </button>
+              </div>
+
               <div id="statusIndicator" class="status">Ready</div>
             </div>
           </div>
@@ -242,6 +274,8 @@ Source: [{title}]({url})</textarea>
       </div>
     </div>
     <script src="libs/browser-polyfill.js"></script>
+    <script src="libs/jszip.min.js"></script>
+    <script src="multi-tab-utils.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

@@ -1,5 +1,7 @@
 // LLMFeeder Background Script
 // Handles keyboard shortcuts and background tasks
+// Dependencies: libs/jszip.min.js and multi-tab-utils.js
+// (loaded via manifest in Firefox, or importScripts in Chrome service worker)
 
 // Create browser compatibility layer for service worker context
 const browserAPI = (function() {
@@ -106,9 +108,9 @@ async function showNotificationInTab(title, message) {
   try {
     const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
     if (!tabs || !tabs.length) return;
-    
+
     const tab = tabs[0];
-    
+
     // Send message to content script to show notification
     await browserAPI.tabs.sendMessage(tab.id, {
       action: 'showNotification',
@@ -120,17 +122,106 @@ async function showNotificationInTab(title, message) {
   }
 }
 
+// Handle multi-tab commands
+async function handleMultiTabCommand(command, tabs) {
+  try {
+    // Get user settings
+    const settings = await browserAPI.storage.sync.get({
+      contentScope: 'mainContent',
+      preserveTables: true,
+      includeImages: true,
+      includeTitle: true,
+      includeMetadata: true,
+      metadataFormat: "---\nSource: [{title}]({url})"
+    });
+
+    // Process all tabs
+    const results = await MultiTabUtils.processMultipleTabs(tabs, settings, browserAPI, null);
+    const { message, successCount } = MultiTabUtils.getResultsSummary(results);
+
+    if (successCount === 0) {
+      await showNotificationInTab("Conversion Failed", "No tabs were successfully converted");
+      return;
+    }
+
+    // Handle different commands
+    if (command === "convert_to_markdown") {
+      // Copy All: Merge and copy to clipboard
+      const merged = MultiTabUtils.mergeMarkdownResults(results);
+
+      // Copy to clipboard via active tab's content script
+      const activeTabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
+      if (activeTabs && activeTabs.length > 0) {
+        await browserAPI.tabs.sendMessage(activeTabs[0].id, {
+          action: "copyToClipboard",
+          text: merged
+        });
+        await showNotificationInTab("Success", `${message} copied to clipboard`);
+      }
+
+    } else if (command === "download_markdown") {
+      // Download Merged: Single .md file
+      const merged = MultiTabUtils.mergeMarkdownResults(results);
+      const filename = `llmfeeder-merged-${MultiTabUtils.getDateString()}.md`;
+
+      // Trigger download via active tab
+      const activeTabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
+      if (activeTabs && activeTabs.length > 0) {
+        await browserAPI.tabs.sendMessage(activeTabs[0].id, {
+          action: "downloadMarkdown",
+          markdown: merged,
+          title: filename.replace('.md', '')
+        });
+        await showNotificationInTab("Success", `${message} downloaded as merged file`);
+      }
+
+    } else if (command === "download_zip") {
+      // Download ZIP: Individual files in archive
+      const { blob, filename } = await MultiTabUtils.createZipArchive(results);
+
+      // Convert blob to data URL for download
+      const reader = new FileReader();
+      reader.onloadend = async function() {
+        const activeTabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
+        if (activeTabs && activeTabs.length > 0) {
+          // Send download message to content script
+          await browserAPI.tabs.sendMessage(activeTabs[0].id, {
+            action: "downloadFile",
+            dataUrl: reader.result,
+            filename: filename
+          });
+          await showNotificationInTab("Success", `ZIP with ${message} downloaded`);
+        }
+      };
+      reader.readAsDataURL(blob);
+    }
+
+  } catch (error) {
+    console.error("Multi-tab command error:", error);
+    await showNotificationInTab("Error", error.message || "Failed to process multiple tabs");
+  }
+}
+
 // Handle keyboard shortcuts
 browserAPI.commands.onCommand.addListener(async (command) => {
-  if (command === "convert_to_markdown" || command === "download_markdown") {
+  if (command === "convert_to_markdown" || command === "download_markdown" || command === "download_zip") {
     try {
-      // Get current active tab
+      // Check if multiple tabs are selected
+      const highlightedTabs = await MultiTabUtils.getHighlightedTabs(browserAPI);
+
+      // Route to multi-tab handler if 2+ tabs selected
+      if (highlightedTabs.length > 1) {
+        await handleMultiTabCommand(command, highlightedTabs);
+        return;
+      }
+
+      // Single-tab handling (existing behavior)
       const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
       if (!tabs || !tabs.length) {
         console.error("No active tab found");
         return;
       }
-      
+
       const activeTab = tabs[0];
       
       // Check if the URL is valid for content scripts

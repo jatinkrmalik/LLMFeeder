@@ -87,6 +87,14 @@ const downloadBtnShortcut = document.getElementById("downloadBtnShortcut");
 const statusIndicator = document.getElementById("statusIndicator");
 const convertShortcut = document.getElementById("convertShortcut");
 
+// DOM elements - Multi-tab mode
+const singleTabActions = document.getElementById("singleTabActions");
+const multiTabActions = document.getElementById("multiTabActions");
+const selectedTabCount = document.getElementById("selectedTabCount");
+const copyAllBtn = document.getElementById("copyAllBtn");
+const downloadMergedBtn = document.getElementById("downloadMergedBtn");
+const downloadZipBtn = document.getElementById("downloadZipBtn");
+
 // DOM elements - Views
 const mainView = document.getElementById("mainView");
 const settingsView = document.getElementById("settingsView");
@@ -160,19 +168,34 @@ function updateShortcutDisplay() {
   const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
   const modifier = isMac ? "⌥⇧" : "Alt+Shift+";
 
-  // Update shortcut badges
+  // Update shortcut badges - Single-tab mode
   popupShortcut.textContent = `${modifier}L`;
   quickConvertShortcut.textContent = `${modifier}M`;
   convertShortcut.textContent = `${modifier}M`;
-  
+
   // Update download shortcut in settings
   if (downloadShortcut) {
     downloadShortcut.textContent = `${modifier}D`;
   }
-  
+
   // Update download button shortcut
   if (downloadBtnShortcut) {
     downloadBtnShortcut.textContent = `${modifier}D`;
+  }
+
+  // Update shortcut badges - Multi-tab mode
+  const copyAllShortcut = document.getElementById("copyAllShortcut");
+  const downloadMergedShortcut = document.getElementById("downloadMergedShortcut");
+  const downloadZipShortcut = document.getElementById("downloadZipShortcut");
+
+  if (copyAllShortcut) {
+    copyAllShortcut.textContent = `${modifier}M`;
+  }
+  if (downloadMergedShortcut) {
+    downloadMergedShortcut.textContent = `${modifier}D`;
+  }
+  if (downloadZipShortcut) {
+    downloadZipShortcut.textContent = `${modifier}Z`;
   }
 
   // Detect browser - check for Firefox-specific APIs
@@ -324,6 +347,152 @@ function updateDebugModeVisibility() {
   }
 }
 
+// Multi-tab functionality
+
+// Detect highlighted tabs and update UI
+async function detectSelectedTabsAndUpdateUI() {
+  // Start with single-tab mode as default (immediate render)
+  showSingleTabUI();
+
+  try {
+    const validTabs = await MultiTabUtils.getHighlightedTabs(browserAPI);
+
+    if (validTabs.length > 1) {
+      // Multi-tab mode - switch to multi-tab UI
+      showMultiTabUI(validTabs.length);
+      return validTabs;
+    } else {
+      // Single-tab mode (already showing)
+      return null;
+    }
+  } catch (error) {
+    console.error('Error detecting tabs:', error);
+    // Already showing single-tab UI, just return
+    return null;
+  }
+}
+
+function showMultiTabUI(count) {
+  singleTabActions.classList.add('hidden');
+  multiTabActions.classList.remove('hidden');
+  selectedTabCount.textContent = count;
+}
+
+function showSingleTabUI() {
+  singleTabActions.classList.remove('hidden');
+  multiTabActions.classList.add('hidden');
+}
+
+// Progress callback for status updates
+function updateStatus(message) {
+  statusIndicator.textContent = message;
+  statusIndicator.className = "status processing";
+}
+
+// Get current settings from UI
+function getCurrentSettings() {
+  return {
+    contentScope: document.querySelector('input[name="contentScope"]:checked').value,
+    preserveTables: preserveTablesCheckbox.checked,
+    includeImages: includeImagesCheckbox.checked,
+    includeTitle: includeTitleCheckbox.checked,
+    includeMetadata: includeMetadataCheckbox.checked,
+    metadataFormat: metadataFormatTextarea.value,
+  };
+}
+
+// Copy All button handler
+async function copyAllTabs() {
+  statusIndicator.textContent = "Converting...";
+  statusIndicator.className = "status processing";
+
+  try {
+    const tabs = await detectSelectedTabsAndUpdateUI();
+    if (!tabs || tabs.length < 2) {
+      throw new Error('Please select multiple tabs');
+    }
+
+    const settings = getCurrentSettings();
+    const results = await MultiTabUtils.processMultipleTabs(tabs, settings, browserAPI, updateStatus);
+    const merged = MultiTabUtils.mergeMarkdownResults(results);
+
+    await navigator.clipboard.writeText(merged);
+
+    const { message } = MultiTabUtils.getResultsSummary(results);
+    statusIndicator.textContent = `${message} copied to clipboard`;
+    statusIndicator.className = "status success";
+
+    await saveSettings();
+  } catch (error) {
+    console.error('Copy all error:', error);
+    statusIndicator.textContent = `Error: ${error.message}`;
+    statusIndicator.className = "status error";
+  }
+}
+
+// Download Merged button handler
+async function downloadMergedFile() {
+  statusIndicator.textContent = "Converting...";
+  statusIndicator.className = "status processing";
+
+  try {
+    const tabs = await detectSelectedTabsAndUpdateUI();
+    if (!tabs || tabs.length < 2) {
+      throw new Error('Please select multiple tabs');
+    }
+
+    const settings = getCurrentSettings();
+    const results = await MultiTabUtils.processMultipleTabs(tabs, settings, browserAPI, updateStatus);
+    const merged = MultiTabUtils.mergeMarkdownResults(results);
+
+    const filename = `llmfeeder-merged-${MultiTabUtils.getDateString()}`;
+    downloadMarkdownFile(filename, merged);
+
+    const { message } = MultiTabUtils.getResultsSummary(results);
+    statusIndicator.textContent = `${message} downloaded`;
+    statusIndicator.className = "status success";
+
+    await saveSettings();
+  } catch (error) {
+    console.error('Download merged error:', error);
+    statusIndicator.textContent = `Error: ${error.message}`;
+    statusIndicator.className = "status error";
+  }
+}
+
+// Download ZIP button handler
+async function downloadZipArchive() {
+  statusIndicator.textContent = "Converting...";
+  statusIndicator.className = "status processing";
+
+  try {
+    const tabs = await detectSelectedTabsAndUpdateUI();
+    if (!tabs || tabs.length < 2) {
+      throw new Error('Please select multiple tabs');
+    }
+
+    const settings = getCurrentSettings();
+    const results = await MultiTabUtils.processMultipleTabs(tabs, settings, browserAPI, updateStatus);
+
+    // Create ZIP archive
+    statusIndicator.textContent = "Creating ZIP archive...";
+    const { blob, filename, successCount } = await MultiTabUtils.createZipArchive(results);
+
+    // Download ZIP using generic download function
+    downloadFile(filename, blob, 'application/zip');
+
+    const { message } = MultiTabUtils.getResultsSummary(results);
+    statusIndicator.textContent = `ZIP with ${message} downloaded`;
+    statusIndicator.className = "status success";
+
+    await saveSettings();
+  } catch (error) {
+    console.error('Download ZIP error:', error);
+    statusIndicator.textContent = `Error: ${error.message}`;
+    statusIndicator.className = "status error";
+  }
+}
+
 // Convert current page to Markdown
 async function convertToMarkdown() {
   statusIndicator.textContent = "Converting...";
@@ -444,16 +613,25 @@ async function downloadMarkdown() {
 }
 
 // Event Listeners
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   updateShortcutDisplay();
-  loadSettings();
+  await loadSettings();
 
-  // Convert button click
+  // Detect multi-tab selection (non-blocking, runs in background)
+  // UI defaults to single-tab mode, then switches if multiple tabs detected
+  detectSelectedTabsAndUpdateUI().catch(error => {
+    console.error('Error detecting multi-tab selection:', error);
+  });
+
+  // Single-tab button clicks
   convertBtn.addEventListener("click", convertToMarkdown);
-  
-  // Download button click
   downloadBtn.addEventListener("click", downloadMarkdown);
+
+  // Multi-tab button clicks
+  copyAllBtn.addEventListener("click", copyAllTabs);
+  downloadMergedBtn.addEventListener("click", downloadMergedFile);
+  downloadZipBtn.addEventListener("click", downloadZipArchive);
 
   // View navigation
   openSettingsBtn.addEventListener("click", showSettingsView);
@@ -527,18 +705,19 @@ async function generateFileNameFromPageTitle() {
   }
 }
 
-function downloadMarkdownFile(filename, content) {
+// Generic file download function
+function downloadFile(filename, content, mimeType = "text/markdown") {
   let a = null;
   let url = null;
-  
+
   try {
     // Create a blob and download
-    const blob = new Blob([content], { type: "text/markdown" });
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType });
     url = URL.createObjectURL(blob);
 
     a = document.createElement("a");
     a.href = url;
-    a.download = `${filename}.md`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
   } catch (error) {
@@ -552,4 +731,9 @@ function downloadMarkdownFile(filename, content) {
       URL.revokeObjectURL(url);
     }
   }
+}
+
+// Helper for markdown file downloads
+function downloadMarkdownFile(filename, content) {
+  downloadFile(`${filename}.md`, content, "text/markdown");
 }

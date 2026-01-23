@@ -228,6 +228,51 @@ h3 {
   flex-shrink: 0;
 }
 
+/* Action buttons container (single-tab mode) */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Multi-tab actions container */
+.multi-tab-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.multi-tab-actions.hidden {
+  display: none;
+}
+
+/* Tab count badge */
+.tab-count-badge {
+  text-align: center;
+  padding: 8px 12px;
+  background: var(--light-gray);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dark-gray);
+}
+
+.tab-count-badge span {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Multi-tab button styling */
+.multi-tab-actions .primary-btn,
+.multi-tab-actions .secondary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .primary-btn {
   background-color: var(--primary-color);
   color: white;

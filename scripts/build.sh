@@ -84,6 +84,7 @@ build_chrome() {
   cp "$EXT_DIR/content.js" "$CHROME_DIR/"
   cp "$EXT_DIR/popup.html" "$CHROME_DIR/"
   cp "$EXT_DIR/popup.js" "$CHROME_DIR/"
+  cp "$EXT_DIR/multi-tab-utils.js" "$CHROME_DIR/"
   cp "$EXT_DIR/styles.css" "$CHROME_DIR/"
   
   # Create directories and copy additional files
@@ -130,6 +131,7 @@ build_firefox() {
   cp "$EXT_DIR/content.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/popup.html" "$FIREFOX_DIR/"
   cp "$EXT_DIR/popup.js" "$FIREFOX_DIR/"
+  cp "$EXT_DIR/multi-tab-utils.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/styles.css" "$FIREFOX_DIR/"
   
   # Create directories and copy additional files
@@ -148,10 +150,10 @@ build_firefox() {
         "id": "llmfeeder@j47.in",
         "strict_min_version": "109.0"
       }
-    } | 
+    } |
     if has("background") then
       .background = {
-        "scripts": ["background.js"]
+        "scripts": ["libs/jszip.min.js", "multi-tab-utils.js", "background.js"]
       }
     else
       .
@@ -161,7 +163,7 @@ build_firefox() {
     echo "jq not found, using manual modification..."
     cp "$EXT_DIR/manifest.json" "$FIREFOX_DIR/manifest.json"
     # This is a basic substitution but might not work for all cases
-    sed -i.bak 's/"service_worker": "background.js",\s*"type": "module"/"scripts": ["background.js"]/' "$FIREFOX_DIR/manifest.json" || true
+    sed -i.bak 's/"service_worker": "background.js",\s*"type": "module"/"scripts": ["libs\/jszip.min.js", "multi-tab-utils.js", "background.js"]/' "$FIREFOX_DIR/manifest.json" || true
     rm -f "$FIREFOX_DIR/manifest.json.bak" 2>/dev/null || true
   fi
   
@@ -191,6 +193,7 @@ build_source() {
   cp "$EXT_DIR/content.js" "$SOURCE_DIR/"
   cp "$EXT_DIR/popup.html" "$SOURCE_DIR/"
   cp "$EXT_DIR/popup.js" "$SOURCE_DIR/"
+  cp "$EXT_DIR/multi-tab-utils.js" "$SOURCE_DIR/"
   cp "$EXT_DIR/styles.css" "$SOURCE_DIR/"
   cp "$EXT_DIR/manifest.json" "$SOURCE_DIR/"
   

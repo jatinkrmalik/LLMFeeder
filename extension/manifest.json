@@ -12,6 +12,7 @@
   },
   "permissions": [
     "activeTab",
+    "tabs",
     "clipboardWrite",
     "storage",
     "scripting"
@@ -57,6 +58,13 @@
         "mac": "Alt+Shift+D"
       },
       "description": "Download webpage as Markdown file"
+    },
+    "download_zip": {
+      "suggested_key": {
+        "default": "Alt+Shift+Z",
+        "mac": "Alt+Shift+Z"
+      },
+      "description": "Download multiple tabs as ZIP archive"
     }
   },
   "background": {
