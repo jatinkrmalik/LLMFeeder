@@ -96,13 +96,29 @@ build_chrome() {
   # Create Chrome-specific manifest
   if command -v jq &> /dev/null; then
     echo "Using jq to create Chrome manifest..."
-    # Remove Firefox-specific settings but ensure service_worker is preserved
-    jq 'del(.browser_specific_settings)' "$EXT_DIR/manifest.json" > "$CHROME_DIR/manifest.json"
+    # Remove Firefox-specific settings and "menus" permission (Chrome doesn't support it)
+    jq 'del(.browser_specific_settings) | .permissions = (.permissions - ["menus"])' "$EXT_DIR/manifest.json" > "$CHROME_DIR/manifest.json"
   else
-    echo "jq not found, using sed instead..."
+    echo "WARNING: jq not found, using sed fallback (less reliable)..."
     cp "$EXT_DIR/manifest.json" "$CHROME_DIR/manifest.json"
-    sed -i.bak '/browser_specific_settings/,/}/d' "$CHROME_DIR/manifest.json" || true
+
+    # Remove browser_specific_settings section
+    if ! sed -i.bak '/browser_specific_settings/,/}/d' "$CHROME_DIR/manifest.json" 2>/dev/null; then
+      echo "WARNING: Failed to remove browser_specific_settings from manifest"
+    fi
+
+    # Remove "menus" permission
+    if ! sed -i.bak '/"menus"/d' "$CHROME_DIR/manifest.json" 2>/dev/null; then
+      echo "WARNING: Failed to remove 'menus' permission from manifest"
+    fi
+
     rm -f "$CHROME_DIR/manifest.json.bak" 2>/dev/null || true
+
+    # Verify the result
+    if grep -q '"menus"' "$CHROME_DIR/manifest.json" 2>/dev/null; then
+      echo "ERROR: Chrome manifest still contains 'menus' permission - build may fail"
+      echo "Please install jq for reliable manifest processing: sudo apt-get install jq"
+    fi
   fi
   
   # Create the ZIP file

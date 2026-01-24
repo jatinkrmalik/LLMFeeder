@@ -4,6 +4,11 @@
   "version": "2.0.0",
   "description": "Web to Markdown converter for ChatGPT, Claude & AI. Extract clean content, copy to clipboard. Now with dark mode.",
   "author": "@jatinkrmalik",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "browser_specific_settings": {
     "gecko": {
       "id": "llmfeeder@j47.in",
@@ -15,7 +20,9 @@
     "tabs",
     "clipboardWrite",
     "storage",
-    "scripting"
+    "scripting",
+    "contextMenus",
+    "menus"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -68,7 +75,6 @@
     }
   },
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   }
 }
