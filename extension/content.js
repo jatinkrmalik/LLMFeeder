@@ -993,31 +993,40 @@
     }
   }
 
+  // This function would normally be provided by the TurndownService-tables plugin
+  // Enhanced implementation to properly handle HTML tables including those without <thead>
   function turndownPluginTables() {
     return function(turndownService) {
-      turndownService.addRule('tableCell', {
-        filter: ['th', 'td'],
+      turndownService.addRule('table', {
+        filter: 'table',
         replacement: function(content, node) {
-          return ' ' + content + ' |';
+          return '\n\n' + content + '\n\n';
         }
       });
 
       turndownService.addRule('tableRow', {
         filter: 'tr',
         replacement: function(content, node) {
+          const cells = node.querySelectorAll('th, td');
           let output = '|' + content + '\n';
-          if (node.parentNode.nodeName === 'THEAD') {
-            const cells = node.querySelectorAll('th, td');
-            output += '|' + Array.from(cells).map(() => ' --- |').join('') + '\n';
+
+          // Check if this row contains th elements (header row)
+          const hasHeaderCell = Array.from(cells).some(cell => cell.nodeName === 'TH');
+
+          // Add separator row after header row
+          if (hasHeaderCell) {
+            const separator = '|' + Array.from(cells).map(() => ' --- |').join('') + '\n';
+            output += separator;
           }
+
           return output;
         }
       });
 
-      turndownService.addRule('table', {
-        filter: 'table',
+      turndownService.addRule('tableCell', {
+        filter: ['th', 'td'],
         replacement: function(content, node) {
-          return '\n\n' + content + '\n\n';
+          return ' ' + content.trim() + ' |';
         }
       });
     };
