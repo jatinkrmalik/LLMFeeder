@@ -221,6 +221,9 @@ async function loadSettings() {
 
     // Show/hide metadata format container based on checkbox state
     updateMetadataFormatVisibility(data.includeMetadata);
+
+    // Show/hide debug logs button based on debug mode
+    updateDebugModeVisibility();
   } catch (error) {
     console.error("Error loading settings:", error);
     statusIndicator.textContent = "Error loading settings";
@@ -264,6 +267,9 @@ function updateMetadataFormatVisibility(isVisible) {
 
 // Copy debug logs from content script
 async function copyLogs() {
+  const btn = copyLogsBtn;
+  const originalText = btn.querySelector('.btn-text').textContent;
+
   try {
     const tabs = await browserAPI.tabs.query({
       active: true,
@@ -282,38 +288,39 @@ async function copyLogs() {
     if (response.success && response.logs) {
       await navigator.clipboard.writeText(response.logs);
 
-      // Show a toast notification for better user feedback
-      await browserAPI.tabs.sendMessage(tabs[0].id, {
-        action: "showNotification",
-        title: "Debug Logs",
-        message: "Logs copied to clipboard successfully!"
-      });
+      // Update button text temporarily to show feedback
+      btn.querySelector('.btn-text').textContent = "Copied!";
+      btn.classList.add('success');
 
-      statusIndicator.textContent = "Logs copied!";
-      statusIndicator.className = "status success";
+      setTimeout(() => {
+        btn.querySelector('.btn-text').textContent = originalText;
+        btn.classList.remove('success');
+      }, 2000);
+    } else {
+      statusIndicator.textContent = "No logs to copy";
+      statusIndicator.className = "status error";
       setTimeout(() => {
         statusIndicator.textContent = "Ready";
         statusIndicator.className = "status";
       }, 2000);
-    } else {
-      await browserAPI.tabs.sendMessage(tabs[0].id, {
-        action: "showNotification",
-        title: "Debug Logs",
-        message: response.logs ? "No logs available. Enable debug mode and try again." : "Could not retrieve logs."
-      });
-
-      statusIndicator.textContent = "No logs available";
-      statusIndicator.className = "status error";
     }
   } catch (error) {
-    await browserAPI.tabs.sendMessage(tabs[0].id, {
-      action: "showNotification",
-      title: "Debug Logs Error",
-      message: error.message || "Failed to copy logs"
-    });
-
     statusIndicator.textContent = "Error: " + error.message;
     statusIndicator.className = "status error";
+    setTimeout(() => {
+      statusIndicator.textContent = "Ready";
+      statusIndicator.className = "status";
+    }, 2000);
+  }
+}
+
+// Toggle copy logs button visibility based on debug mode
+function updateDebugModeVisibility() {
+  const debugEnabled = debugModeCheckbox.checked;
+  if (debugEnabled) {
+    copyLogsBtn.style.display = '';
+  } else {
+    copyLogsBtn.style.display = 'none';
   }
 }
 
@@ -464,7 +471,10 @@ document.addEventListener("DOMContentLoaded", () => {
   preserveTablesCheckbox.addEventListener("change", saveSettings);
   includeImagesCheckbox.addEventListener("change", saveSettings);
   includeTitleCheckbox.addEventListener("change", saveSettings);
-  debugModeCheckbox.addEventListener("change", saveSettings);
+  debugModeCheckbox.addEventListener("change", () => {
+    updateDebugModeVisibility();
+    saveSettings();
+  });
 
   // Metadata format settings
   includeMetadataCheckbox.addEventListener("change", () => {
