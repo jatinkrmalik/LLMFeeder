@@ -281,6 +281,14 @@ async function copyLogs() {
 
     if (response.success && response.logs) {
       await navigator.clipboard.writeText(response.logs);
+
+      // Show a toast notification for better user feedback
+      await browserAPI.tabs.sendMessage(tabs[0].id, {
+        action: "showNotification",
+        title: "Debug Logs",
+        message: "Logs copied to clipboard successfully!"
+      });
+
       statusIndicator.textContent = "Logs copied!";
       statusIndicator.className = "status success";
       setTimeout(() => {
@@ -288,10 +296,22 @@ async function copyLogs() {
         statusIndicator.className = "status";
       }, 2000);
     } else {
+      await browserAPI.tabs.sendMessage(tabs[0].id, {
+        action: "showNotification",
+        title: "Debug Logs",
+        message: response.logs ? "No logs available. Enable debug mode and try again." : "Could not retrieve logs."
+      });
+
       statusIndicator.textContent = "No logs available";
       statusIndicator.className = "status error";
     }
   } catch (error) {
+    await browserAPI.tabs.sendMessage(tabs[0].id, {
+      action: "showNotification",
+      title: "Debug Logs Error",
+      message: error.message || "Failed to copy logs"
+    });
+
     statusIndicator.textContent = "Error: " + error.message;
     statusIndicator.className = "status error";
   }
