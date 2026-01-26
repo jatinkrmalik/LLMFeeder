@@ -1,0 +1,72 @@
+name: Build Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+
+jobs:
+  validate-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq zip
+
+    - name: Make build script executable
+      run: chmod +x ./scripts/build.sh
+
+    - name: Build Chrome package
+      run: ./scripts/build.sh chrome
+
+    - name: Build Firefox package
+      run: ./scripts/build.sh firefox
+
+    - name: Build Source package
+      run: ./scripts/build.sh source
+
+    - name: Verify build artifacts
+      run: |
+        echo "Checking build artifacts..."
+        if [ ! -f "dist/LLMFeeder-Chrome-v2.0.0.zip" ]; then
+          echo "::error::Chrome build artifact not found"
+          exit 1
+        fi
+        if [ ! -f "dist/LLMFeeder-Firefox-v2.0.0.zip" ]; then
+          echo "::error::Firefox build artifact not found"
+          exit 1
+        fi
+        if [ ! -f "dist/LLMFeeder-Source-v2.0.0.zip" ]; then
+          echo "::error::Source build artifact not found"
+          exit 1
+        fi
+        echo "All build artifacts created successfully"
+
+    - name: Validate Chrome manifest
+      run: |
+        echo "Validating Chrome manifest.json..."
+        # Extract and validate the Chrome manifest from the zip
+        mkdir -p /tmp/chrome-extract
+        unzip -q -o dist/LLMFeeder-Chrome-v2.0.0.zip manifest.json -d /tmp/chrome-extract
+        jq empty /tmp/chrome-extract/manifest.json
+        echo "Chrome manifest.json is valid JSON"
+
+    - name: Validate Firefox manifest
+      run: |
+        echo "Validating Firefox manifest.json..."
+        mkdir -p /tmp/firefox-extract
+        unzip -q -o dist/LLMFeeder-Firefox-v2.0.0.zip manifest.json -d /tmp/firefox-extract
+        jq empty /tmp/firefox-extract/manifest.json
+        echo "Firefox manifest.json is valid JSON"
+
+    - name: List build artifacts
+      run: |
+        echo "Build artifacts:"
+        ls -la dist/
