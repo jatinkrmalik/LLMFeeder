@@ -50,15 +50,17 @@ jobs:
       run: |
         echo "Validating Chrome manifest.json..."
         # Extract and validate the Chrome manifest from the zip
-        unzip -q dist/LLMFeeder-Chrome-v2.0.0.zip "*/manifest.json" -d /tmp/chrome-extract
-        jq empty /tmp/chrome-extract/*/manifest.json
+        mkdir -p /tmp/chrome-extract
+        unzip -q -o dist/LLMFeeder-Chrome-v2.0.0.zip manifest.json -d /tmp/chrome-extract
+        jq empty /tmp/chrome-extract/manifest.json
         echo "Chrome manifest.json is valid JSON"
 
     - name: Validate Firefox manifest
       run: |
         echo "Validating Firefox manifest.json..."
-        unzip -q dist/LLMFeeder-Firefox-v2.0.0.zip "*/manifest.json" -d /tmp/firefox-extract
-        jq empty /tmp/firefox-extract/*/manifest.json
+        mkdir -p /tmp/firefox-extract
+        unzip -q -o dist/LLMFeeder-Firefox-v2.0.0.zip manifest.json -d /tmp/firefox-extract
+        jq empty /tmp/firefox-extract/manifest.json
         echo "Firefox manifest.json is valid JSON"
 
     - name: List build artifacts
