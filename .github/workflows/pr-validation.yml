@@ -1,8 +1,11 @@
-name: Pull Request Validation
+name: Build Validation
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
 
 jobs:
   validate-build:
