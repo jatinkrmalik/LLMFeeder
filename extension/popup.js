@@ -148,6 +148,8 @@ const includeMetadataCheckbox = document.getElementById("includeMetadata");
 const metadataFormatTextarea = document.getElementById("metadataFormat");
 const metadataFormatContainer = document.getElementById("metadataFormatContainer");
 const resetMetadataFormatBtn = document.getElementById("resetMetadataFormat");
+const debugModeCheckbox = document.getElementById("debugMode");
+const copyLogsBtn = document.getElementById("copyLogsBtn");
 
 // Default metadata format
 const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
@@ -205,6 +207,7 @@ async function loadSettings() {
       includeTitle: true,
       includeMetadata: true,
       metadataFormat: DEFAULT_METADATA_FORMAT,
+      debugMode: false,
     });
 
     // Apply settings to UI
@@ -214,9 +217,13 @@ async function loadSettings() {
     includeTitleCheckbox.checked = data.includeTitle;
     includeMetadataCheckbox.checked = data.includeMetadata;
     metadataFormatTextarea.value = data.metadataFormat;
-    
+    debugModeCheckbox.checked = data.debugMode;
+
     // Show/hide metadata format container based on checkbox state
     updateMetadataFormatVisibility(data.includeMetadata);
+
+    // Show/hide debug logs button based on debug mode
+    updateDebugModeVisibility();
   } catch (error) {
     console.error("Error loading settings:", error);
     statusIndicator.textContent = "Error loading settings";
@@ -233,6 +240,7 @@ async function saveSettings() {
     const includeTitle = includeTitleCheckbox.checked;
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
+    const debugMode = debugModeCheckbox.checked;
 
     await browserAPI.storage.sync.set({
       contentScope,
@@ -241,6 +249,7 @@ async function saveSettings() {
       includeTitle,
       includeMetadata,
       metadataFormat,
+      debugMode,
     });
   } catch (error) {
     console.error("Error saving settings:", error);
@@ -253,6 +262,65 @@ function updateMetadataFormatVisibility(isVisible) {
     metadataFormatContainer.classList.remove("hidden");
   } else {
     metadataFormatContainer.classList.add("hidden");
+  }
+}
+
+// Copy debug logs from content script
+async function copyLogs() {
+  const btn = copyLogsBtn;
+  const originalText = btn.querySelector('.btn-text').textContent;
+
+  try {
+    const tabs = await browserAPI.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (!tabs || tabs.length === 0) {
+      statusIndicator.textContent = "No active tab";
+      statusIndicator.className = "status error";
+      return;
+    }
+
+    const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
+      action: "getDebugLogs",
+    });
+
+    if (response.success && response.logs) {
+      await navigator.clipboard.writeText(response.logs);
+
+      // Update button text temporarily to show feedback
+      btn.querySelector('.btn-text').textContent = "Copied!";
+      btn.classList.add('success');
+
+      setTimeout(() => {
+        btn.querySelector('.btn-text').textContent = originalText;
+        btn.classList.remove('success');
+      }, 2000);
+    } else {
+      statusIndicator.textContent = "No logs to copy";
+      statusIndicator.className = "status error";
+      setTimeout(() => {
+        statusIndicator.textContent = "Ready";
+        statusIndicator.className = "status";
+      }, 2000);
+    }
+  } catch (error) {
+    statusIndicator.textContent = "Error: " + error.message;
+    statusIndicator.className = "status error";
+    setTimeout(() => {
+      statusIndicator.textContent = "Ready";
+      statusIndicator.className = "status";
+    }, 2000);
+  }
+}
+
+// Toggle copy logs button visibility based on debug mode
+function updateDebugModeVisibility() {
+  const debugEnabled = debugModeCheckbox.checked;
+  if (debugEnabled) {
+    copyLogsBtn.style.display = '';
+  } else {
+    copyLogsBtn.style.display = 'none';
   }
 }
 
@@ -278,6 +346,7 @@ async function convertToMarkdown() {
     const includeTitle = includeTitleCheckbox.checked;
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
+    const debugMode = debugModeCheckbox.checked;
 
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
@@ -289,6 +358,7 @@ async function convertToMarkdown() {
         includeTitle,
         includeMetadata,
         metadataFormat,
+        debugMode,
       },
     });
 
@@ -335,6 +405,7 @@ async function downloadMarkdown() {
     const includeTitle = includeTitleCheckbox.checked;
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
+    const debugMode = debugModeCheckbox.checked;
 
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
@@ -346,6 +417,7 @@ async function downloadMarkdown() {
         includeTitle,
         includeMetadata,
         metadataFormat,
+        debugMode,
       },
     });
 
@@ -399,19 +471,26 @@ document.addEventListener("DOMContentLoaded", () => {
   preserveTablesCheckbox.addEventListener("change", saveSettings);
   includeImagesCheckbox.addEventListener("change", saveSettings);
   includeTitleCheckbox.addEventListener("change", saveSettings);
-  
+  debugModeCheckbox.addEventListener("change", () => {
+    updateDebugModeVisibility();
+    saveSettings();
+  });
+
   // Metadata format settings
   includeMetadataCheckbox.addEventListener("change", () => {
     updateMetadataFormatVisibility(includeMetadataCheckbox.checked);
     saveSettings();
   });
-  
+
   metadataFormatTextarea.addEventListener("input", saveSettings);
-  
+
   resetMetadataFormatBtn.addEventListener("click", () => {
     metadataFormatTextarea.value = DEFAULT_METADATA_FORMAT;
     saveSettings();
   });
+
+  // Copy logs button
+  copyLogsBtn.addEventListener("click", copyLogs);
 });
 
 async function generateFileNameFromPageTitle() {

@@ -9,9 +9,61 @@
     PERMISSION_DENIED: 'Permission denied. Please check extension permissions.',
     GENERAL: 'An error occurred during conversion.'
   };
-  
+
   const CONVERSION_TIMEOUT = 10000; // 10 seconds
-  
+
+  // Debug logging system
+  const DebugLog = {
+    logs: [],
+    enabled: false,
+
+    init(settings) {
+      this.enabled = settings?.debugMode || false;
+      if (this.enabled) {
+        this.clear();
+        this.log('Debug mode enabled', { url: window.location.href, timestamp: new Date().toISOString() });
+      }
+    },
+
+    log(message, data) {
+      if (this.enabled) {
+        const entry = {
+          time: new Date().toISOString(),
+          message,
+          ...(data !== undefined && { data })
+        };
+        this.logs.push(entry);
+        // Keep only last 500 entries to prevent memory issues
+        if (this.logs.length > 500) {
+          this.logs.shift();
+        }
+      }
+    },
+
+    error(message, error) {
+      if (this.enabled) {
+        this.log(message, {
+          error: error?.message || String(error),
+          stack: error?.stack
+        });
+      }
+    },
+
+    getLogs() {
+      return this.logs.map(entry => {
+        let str = `[${entry.time}] ${entry.message}`;
+        if (entry.data !== undefined) {
+          str += '\n  ' + JSON.stringify(entry.data, null, 2);
+        }
+        return str;
+      }).join('\n');
+    },
+
+    clear() {
+      this.logs = [];
+    }
+  };
+
   // Create a proper runtime API wrapper for message handling
   const browserRuntime = (function() {
     if (typeof browser !== 'undefined' && browser.runtime) {
@@ -23,7 +75,7 @@
       onMessage: { addListener: function() {} }
     };
   })();
-  
+
   // Listen for messages from popup or background script
   browserRuntime.onMessage.addListener((request, sender, sendResponse) => {
     // Ping handler - used to check if content script is loaded
@@ -31,18 +83,24 @@
       sendResponse({ success: true });
       return true;
     }
-    
+
+    // Get debug logs handler
+    if (request.action === 'getDebugLogs') {
+      sendResponse({ success: true, logs: DebugLog.getLogs() });
+      return true;
+    }
+
     // Copy to clipboard handler
     if (request.action === 'copyToClipboard' && request.text) {
       copyTextToClipboard(request.text)
         .then(() => sendResponse({ success: true }))
-        .catch(error => sendResponse({ 
-          success: false, 
-          error: 'Failed to copy to clipboard: ' + error.message 
+        .catch(error => sendResponse({
+          success: false,
+          error: 'Failed to copy to clipboard: ' + error.message
         }));
       return true;
     }
-    
+
     // Convert handler (simplified version)
     if (request.action === 'convert') {
       const options = request.options || {};
@@ -50,17 +108,17 @@
       sendResponse({ success: true, markdown: markdownResult });
       return true;
     }
-    
+
     // Main conversion handler
     if (request.action === 'convertToMarkdown') {
       // Set up timeout for conversion process
       const timeoutId = setTimeout(() => {
-        sendResponse({ 
-          success: false, 
-          error: ERROR_MESSAGES.TIMEOUT 
+        sendResponse({
+          success: false,
+          error: ERROR_MESSAGES.TIMEOUT
         });
       }, CONVERSION_TIMEOUT);
-      
+
       try {
         const settings = request.settings || request.options || {};
         const markdown = convertToMarkdown(settings);
@@ -69,7 +127,8 @@
       } catch (error) {
         clearTimeout(timeoutId);
         console.error('Conversion error:', error);
-        
+        DebugLog.error('Conversion error', error);
+
         // Map error to user-friendly message
         let errorMessage = ERROR_MESSAGES.GENERAL;
         if (error.message.includes('No content')) {
@@ -79,23 +138,23 @@
         } else if (error.message.includes('Permission')) {
           errorMessage = ERROR_MESSAGES.PERMISSION_DENIED;
         }
-        
-        sendResponse({ 
-          success: false, 
+
+        sendResponse({
+          success: false,
           error: errorMessage,
-          details: error.message 
+          details: error.message
         });
       }
       return true; // Indicates we will send a response asynchronously
     }
-    
+
     // Show notification handler
     if (request.action === 'showNotification') {
       showNotification(request.title, request.message);
       sendResponse({ success: true });
       return true;
     }
-    
+
     // Download markdown handler
     if (request.action === 'downloadMarkdown') {
       try {
@@ -193,6 +252,16 @@
    * @returns {string} Markdown output
    */
   function convertToMarkdown(settings) {
+    // Initialize debug logging
+    DebugLog.init(settings);
+
+    DebugLog.log('Conversion started', {
+      contentScope: settings.contentScope,
+      preserveTables: settings.preserveTables,
+      includeImages: settings.includeImages,
+      includeTitle: settings.includeTitle
+    });
+
     // Clone the document to avoid modifying the original
     const docClone = document.cloneNode(true);
 
@@ -213,31 +282,40 @@
         articleData = result.articleData;
         break;
     }
-    
+
     if (!content) {
+      DebugLog.log('Content extraction failed');
       throw new Error('No content could be extracted');
     }
-    
+
+    DebugLog.log('Content extracted', { innerHTMLLength: content.innerHTML?.length || 0 });
+
     // Check if content is too large (potential performance issue)
     const contentSize = content.innerHTML.length;
     if (contentSize > 1000000) { // 1MB
       console.warn('Large content detected:', contentSize, 'bytes');
+      DebugLog.log('Large content detected', { size: contentSize });
     }
-    
+
     // Clean the content before conversion
     cleanContent(content, settings);
-    
+
     // Convert to Markdown using TurndownService
     const turndownService = configureTurndownService(settings);
-    
+
     try {
       let markdown = turndownService.turndown(content);
-      
+
       // Validate markdown output
       if (!markdown || markdown.trim() === '') {
         throw new Error('Conversion resulted in empty markdown');
       }
-      
+
+      DebugLog.log('Conversion successful', {
+        markdownLength: markdown.length,
+        hasTables: markdown.includes('|---')
+      });
+
       // Add page title as H1 if enabled and title is non-empty
       if (settings.includeTitle) {
         const pageTitle = document.title.trim();
@@ -245,25 +323,26 @@
           markdown = `# ${pageTitle}\n\n${markdown}`;
         }
       }
-      
+
       // Post-process the markdown with metadata
       return postProcessMarkdown(markdown, settings, articleData);
     } catch (error) {
+      DebugLog.error('Conversion failed', error);
       console.error('Turndown conversion error:', error);
-      
+
       // Attempt a simplified conversion for problematic content
       if (contentSize > 100000) { // 100KB
         // Try converting a smaller portion of the content
         const simplifiedContent = document.createElement('div');
         simplifiedContent.innerHTML = content.innerHTML.substring(0, 100000);
-        return turndownService.turndown(simplifiedContent) + 
+        return turndownService.turndown(simplifiedContent) +
                '\n\n---\n*Note: Content was truncated due to size limitations.*';
       }
-      
+
       throw error;
     }
   }
-  
+
   /**
    * Extract the full page content
    * @param {Document} doc - Cloned document
