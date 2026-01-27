@@ -592,8 +592,8 @@
   }
 
   /**
-   * Extract iframe content from the ORIGINAL document and inject into cloned content
-   * This is needed because Readability may remove iframes, and cloned iframes don't have loaded contentWindow
+   * Extract iframe content from the ORIGINAL document and append to content
+   * This is needed because Readability may remove iframes from the content
    */
   async function extractAndReplaceIframesFromOriginal(clonedContent, preserveIframeLinks) {
     const originalIframes = Array.from(document.querySelectorAll('iframe'));
@@ -601,8 +601,8 @@
     const crossOriginIframes = [];
     const inaccessibleIframes = [];
 
-    DebugLog.log('Starting iframe extraction from original document', { 
-      originalIframes: originalIframes.length 
+    DebugLog.log('Starting iframe extraction from original document', {
+      originalIframes: originalIframes.length
     });
 
     for (let i = 0; i < originalIframes.length; i++) {
@@ -634,14 +634,14 @@
             wrapper.setAttribute('data-iframe-index', i);
             wrapper.innerHTML = clonedContent.innerHTML;
             extractedContents.push(wrapper);
-            DebugLog.log('Extracted same-origin iframe', { 
-              src: iframeSrc.substring(0, 50), 
-              contentLength: iframeText.length 
+            DebugLog.log('Extracted same-origin iframe', {
+              src: iframeSrc.substring(0, 50),
+              contentLength: iframeText.length
             });
           } else {
-            DebugLog.log('Iframe skipped (not enough content)', { 
-              src: iframeSrc.substring(0, 50), 
-              contentLength: iframeText.length 
+            DebugLog.log('Iframe skipped (not enough content)', {
+              src: iframeSrc.substring(0, 50),
+              contentLength: iframeText.length
             });
           }
         } catch (e) {
@@ -657,8 +657,8 @@
 
     // Try cross-origin via messaging
     if (inaccessibleIframes.length > 0) {
-      DebugLog.log('Attempting cross-origin iframe extraction', { 
-        count: inaccessibleIframes.length 
+      DebugLog.log('Attempting cross-origin iframe extraction', {
+        count: inaccessibleIframes.length
       });
       const iframesToExtract = inaccessibleIframes.map(item => item.iframe);
       const results = await extractIframesInBatches(iframesToExtract);
@@ -674,8 +674,8 @@
           wrapper.setAttribute('data-iframe-index', originalItem.index);
           wrapper.innerHTML = result.content;
           extractedContents.push(wrapper);
-          DebugLog.log('Extracted cross-origin iframe via messaging', { 
-            src: result.src.substring(0, 50) 
+          DebugLog.log('Extracted cross-origin iframe via messaging', {
+            src: result.src.substring(0, 50)
           });
         } else {
           crossOriginIframes.push({
@@ -691,30 +691,26 @@
       crossOrigin: crossOriginIframes.length
     });
 
-    // Now replace iframes in the cloned content
-    const clonedIframes = Array.from(clonedContent.querySelectorAll('iframe'));
-    for (let i = 0; i < clonedIframes.length; i++) {
-      const iframe = clonedIframes[i];
-      const iframeSrc = iframe.src || iframe.srcdoc || 'about:blank';
+    // CRITICAL FIX: For mainContent scope, Readability has already removed iframes
+    // So we APPEND the extracted iframe content directly to the cloned content
+    // instead of trying to replace non-existent iframes
+    if (extractedContents.length > 0) {
+      DebugLog.log('Appending extracted iframe content to cloned content', {
+        count: extractedContents.length
+      });
 
-      const extractedContent = extractedContents.find(c =>
-        parseInt(c.getAttribute('data-iframe-index')) === i
-      );
+      const iframeSection = document.createElement('div');
+      iframeSection.className = 'llmfeeder-iframes';
 
-      if (extractedContent) {
-        const replacementDiv = document.createElement('div');
-        replacementDiv.className = 'llmfeeder-iframe-replacement';
-        replacementDiv.innerHTML = extractedContent.innerHTML;
-        iframe.parentNode.replaceChild(replacementDiv, iframe);
-      } else if (preserveIframeLinks && iframeSrc && iframeSrc !== 'about:blank') {
-        const linkDiv = document.createElement('div');
-        linkDiv.className = 'llmfeeder-iframe-link';
-        const iframeTitle = iframe.title || iframe.getAttribute('aria-label') || 'Embedded content';
-        linkDiv.innerHTML = `<p>[Embedded content: <a href="${iframeSrc}">${iframeTitle}</a>]</p>`;
-        iframe.parentNode.replaceChild(linkDiv, iframe);
-      } else {
-        iframe.parentNode.removeChild(iframe);
-      }
+      extractedContents.forEach((wrapper, index) => {
+        const section = document.createElement('div');
+        section.className = 'llmfeeder-iframe-section';
+        section.innerHTML = `<hr>\n<h3>Embedded Content ${index + 1}</h3>\n` + wrapper.innerHTML;
+        iframeSection.appendChild(section);
+      });
+
+      clonedContent.appendChild(iframeSection);
+      DebugLog.log('Appended iframe content to cloned content');
     }
 
     const warnings = [];
