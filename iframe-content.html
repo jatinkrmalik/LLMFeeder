@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nested Iframe Content</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            background: #fce4ec;
+            margin: 0;
+        }
+        h2 {
+            color: #c2185b;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <h2>Nested Same-Origin Iframe Content</h2>
+    <p><strong>This content was loaded from iframe-content.html on the same server!</strong></p>
+    <p>This iframe is same-origin with the parent page, so LLMFeeder should be able to extract its content.</p>
+    <ul>
+        <li>Loaded via separate HTML file</li>
+        <li>Same origin (same protocol, host, and port)</li>
+        <li>Direct DOM access should work with Full Page scope</li>
+    </ul>
+</body>
+</html>
