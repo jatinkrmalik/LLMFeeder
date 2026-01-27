@@ -1,7 +1,12 @@
 // LLMFeeder Content Script
 // Created by @jatinkrmalik (https://github.com/jatinkrmalik)
 (function() {
-  // Constants for error handling
+  'use strict';
+
+  // ==========================================================================
+  // CONSTANTS
+  // ==========================================================================
+
   const ERROR_MESSAGES = {
     NO_CONTENT: 'No content could be extracted from this page.',
     TIMEOUT: 'Conversion timed out. The page might be too large.',
@@ -10,9 +15,22 @@
     GENERAL: 'An error occurred during conversion.'
   };
 
-  const CONVERSION_TIMEOUT = 10000; // 10 seconds
+  const CONVERSION_TIMEOUT = 15000; // 15 seconds (increased for iframe handling)
+  const IFRAME_EXTRACTION_TIMEOUT = 1000; // 1 second per iframe
+  const MIN_CONTENT_LENGTH = 50; // Minimum meaningful content length
+  const MAX_IFRAME_BATCH_SIZE = 5; // Process up to 5 iframes in parallel
+  const MAX_DEBUG_LOG_ENTRIES = 500; // Keep memory usage in check
 
-  // Debug logging system
+  // Message action constants for security validation
+  const MESSAGE_ACTIONS = {
+    EXTRACT_CONTENT: 'llmfeeder_extract_content',
+    EXTRACT_RESPONSE: 'llmfeeder_extract_content_response'
+  };
+
+  // ==========================================================================
+  // DEBUG LOGGING SYSTEM
+  // ==========================================================================
+
   const DebugLog = {
     logs: [],
     enabled: false,
@@ -33,8 +51,8 @@
           ...(data !== undefined && { data })
         };
         this.logs.push(entry);
-        // Keep only last 500 entries to prevent memory issues
-        if (this.logs.length > 500) {
+        // Keep only last MAX_DEBUG_LOG_ENTRIES entries to prevent memory issues
+        if (this.logs.length > MAX_DEBUG_LOG_ENTRIES) {
           this.logs.shift();
         }
       }
@@ -64,7 +82,10 @@
     }
   };
 
-  // Create a proper runtime API wrapper for message handling
+  // ==========================================================================
+  // BROWSER RUNTIME WRAPPER
+  // ==========================================================================
+
   const browserRuntime = (function() {
     if (typeof browser !== 'undefined' && browser.runtime) {
       return browser.runtime;
@@ -76,9 +97,51 @@
     };
   })();
 
-  // Listen for messages from popup or background script
+  // ==========================================================================
+  // CROSS-ORIGIN IFRAME MESSAGE LISTENER
+  // ==========================================================================
+
+  // Listen for messages from parent window for iframe content extraction
+  window.addEventListener('message', (event) => {
+    if (event.data && event.data.action === MESSAGE_ACTIONS.EXTRACT_CONTENT) {
+      try {
+        const content = document.body.cloneNode(true);
+        const elementsToRemove = content.querySelectorAll('script, style, noscript, iframe');
+        for (let i = elementsToRemove.length - 1; i >= 0; i--) {
+          if (elementsToRemove[i].parentNode) {
+            elementsToRemove[i].parentNode.removeChild(elementsToRemove[i]);
+          }
+        }
+        const contentText = content.textContent || '';
+        if (contentText.trim().length > MIN_CONTENT_LENGTH) {
+          event.source.postMessage({
+            action: MESSAGE_ACTIONS.EXTRACT_RESPONSE,
+            messageId: event.data.messageId,
+            content: content.innerHTML
+          }, event.origin);
+        } else {
+          event.source.postMessage({
+            action: MESSAGE_ACTIONS.EXTRACT_RESPONSE,
+            messageId: event.data.messageId,
+            content: null
+          }, event.origin);
+        }
+      } catch (e) {
+        event.source.postMessage({
+          action: MESSAGE_ACTIONS.EXTRACT_RESPONSE,
+          messageId: event.data.messageId,
+          content: null
+        }, event.origin);
+      }
+    }
+  });
+
+  // ==========================================================================
+  // MESSAGE HANDLERS
+  // ==========================================================================
+
   browserRuntime.onMessage.addListener((request, sender, sendResponse) => {
-    // Ping handler - used to check if content script is loaded
+    // Ping handler
     if (request.action === 'ping') {
       sendResponse({ success: true });
       return true;
@@ -101,17 +164,8 @@
       return true;
     }
 
-    // Convert handler (simplified version)
-    if (request.action === 'convert') {
-      const options = request.options || {};
-      const markdownResult = convertToMarkdown(options);
-      sendResponse({ success: true, markdown: markdownResult });
-      return true;
-    }
-
-    // Main conversion handler
+    // Main conversion handler - async
     if (request.action === 'convertToMarkdown') {
-      // Set up timeout for conversion process
       const timeoutId = setTimeout(() => {
         sendResponse({
           success: false,
@@ -119,33 +173,35 @@
         });
       }, CONVERSION_TIMEOUT);
 
-      try {
-        const settings = request.settings || request.options || {};
-        const markdown = convertToMarkdown(settings);
-        clearTimeout(timeoutId);
-        sendResponse({ success: true, markdown });
-      } catch (error) {
-        clearTimeout(timeoutId);
-        console.error('Conversion error:', error);
-        DebugLog.error('Conversion error', error);
+      (async () => {
+        try {
+          const settings = request.settings || request.options || {};
+          const markdown = await convertToMarkdown(settings);
+          clearTimeout(timeoutId);
+          sendResponse({ success: true, markdown });
+        } catch (error) {
+          clearTimeout(timeoutId);
+          console.error('Conversion error:', error);
+          DebugLog.error('Conversion error', error);
 
-        // Map error to user-friendly message
-        let errorMessage = ERROR_MESSAGES.GENERAL;
-        if (error.message.includes('No content')) {
-          errorMessage = ERROR_MESSAGES.NO_CONTENT;
-        } else if (error.message.includes('No text is selected')) {
-          errorMessage = ERROR_MESSAGES.NO_SELECTION;
-        } else if (error.message.includes('Permission')) {
-          errorMessage = ERROR_MESSAGES.PERMISSION_DENIED;
+          let errorMessage = ERROR_MESSAGES.GENERAL;
+          if (error.message.includes('No content')) {
+            errorMessage = ERROR_MESSAGES.NO_CONTENT;
+          } else if (error.message.includes('No text is selected')) {
+            errorMessage = ERROR_MESSAGES.NO_SELECTION;
+          } else if (error.message.includes('Permission')) {
+            errorMessage = ERROR_MESSAGES.PERMISSION_DENIED;
+          }
+
+          sendResponse({
+            success: false,
+            error: errorMessage,
+            details: error.message
+          });
         }
+      })();
 
-        sendResponse({
-          success: false,
-          error: errorMessage,
-          details: error.message
-        });
-      }
-      return true; // Indicates we will send a response asynchronously
+      return true;
     }
 
     // Show notification handler
@@ -167,60 +223,42 @@
       return true;
     }
   });
-  
-  /**
-   * Download markdown content as a file
-   * @param {string} markdown - Markdown content to download
-   * @param {string} title - Page title for filename
-   */
+
+  // ==========================================================================
+  // UTILITY FUNCTIONS
+  // ==========================================================================
+
   function downloadMarkdownFile(markdown, title) {
     const MAX_FILENAME_LENGTH = 100;
-    
-    // Sanitize the title to be a valid filename
     let filename = title
-      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '') // Remove invalid characters
-      .replace(/[\s./]+/g, '_') // Replace spaces, dots, slashes with underscores
-      .replace(/_+/g, '_') // Consolidate multiple underscores
-      .replace(/^_+|_+$/g, ''); // Trim leading/trailing underscores
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+      .replace(/[\s./]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '');
     
     if (filename.length > MAX_FILENAME_LENGTH) {
       filename = filename.substring(0, MAX_FILENAME_LENGTH).replace(/_+$/g, '');
     }
+    if (!filename) filename = 'llmfeeder';
     
-    if (!filename) {
-      filename = 'llmfeeder';
-    }
-    
-    // Create blob and download
     const blob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
-    
     const a = document.createElement('a');
     a.href = url;
     a.download = `${filename}.md`;
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
-    
-    // Cleanup
     setTimeout(() => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }, 100);
   }
-  
-  /**
-   * Copy text to clipboard
-   * @param {string} text - Text to copy to clipboard
-   * @returns {Promise} - Promise resolving when copy completes
-   */
+
   async function copyTextToClipboard(text) {
-    // Try using the Clipboard API first
     if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(text);
     }
-    
-    // Fallback to document.execCommand
     const textarea = document.createElement('textarea');
     textarea.value = text;
     textarea.style.position = 'fixed';
@@ -229,15 +267,11 @@
     document.body.appendChild(textarea);
     textarea.focus();
     textarea.select();
-    
     return new Promise((resolve, reject) => {
       try {
         const success = document.execCommand('copy');
-        if (success) {
-          resolve();
-        } else {
-          reject(new Error('execCommand returned false'));
-        }
+        if (success) resolve();
+        else reject(new Error('execCommand returned false'));
       } catch (err) {
         reject(err);
       } finally {
@@ -245,16 +279,13 @@
       }
     });
   }
-  
-  /**
-   * Main conversion function
-   * @param {Object} settings - User settings for conversion
-   * @returns {string} Markdown output
-   */
-  function convertToMarkdown(settings) {
-    // Initialize debug logging
-    DebugLog.init(settings);
 
+  // ==========================================================================
+  // MAIN CONVERSION FUNCTION
+  // ==========================================================================
+
+  async function convertToMarkdown(settings) {
+    DebugLog.init(settings);
     DebugLog.log('Conversion started', {
       contentScope: settings.contentScope,
       preserveTables: settings.preserveTables,
@@ -262,12 +293,10 @@
       includeTitle: settings.includeTitle
     });
 
-    // Clone the document to avoid modifying the original
     const docClone = document.cloneNode(true);
-
-    // Get content based on scope setting
     let content;
     let articleData = null;
+    
     switch (settings.contentScope) {
       case 'fullPage':
         content = extractFullPageContent(docClone);
@@ -290,23 +319,29 @@
 
     DebugLog.log('Content extracted', { innerHTMLLength: content.innerHTML?.length || 0 });
 
-    // Check if content is too large (potential performance issue)
     const contentSize = content.innerHTML.length;
-    if (contentSize > 1000000) { // 1MB
+    if (contentSize > 1000000) {
       console.warn('Large content detected:', contentSize, 'bytes');
       DebugLog.log('Large content detected', { size: contentSize });
     }
 
-    // Clean the content before conversion
-    cleanContent(content, settings);
+    // Extract iframes BEFORE running cleanContent (which removes them)
+    // For mainContent scope, we need to extract from original document since Readability may remove iframes
+    let iframeWarnings = [];
+    if (settings.contentScope === 'mainContent') {
+      iframeWarnings = await extractAndReplaceIframesFromOriginal(content, settings.preserveIframeLinks !== false);
+    }
+    
+    const cleanWarnings = await cleanContent(content, settings);
+    iframeWarnings = iframeWarnings.concat(cleanWarnings);
 
-    // Convert to Markdown using TurndownService
+    DebugLog.log('Iframe warnings', { count: iframeWarnings.length, types: iframeWarnings.map(w => w.type) });
+
     const turndownService = configureTurndownService(settings);
 
     try {
       let markdown = turndownService.turndown(content);
 
-      // Validate markdown output
       if (!markdown || markdown.trim() === '') {
         throw new Error('Conversion resulted in empty markdown');
       }
@@ -316,7 +351,6 @@
         hasTables: markdown.includes('|---')
       });
 
-      // Add page title as H1 if enabled and title is non-empty
       if (settings.includeTitle) {
         const pageTitle = document.title.trim();
         if (pageTitle.length > 0) {
@@ -324,15 +358,19 @@
         }
       }
 
-      // Post-process the markdown with metadata
+      const iframeWarning = iframeWarnings.find(w => w.type === 'crossOriginIframe');
+      if (iframeWarning) {
+        const warningText = `\n\n---\n> **Note:** This page contains ${iframeWarning.count} cross-origin iframe(s) that could not be accessed due to browser security policies. Some content may be missing. Links to these iframes have been preserved where possible.\n`;
+        markdown += warningText;
+        DebugLog.log('Added iframe warning', { count: iframeWarning.count });
+      }
+
       return postProcessMarkdown(markdown, settings, articleData);
     } catch (error) {
       DebugLog.error('Conversion failed', error);
       console.error('Turndown conversion error:', error);
 
-      // Attempt a simplified conversion for problematic content
-      if (contentSize > 100000) { // 100KB
-        // Try converting a smaller portion of the content
+      if (contentSize > 100000) {
         const simplifiedContent = document.createElement('div');
         simplifiedContent.innerHTML = content.innerHTML.substring(0, 100000);
         return turndownService.turndown(simplifiedContent) +
@@ -343,56 +381,37 @@
     }
   }
 
-  /**
-   * Extract the full page content
-   * @param {Document} doc - Cloned document
-   * @returns {HTMLElement} Content element
-   */
+  // ==========================================================================
+  // CONTENT EXTRACTION FUNCTIONS
+  // ==========================================================================
+
   function extractFullPageContent(doc) {
-    // Remove script and style tags
     const scripts = doc.getElementsByTagName('script');
     const styles = doc.getElementsByTagName('style');
-    
-    // Remove scripts and styles (iterate backwards to avoid issues with live collections)
     for (let i = scripts.length - 1; i >= 0; i--) {
       scripts[i].parentNode.removeChild(scripts[i]);
     }
-    
     for (let i = styles.length - 1; i >= 0; i--) {
       styles[i].parentNode.removeChild(styles[i]);
     }
-    
     return doc.body;
   }
-  
-  /**
-   * Extract the selected content
-   * @returns {HTMLElement} Content element
-   */
+
   function extractSelectedContent() {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || selection.toString().trim() === '') {
       throw new Error('No text is selected');
     }
-    
     const container = document.createElement('div');
     const range = selection.getRangeAt(0);
     container.appendChild(range.cloneContents());
-    
     return container;
   }
-  
-  /**
-   * Extract the main content using Readability
-   * @param {Document} doc - Cloned document
-   * @returns {Object} Object containing content element and article data
-   */
+
   function extractMainContent(doc) {
     try {
-      // Use Readability to extract the main content
       const documentClone = doc.implementation.createHTMLDocument('Article');
       documentClone.documentElement.innerHTML = doc.documentElement.innerHTML;
-      
       const reader = new Readability(documentClone);
       const article = reader.parse();
       
@@ -403,7 +422,6 @@
       const container = document.createElement('div');
       container.innerHTML = article.content;
       
-      // Return both content and article metadata
       return {
         content: container,
         articleData: {
@@ -416,39 +434,26 @@
       };
     } catch (error) {
       console.error('Readability error:', error);
-      // Fallback to a simple extraction
+      DebugLog.error('Readability error', error);
       return {
         content: fallbackContentExtraction(doc),
         articleData: null
       };
     }
   }
-  
-  /**
-   * Fallback content extraction when Readability fails
-   * @param {Document} doc - Cloned document
-   * @returns {HTMLElement} Content element
-   */
+
   function fallbackContentExtraction(doc) {
-    // Try to find the main content area
     const container = document.createElement('div');
-    // Look for common content containers
     const mainContent = doc.querySelector('main') || 
                         doc.querySelector('article') || 
                         doc.querySelector('.content') || 
                         doc.querySelector('#content') ||
                         doc.body;
-    // Clone the content to avoid modifying the original
     container.appendChild(mainContent.cloneNode(true));
     return container;
   }
-  
-  /**
-   * Extract author from meta tags
-   * @returns {string} Author name or empty string
-   */
+
   function extractAuthorFromMeta() {
-    // Try various meta tags for author
     const authorSelectors = [
       'meta[name="author"]',
       'meta[property="article:author"]',
@@ -456,47 +461,34 @@
       'meta[name="DC.creator"]',
       'meta[property="og:author"]'
     ];
-    
     for (const selector of authorSelectors) {
       const metaTag = document.querySelector(selector);
       if (metaTag && metaTag.content) {
         return metaTag.content.trim();
       }
     }
-    
     return '';
   }
-  
-  /**
-   * Extract site name from meta tags
-   * @returns {string} Site name or empty string
-   */
+
   function extractSiteNameFromMeta() {
     const siteNameSelectors = [
       'meta[property="og:site_name"]',
       'meta[name="application-name"]',
       'meta[name="apple-mobile-web-app-title"]'
     ];
-    
     for (const selector of siteNameSelectors) {
       const metaTag = document.querySelector(selector);
       if (metaTag && metaTag.content) {
         return metaTag.content.trim();
       }
     }
-    
-    // Fallback to domain name
     try {
       return new URL(window.location.href).hostname;
     } catch {
       return '';
     }
   }
-  
-  /**
-   * Extract published date from meta tags
-   * @returns {string} Published date or empty string
-   */
+
   function extractPublishedDateFromMeta() {
     const dateSelectors = [
       'meta[property="article:published_time"]',
@@ -507,7 +499,6 @@
       'time[datetime]',
       'time[pubdate]'
     ];
-    
     for (const selector of dateSelectors) {
       const element = document.querySelector(selector);
       if (element) {
@@ -516,40 +507,369 @@
                          element.textContent;
         if (dateValue) {
           try {
-            // Try to format the date nicely
             const date = new Date(dateValue.trim());
             if (!isNaN(date.getTime())) {
-              return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+              return date.toISOString().split('T')[0];
             }
           } catch {
-            // If parsing fails, return the raw value
             return dateValue.trim();
           }
         }
       }
     }
-    
     return '';
   }
-  
+
+  // ==========================================================================
+  // IFRAME CONTENT EXTRACTION
+  // ==========================================================================
+
+  function isSameOriginIframe(iframe) {
+    try {
+      if (!iframe.contentWindow) {
+        return false;
+      }
+      const iframeDoc = iframe.contentWindow.document;
+      return !!iframeDoc;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function extractSingleIframe(iframe, iframeSrc) {
+    return new Promise((resolve) => {
+      const messageId = `llmfeeder-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      let timeoutId = null;
+      let messageHandler = null;
+
+      const cleanup = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (messageHandler) window.removeEventListener('message', messageHandler);
+      };
+
+      messageHandler = (event) => {
+        if (event.data &&
+            event.data.action === MESSAGE_ACTIONS.EXTRACT_RESPONSE &&
+            event.data.messageId === messageId) {
+          cleanup();
+          resolve({
+            success: true,
+            content: event.data.content,
+            src: iframeSrc
+          });
+        }
+      };
+
+      window.addEventListener('message', messageHandler);
+
+      timeoutId = setTimeout(() => {
+        cleanup();
+        resolve({ success: false, content: null, src: iframeSrc });
+      }, IFRAME_EXTRACTION_TIMEOUT);
+
+      try {
+        iframe.contentWindow.postMessage({
+          action: MESSAGE_ACTIONS.EXTRACT_CONTENT,
+          messageId: messageId
+        }, '*');
+      } catch (e) {
+        cleanup();
+        resolve({ success: false, content: null, src: iframeSrc });
+      }
+    });
+  }
+
+  async function extractIframesInBatches(iframes) {
+    const results = [];
+    for (let i = 0; i < iframes.length; i += MAX_IFRAME_BATCH_SIZE) {
+      const batch = iframes.slice(i, i + MAX_IFRAME_BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(iframe => extractSingleIframe(iframe, iframe.src))
+      );
+      results.push(...batchResults);
+    }
+    return results;
+  }
+
   /**
-   * Clean the HTML content before conversion
-   * @param {HTMLElement} content - The content element
-   * @param {Object} settings - User settings
+   * Extract iframe content from the ORIGINAL document and inject into cloned content
+   * This is needed because Readability may remove iframes, and cloned iframes don't have loaded contentWindow
    */
-  function cleanContent(content, settings) {
+  async function extractAndReplaceIframesFromOriginal(clonedContent, preserveIframeLinks) {
+    const originalIframes = Array.from(document.querySelectorAll('iframe'));
+    const extractedContents = [];
+    const crossOriginIframes = [];
+    const inaccessibleIframes = [];
+
+    DebugLog.log('Starting iframe extraction from original document', { 
+      originalIframes: originalIframes.length 
+    });
+
+    for (let i = 0; i < originalIframes.length; i++) {
+      const iframe = originalIframes[i];
+      const iframeSrc = iframe.src || iframe.srcdoc || 'about:blank';
+
+      // Skip hidden/empty iframes
+      if (!iframe.offsetParent && !iframe.src && !iframe.srcdoc) {
+        continue;
+      }
+
+      if (isSameOriginIframe(iframe)) {
+        try {
+          const iframeDoc = iframe.contentWindow.document;
+          const iframeBody = iframeDoc.body;
+          const clonedContent = iframeBody.cloneNode(true);
+
+          // Clean scripts, styles
+          const scripts = clonedContent.querySelectorAll('script, style, noscript');
+          for (let j = scripts.length - 1; j >= 0; j--) {
+            scripts[j].parentNode.removeChild(scripts[j]);
+          }
+
+          const iframeText = clonedContent.textContent || '';
+          if (iframeText.trim().length > MIN_CONTENT_LENGTH) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'llmfeeder-iframe-content';
+            wrapper.setAttribute('data-iframe-src', iframeSrc);
+            wrapper.setAttribute('data-iframe-index', i);
+            wrapper.innerHTML = clonedContent.innerHTML;
+            extractedContents.push(wrapper);
+            DebugLog.log('Extracted same-origin iframe', { 
+              src: iframeSrc.substring(0, 50), 
+              contentLength: iframeText.length 
+            });
+          } else {
+            DebugLog.log('Iframe skipped (not enough content)', { 
+              src: iframeSrc.substring(0, 50), 
+              contentLength: iframeText.length 
+            });
+          }
+        } catch (e) {
+          DebugLog.error('Same-origin iframe extraction failed', e);
+          if (iframe.src) {
+            inaccessibleIframes.push({ iframe, index: i, src: iframeSrc });
+          }
+        }
+      } else if (iframe.src && iframe.src !== 'about:blank' && iframe.src !== 'javascript:void(0)') {
+        inaccessibleIframes.push({ iframe, index: i, src: iframeSrc });
+      }
+    }
+
+    // Try cross-origin via messaging
+    if (inaccessibleIframes.length > 0) {
+      DebugLog.log('Attempting cross-origin iframe extraction', { 
+        count: inaccessibleIframes.length 
+      });
+      const iframesToExtract = inaccessibleIframes.map(item => item.iframe);
+      const results = await extractIframesInBatches(iframesToExtract);
+
+      for (let j = 0; j < results.length; j++) {
+        const result = results[j];
+        const originalItem = inaccessibleIframes[j];
+
+        if (result.success && result.content) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'llmfeeder-iframe-content';
+          wrapper.setAttribute('data-iframe-src', result.src);
+          wrapper.setAttribute('data-iframe-index', originalItem.index);
+          wrapper.innerHTML = result.content;
+          extractedContents.push(wrapper);
+          DebugLog.log('Extracted cross-origin iframe via messaging', { 
+            src: result.src.substring(0, 50) 
+          });
+        } else {
+          crossOriginIframes.push({
+            src: result.src,
+            title: originalItem.iframe?.title || originalItem.iframe?.getAttribute('aria-label') || 'Embedded content'
+          });
+        }
+      }
+    }
+
+    DebugLog.log('Iframe extraction complete', {
+      extracted: extractedContents.length,
+      crossOrigin: crossOriginIframes.length
+    });
+
+    // Now replace iframes in the cloned content
+    const clonedIframes = Array.from(clonedContent.querySelectorAll('iframe'));
+    for (let i = 0; i < clonedIframes.length; i++) {
+      const iframe = clonedIframes[i];
+      const iframeSrc = iframe.src || iframe.srcdoc || 'about:blank';
+
+      const extractedContent = extractedContents.find(c =>
+        parseInt(c.getAttribute('data-iframe-index')) === i
+      );
+
+      if (extractedContent) {
+        const replacementDiv = document.createElement('div');
+        replacementDiv.className = 'llmfeeder-iframe-replacement';
+        replacementDiv.innerHTML = extractedContent.innerHTML;
+        iframe.parentNode.replaceChild(replacementDiv, iframe);
+      } else if (preserveIframeLinks && iframeSrc && iframeSrc !== 'about:blank') {
+        const linkDiv = document.createElement('div');
+        linkDiv.className = 'llmfeeder-iframe-link';
+        const iframeTitle = iframe.title || iframe.getAttribute('aria-label') || 'Embedded content';
+        linkDiv.innerHTML = `<p>[Embedded content: <a href="${iframeSrc}">${iframeTitle}</a>]</p>`;
+        iframe.parentNode.replaceChild(linkDiv, iframe);
+      } else {
+        iframe.parentNode.removeChild(iframe);
+      }
+    }
+
+    const warnings = [];
+    if (crossOriginIframes.length > 0) {
+      warnings.push({
+        type: 'crossOriginIframe',
+        count: crossOriginIframes.length,
+        details: crossOriginIframes.slice(0, 3)
+      });
+    }
+
+    return warnings;
+  }
+
+  /**
+   * Extract and replace iframes for fullPage/selection scope
+   * (For these scopes, iframes are still present in the cloned content)
+   */
+  async function extractAndReplaceIframesFromCloned(content, preserveIframeLinks) {
+    const originalIframes = Array.from(document.querySelectorAll('iframe'));
+    const extractedContents = [];
+    const crossOriginIframes = [];
+    const inaccessibleIframes = [];
+
+    DebugLog.log('Starting iframe extraction from cloned content', { 
+      originalIframes: originalIframes.length 
+    });
+
+    for (let i = 0; i < originalIframes.length; i++) {
+      const iframe = originalIframes[i];
+      const iframeSrc = iframe.src || iframe.srcdoc || 'about:blank';
+
+      if (!iframe.offsetParent && !iframe.src && !iframe.srcdoc) {
+        continue;
+      }
+
+      if (isSameOriginIframe(iframe)) {
+        try {
+          const iframeDoc = iframe.contentWindow.document;
+          const iframeBody = iframeDoc.body;
+          const clonedContent = iframeBody.cloneNode(true);
+
+          const scripts = clonedContent.querySelectorAll('script, style, noscript');
+          for (let j = scripts.length - 1; j >= 0; j--) {
+            scripts[j].parentNode.removeChild(scripts[j]);
+          }
+
+          const iframeText = clonedContent.textContent || '';
+          if (iframeText.trim().length > MIN_CONTENT_LENGTH) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'llmfeeder-iframe-content';
+            wrapper.setAttribute('data-iframe-src', iframeSrc);
+            wrapper.setAttribute('data-iframe-index', i);
+            wrapper.innerHTML = clonedContent.innerHTML;
+            extractedContents.push(wrapper);
+            DebugLog.log('Extracted same-origin iframe', { 
+              src: iframeSrc.substring(0, 50), 
+              contentLength: iframeText.length 
+            });
+          }
+        } catch (e) {
+          DebugLog.error('Same-origin iframe extraction failed', e);
+          if (iframe.src) {
+            inaccessibleIframes.push({ iframe, index: i, src: iframeSrc });
+          }
+        }
+      } else if (iframe.src && iframe.src !== 'about:blank' && iframe.src !== 'javascript:void(0)') {
+        inaccessibleIframes.push({ iframe, index: i, src: iframeSrc });
+      }
+    }
+
+    if (inaccessibleIframes.length > 0) {
+      const iframesToExtract = inaccessibleIframes.map(item => item.iframe);
+      const results = await extractIframesInBatches(iframesToExtract);
+
+      for (let j = 0; j < results.length; j++) {
+        const result = results[j];
+        const originalItem = inaccessibleIframes[j];
+
+        if (result.success && result.content) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'llmfeeder-iframe-content';
+          wrapper.setAttribute('data-iframe-src', result.src);
+          wrapper.setAttribute('data-iframe-index', originalItem.index);
+          wrapper.innerHTML = result.content;
+          extractedContents.push(wrapper);
+        } else {
+          crossOriginIframes.push({
+            src: result.src,
+            title: originalItem.iframe?.title || originalItem.iframe?.getAttribute('aria-label') || 'Embedded content'
+          });
+        }
+      }
+    }
+
+    // Replace iframes in cloned content
+    const clonedIframes = Array.from(content.querySelectorAll('iframe'));
+    for (let i = 0; i < clonedIframes.length; i++) {
+      const iframe = clonedIframes[i];
+      const iframeSrc = iframe.src || iframe.srcdoc || 'about:blank';
+
+      const extractedContent = extractedContents.find(c =>
+        parseInt(c.getAttribute('data-iframe-index')) === i
+      );
+
+      if (extractedContent) {
+        const replacementDiv = document.createElement('div');
+        replacementDiv.className = 'llmfeeder-iframe-replacement';
+        replacementDiv.innerHTML = extractedContent.innerHTML;
+        iframe.parentNode.replaceChild(replacementDiv, iframe);
+      } else if (preserveIframeLinks && iframeSrc && iframeSrc !== 'about:blank') {
+        const linkDiv = document.createElement('div');
+        linkDiv.className = 'llmfeeder-iframe-link';
+        const iframeTitle = iframe.title || iframe.getAttribute('aria-label') || 'Embedded content';
+        linkDiv.innerHTML = `<p>[Embedded content: <a href="${iframeSrc}">${iframeTitle}</a>]</p>`;
+        iframe.parentNode.replaceChild(linkDiv, iframe);
+      } else {
+        iframe.parentNode.removeChild(iframe);
+      }
+    }
+
+    const warnings = [];
+    if (crossOriginIframes.length > 0) {
+      warnings.push({
+        type: 'crossOriginIframe',
+        count: crossOriginIframes.length,
+        details: crossOriginIframes.slice(0, 3)
+      });
+    }
+
+    return warnings;
+  }
+
+  // ==========================================================================
+  // CONTENT CLEANING
+  // ==========================================================================
+
+  async function cleanContent(content, settings) {
+    // For fullPage and selection scopes, extract iframes from cloned content
+    // For mainContent scope, this was already done before Readability
+    let iframeWarnings = [];
+    if (settings.contentScope !== 'mainContent') {
+      iframeWarnings = await extractAndReplaceIframesFromCloned(content, settings.preserveIframeLinks !== false);
+    }
+
     // Remove elements that shouldn't be included
     const elementsToRemove = [
-      'script', 'style', 'noscript', 'iframe',
+      'script', 'style', 'noscript',
       'nav', 'footer', '.comments', '.ads', '.sidebar'
     ];
-    
-    // Add more elements to remove if images are disabled
+
     if (!settings.includeImages) {
       elementsToRemove.push('img', 'picture', 'svg');
     }
-    
-    // Remove unwanted elements
+
     elementsToRemove.forEach(selector => {
       const elements = content.querySelectorAll(selector);
       for (let i = 0; i < elements.length; i++) {
@@ -558,61 +878,55 @@
         }
       }
     });
-    
+
     // Remove empty paragraphs and divs
     const emptyElements = content.querySelectorAll('p:empty, div:empty');
     for (let i = 0; i < emptyElements.length; i++) {
       emptyElements[i].parentNode.removeChild(emptyElements[i]);
     }
-    
-    // Convert relative URLs to absolute
+
     makeUrlsAbsolute(content);
+    return iframeWarnings;
   }
-  
-  /**
-   * Make all URLs in the content absolute
-   * @param {HTMLElement} content - The content element
-   */
+
   function makeUrlsAbsolute(content) {
-    // Convert links
     const links = content.querySelectorAll('a');
     for (let i = 0; i < links.length; i++) {
       if (links[i].href) {
-        links[i].href = new URL(links[i].getAttribute('href'), document.baseURI).href;
+        try {
+          links[i].href = new URL(links[i].getAttribute('href'), document.baseURI).href;
+        } catch (e) {}
       }
     }
-    
-    // Convert images
+
     const images = content.querySelectorAll('img');
     for (let i = 0; i < images.length; i++) {
       if (images[i].src) {
-        images[i].src = new URL(images[i].getAttribute('src'), document.baseURI).href;
+        try {
+          images[i].src = new URL(images[i].getAttribute('src'), document.baseURI).href;
+        } catch (e) {}
       }
     }
   }
-  
-  /**
-   * Configure the TurndownService based on user settings
-   * @param {Object} settings - User settings
-   * @returns {TurndownService} Configured TurndownService
-   */
+
+  // ==========================================================================
+  // TURNDOWN CONFIGURATION
+  // ==========================================================================
+
   function configureTurndownService(settings) {
     const turndownService = new TurndownService({
-      headingStyle: 'atx',        // Use # style headings
-      hr: '---',                  // Use --- for horizontal rules
-      bulletListMarker: '-',      // Use - for bullet lists
-      codeBlockStyle: 'fenced',   // Use ``` style code blocks
-      emDelimiter: '*'            // Use * for emphasis
+      headingStyle: 'atx',
+      hr: '---',
+      bulletListMarker: '-',
+      codeBlockStyle: 'fenced',
+      emDelimiter: '*'
     });
-    
-    // Preserve tables if enabled
+
     if (settings.preserveTables) {
       turndownService.use(turndownPluginTables);
     }
-    
-    // Configure image handling
+
     if (!settings.includeImages) {
-      // Override image rule to ignore images
       turndownService.addRule('images', {
         filter: 'img',
         replacement: function() {
@@ -620,8 +934,7 @@
         }
       });
     }
-    
-    // Improve code block handling
+
     turndownService.addRule('fencedCodeBlock', {
       filter: function(node) {
         return (
@@ -634,7 +947,6 @@
         const language = node.firstChild.getAttribute('class') || '';
         const languageMatch = language.match(/language-(\S+)/);
         const languageIdentifier = languageMatch ? languageMatch[1] : '';
-        
         return (
           '\n\n```' + languageIdentifier + '\n' +
           node.firstChild.textContent.replace(/\n$/, '') +
@@ -642,47 +954,27 @@
         );
       }
     });
-    
+
     return turndownService;
   }
-  
-  /**
-   * Post-process the markdown output
-   * @param {string} markdown - Raw markdown
-   * @param {Object} settings - User settings
-   * @param {Object} articleData - Extracted article metadata
-   * @returns {string} Processed markdown
-   */
+
   function postProcessMarkdown(markdown, settings, articleData) {
-    // Remove excessive blank lines (more than 2 in a row)
     markdown = markdown.replace(/\n{3,}/g, '\n\n');
-    
-    // Ensure proper spacing around headings
     markdown = markdown.replace(/([^\n])(\n#{1,6} )/g, '$1\n\n$2');
-    
-    // Fix list item spacing
     markdown = markdown.replace(/(\n[*\-+] [^\n]+)(\n[*\-+] )/g, '$1\n$2');
-    
-    // Add custom metadata format if enabled
+
     if (settings.includeMetadata && settings.metadataFormat) {
       const metadataText = formatMetadata(settings.metadataFormat, articleData);
       if (metadataText) {
         markdown = markdown + '\n\n' + metadataText;
       }
     }
-    
+
     return markdown;
   }
-  
-  /**
-   * Format metadata using custom template
-   * @param {string} template - Format template with placeholders
-   * @param {Object} articleData - Extracted article metadata
-   * @returns {string} Formatted metadata string
-   */
+
   function formatMetadata(template, articleData) {
     try {
-      // Prepare metadata values with predictable placeholders
       const metadata = {
         title: articleData?.title || document.title || 'Untitled',
         url: window.location.href,
@@ -691,26 +983,20 @@
         siteName: articleData?.siteName || new URL(window.location.href).hostname,
         excerpt: articleData?.excerpt || ''
       };
-      
-      // Replace placeholders in template
+
       let formatted = template;
-      
-      // Replace each placeholder - preserves user's format exactly
       Object.entries(metadata).forEach(([key, value]) => {
         const placeholder = new RegExp(`\\{${key}\\}`, 'g');
         formatted = formatted.replace(placeholder, value);
       });
-      
+
       return formatted;
     } catch (error) {
       console.error('Error formatting metadata:', error);
-      // Fallback to simple source line
       return `---\nSource: [${document.title || 'Untitled'}](${window.location.href})`;
     }
   }
-  
-  // This function would normally be provided by the TurndownService-tables plugin
-  // Simplified implementation for demonstration
+
   function turndownPluginTables() {
     return function(turndownService) {
       turndownService.addRule('tableCell', {
@@ -719,22 +1005,19 @@
           return ' ' + content + ' |';
         }
       });
-      
+
       turndownService.addRule('tableRow', {
         filter: 'tr',
         replacement: function(content, node) {
           let output = '|' + content + '\n';
-          
-          // Add header row separator
           if (node.parentNode.nodeName === 'THEAD') {
             const cells = node.querySelectorAll('th, td');
             output += '|' + Array.from(cells).map(() => ' --- |').join('') + '\n';
           }
-          
           return output;
         }
       });
-      
+
       turndownService.addRule('table', {
         filter: 'table',
         replacement: function(content, node) {
@@ -744,13 +1027,11 @@
     };
   }
 
-  /**
-   * Show notification in the current tab
-   * @param {string} title - Notification title
-   * @param {string} message - Notification message
-   */
+  // ==========================================================================
+  // NOTIFICATION SYSTEM
+  // ==========================================================================
+
   function showNotification(title, message) {
-    // Remove any existing notifications first
     const existingNotifications = document.querySelectorAll('.llmfeeder-notification');
     existingNotifications.forEach(notification => {
       if (notification.parentNode) {
@@ -758,11 +1039,9 @@
       }
     });
 
-    // Create notification container
     const notification = document.createElement('div');
     notification.className = 'llmfeeder-notification';
-    
-    // Modern styling with high contrast and accessibility
+
     notification.style.cssText = `
       position: fixed;
       top: 24px;
@@ -784,7 +1063,6 @@
       transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     `;
 
-    // Create content wrapper
     const contentWrapper = document.createElement('div');
     contentWrapper.style.cssText = `
       display: flex;
@@ -792,7 +1070,6 @@
       gap: 12px;
     `;
 
-    // Add icon based on title
     const iconWrapper = document.createElement('div');
     iconWrapper.style.cssText = `
       flex-shrink: 0;
@@ -804,7 +1081,6 @@
       margin-top: 2px;
     `;
 
-    // Choose icon based on title
     let iconSVG = '';
     if (title.toLowerCase().includes('success')) {
       iconSVG = `
@@ -818,7 +1094,6 @@
           <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       `;
-      // Use red gradient for errors
       notification.style.background = 'linear-gradient(135deg, #ea4335 0%, #d93025 100%)';
     } else {
       iconSVG = `
@@ -829,14 +1104,12 @@
     }
     iconWrapper.innerHTML = iconSVG;
 
-    // Create text content
     const textWrapper = document.createElement('div');
     textWrapper.style.cssText = `
       flex: 1;
       min-width: 0;
     `;
 
-    // Add title
     const titleElement = document.createElement('div');
     titleElement.textContent = title;
     titleElement.style.cssText = `
@@ -847,7 +1120,6 @@
       color: #ffffff;
     `;
 
-    // Add message
     const messageElement = document.createElement('div');
     messageElement.textContent = message;
     messageElement.style.cssText = `
@@ -858,7 +1130,6 @@
       word-wrap: break-word;
     `;
 
-    // Add close button
     const closeButton = document.createElement('button');
     closeButton.style.cssText = `
       position: absolute;
@@ -881,7 +1152,6 @@
       </svg>
     `;
 
-    // Close button hover effect
     closeButton.addEventListener('mouseenter', () => {
       closeButton.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
       closeButton.style.color = '#ffffff';
@@ -891,7 +1161,6 @@
       closeButton.style.color = 'rgba(255, 255, 255, 0.7)';
     });
 
-    // Assemble the notification
     textWrapper.appendChild(titleElement);
     textWrapper.appendChild(messageElement);
     contentWrapper.appendChild(iconWrapper);
@@ -899,16 +1168,13 @@
     notification.appendChild(contentWrapper);
     notification.appendChild(closeButton);
 
-    // Add to page
     document.body.appendChild(notification);
 
-    // Trigger entrance animation
     requestAnimationFrame(() => {
       notification.style.transform = 'translateX(0) scale(1)';
       notification.style.opacity = '1';
     });
 
-    // Auto-remove function
     const removeNotification = () => {
       notification.style.transform = 'translateX(100%) scale(0.8)';
       notification.style.opacity = '0';
@@ -919,15 +1185,13 @@
       }, 400);
     };
 
-    // Close button click handler
     closeButton.addEventListener('click', removeNotification);
 
-    // Auto-remove after 4 seconds (increased from 3 for better readability)
     const autoRemoveTimeout = setTimeout(removeNotification, 4000);
 
-    // Clear timeout if manually closed
     closeButton.addEventListener('click', () => {
       clearTimeout(autoRemoveTimeout);
     });
   }
-})(); 
+
+})();

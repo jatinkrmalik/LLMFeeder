@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LLMFeeder Iframe Test Page</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
+        h1 { color: #333; }
+        h2 { border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-top: 30px; }
+        .test-section { background: #f5f5f5; padding: 20px; margin: 20px 0; border-radius: 8px; border: 1px solid #ddd; }
+        iframe { width: 100%; height: 180px; border: 2px solid #4285f4; border-radius: 4px; display: block; }
+        .instructions { background: #fff3e0; padding: 15px; border-radius: 6px; border-left: 4px solid #ff9800; margin-bottom: 20px; }
+        .expected { background: #e3f2fd; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 0.9em; }
+        code { background: #263238; color: #aed581; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+        .success { color: #2e7d32; font-weight: bold; }
+        .warning { color: #f57c00; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>LLMFeeder Iframe Extraction Test Page</h1>
+
+    <div class="instructions">
+        <h3>Testing Instructions:</h3>
+        <ol>
+            <li>Reload the LLMFeeder extension</li>
+            <li>Open LLMFeeder popup (click the extension icon)</li>
+            <li><strong>Enable "Debug Mode" in options</strong> (gear icon)</li>
+            <li>Set <strong>Content Scope to "Full Page"</strong></li>
+            <li>Click "Copy to Clipboard"</li>
+            <li>Paste and verify the output contains all sections below</li>
+        </ol>
+        <p><strong>Note:</strong> Serve this file via HTTP (e.g., <code>python3 -m http.server 8080</code>) rather than opening as <code>file://</code> for best results.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 1: Main Content</h2>
+        <p>This content should be extracted by LLMFeeder. It's a simple article with some text.</p>
+        <ul>
+            <li>Item 1: The main content is easily accessible</li>
+            <li>Item 2: Iframes require special handling</li>
+            <li>Item 3: Cross-origin iframes may not be accessible</li>
+        </ul>
+        <div class="expected"><span class="success">Expected:</span> This content SHOULD appear in markdown</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Same-Origin Iframe (srcdoc)</h2>
+        <p>This iframe uses the <code>srcdoc</code> attribute, which is considered same-origin.</p>
+        <iframe
+            srcdoc="<html><head><style>body{font-family:sans-serif;padding:20px;background:#e3f2fd}h2{color:#1976d2}</style></head><body><h2>srcdoc Iframe Content</h2><p><strong>This content SHOULD be extracted by LLMFeeder!</strong></p><p>This is same-origin content loaded via the srcdoc attribute, which bypasses normal iframe loading restrictions.</p><ul><li>Extracted via direct DOM access</li><li>Same-origin via srcdoc attribute</li><li>Should work with Full Page scope</li></ul></body></html>"
+            title="srcdoc Iframe"></iframe>
+        <div class="expected"><span class="success">Expected:</span> This iframe content SHOULD appear in markdown (Full Page scope)</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Same-Origin Nested Iframe</h2>
+        <p>This iframe loads from the same origin (same server).</p>
+        <iframe src="iframe-content.html" title="Same-Origin Nested Iframe"></iframe>
+        <div class="expected"><span class="success">Expected:</span> This iframe content SHOULD appear in markdown (Full Page scope)</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Cross-Origin Iframe (Wikipedia)</h2>
+        <p>This iframe loads Wikipedia content. Due to Same-Origin Policy, content cannot be accessed directly.</p>
+        <iframe src="https://en.wikipedia.org/wiki/Special:Random" title="Cross-Origin Wikipedia Iframe"></iframe>
+        <div class="expected"><span class="warning">Expected:</span> A warning should appear about cross-origin iframes</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Sandboxed Iframe</h2>
+        <p>This iframe has the <code>sandbox</code> attribute, which restricts access even if same-origin.</p>
+        <iframe
+            sandbox
+            srcdoc="<html><body><h2>Sandboxed Iframe</h2><p>This content is in a sandboxed iframe.</p><p>Should NOT be extractable due to sandbox restrictions.</p></body></html>"
+            title="Sandboxed Iframe"></iframe>
+        <div class="expected"><span class="warning">Expected:</span> May or may not be extracted (depends on browser)</div>
+    </div>
+
+</body>
+</html>
