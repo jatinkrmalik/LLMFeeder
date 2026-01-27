@@ -919,7 +919,54 @@
     });
 
     if (settings.preserveTables) {
-      turndownService.use(turndownPluginTables);
+      // Prevent thead and tbody from adding extra newlines
+      turndownService.addRule('thead', {
+        filter: 'thead',
+        replacement: function(content) {
+          return content;
+        }
+      });
+
+      turndownService.addRule('tbody', {
+        filter: 'tbody',
+        replacement: function(content) {
+          return content;
+        }
+      });
+
+      // Add custom table rules before default rules can process them
+      turndownService.addRule('table', {
+        filter: 'table',
+        replacement: function(content, node) {
+          return '\n\n' + content + '\n\n';
+        }
+      });
+
+      turndownService.addRule('tableRow', {
+        filter: 'tr',
+        replacement: function(content, node) {
+          const cells = node.querySelectorAll('th, td');
+          let output = '|' + content + '\n';
+
+          // Check if this row contains th elements (header row)
+          const hasHeaderCell = Array.from(cells).some(cell => cell.nodeName === 'TH');
+
+          // Add separator row after header row
+          if (hasHeaderCell) {
+            const separator = '|' + Array.from(cells).map(() => ' --- |').join('') + '\n';
+            output += separator;
+          }
+
+          return output;
+        }
+      });
+
+      turndownService.addRule('tableCell', {
+        filter: ['th', 'td'],
+        replacement: function(content, node) {
+          return ' ' + content.trim() + ' |';
+        }
+      });
     }
 
     if (!settings.includeImages) {
@@ -991,36 +1038,6 @@
       console.error('Error formatting metadata:', error);
       return `---\nSource: [${document.title || 'Untitled'}](${window.location.href})`;
     }
-  }
-
-  function turndownPluginTables() {
-    return function(turndownService) {
-      turndownService.addRule('tableCell', {
-        filter: ['th', 'td'],
-        replacement: function(content, node) {
-          return ' ' + content + ' |';
-        }
-      });
-
-      turndownService.addRule('tableRow', {
-        filter: 'tr',
-        replacement: function(content, node) {
-          let output = '|' + content + '\n';
-          if (node.parentNode.nodeName === 'THEAD') {
-            const cells = node.querySelectorAll('th, td');
-            output += '|' + Array.from(cells).map(() => ' --- |').join('') + '\n';
-          }
-          return output;
-        }
-      });
-
-      turndownService.addRule('table', {
-        filter: 'table',
-        replacement: function(content, node) {
-          return '\n\n' + content + '\n\n';
-        }
-      });
-    };
   }
 
   // ==========================================================================

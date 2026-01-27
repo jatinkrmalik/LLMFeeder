@@ -242,6 +242,9 @@ LLMFeeder/
 ├── scripts/                   # Build and utility scripts
 │   └── build.sh               # Main build script
 │
+├── testbench.html             # Test bench page for extension testing
+├── iframe-content-test.html   # Nested iframe content for testing
+│
 ├── .gitignore                 # Git ignore rules
 └── README.md                  # Project documentation
 ```
@@ -347,6 +350,45 @@ make versioned-source version=1.0.0
 make clean         # Remove dist/ artifacts
 make help          # Show help message
 ```
+
+## Testing
+
+A test bench page (`testbench.html`) is included to verify extension functionality:
+
+### Running the Test Bench
+
+1. Start a local HTTP server:
+   ```bash
+   python3 -m http.server 8080
+   ```
+
+2. Open `http://localhost:8080/testbench.html` in your browser
+
+3. Test the extension with different content types:
+   - **Main Content Extraction**: Article content with Readability
+   - **Iframe Extraction**: Same-origin, srcdoc, and cross-origin iframes
+   - **Table Conversion**: Standard HTML tables and GitHub-style tables
+   - **Empty Cells**: Tables with missing data
+
+### Test Coverage
+
+| Test Case | Description | Expected Result |
+|-----------|-------------|-----------------|
+| Test 1 | Main article content | Extracted with proper formatting |
+| Test 2 | srcdoc iframe | Content extracted (same-origin) |
+| Test 3 | Nested iframe | Content extracted (same-origin) |
+| Test 4 | Cross-origin iframe | Warning message with link placeholder |
+| Test 5 | Sandboxed iframe | May or may not extract (browser-dependent) |
+| Test 6 | Standard HTML table | Markdown table with `|` separators |
+| Test 7 | GitHub-style table | Markdown table without `<thead>` |
+| Test 8 | Empty cells | Empty cells handled correctly |
+
+### Testing Tips
+
+- Enable **Debug Mode** in options for detailed logs
+- Use **Full Page** scope to test iframe extraction
+- Enable **Preserve Tables** to test table conversion
+- Test with both "Main Content" and "Full Page" scopes
 
 ## License
 
