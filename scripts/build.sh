@@ -84,6 +84,7 @@ build_chrome() {
   cp "$EXT_DIR/content.js" "$CHROME_DIR/"
   cp "$EXT_DIR/popup.html" "$CHROME_DIR/"
   cp "$EXT_DIR/popup.js" "$CHROME_DIR/"
+  cp "$EXT_DIR/multi-tab-utils.js" "$CHROME_DIR/"
   cp "$EXT_DIR/styles.css" "$CHROME_DIR/"
   
   # Create directories and copy additional files
@@ -95,13 +96,29 @@ build_chrome() {
   # Create Chrome-specific manifest
   if command -v jq &> /dev/null; then
     echo "Using jq to create Chrome manifest..."
-    # Remove Firefox-specific settings but ensure service_worker is preserved
-    jq 'del(.browser_specific_settings)' "$EXT_DIR/manifest.json" > "$CHROME_DIR/manifest.json"
+    # Remove Firefox-specific settings and "menus" permission (Chrome doesn't support it)
+    jq 'del(.browser_specific_settings) | .permissions = (.permissions - ["menus"])' "$EXT_DIR/manifest.json" > "$CHROME_DIR/manifest.json"
   else
-    echo "jq not found, using sed instead..."
+    echo "WARNING: jq not found, using sed fallback (less reliable)..."
     cp "$EXT_DIR/manifest.json" "$CHROME_DIR/manifest.json"
-    sed -i.bak '/browser_specific_settings/,/}/d' "$CHROME_DIR/manifest.json" || true
+
+    # Remove browser_specific_settings section
+    if ! sed -i.bak '/browser_specific_settings/,/}/d' "$CHROME_DIR/manifest.json" 2>/dev/null; then
+      echo "WARNING: Failed to remove browser_specific_settings from manifest"
+    fi
+
+    # Remove "menus" permission
+    if ! sed -i.bak '/"menus"/d' "$CHROME_DIR/manifest.json" 2>/dev/null; then
+      echo "WARNING: Failed to remove 'menus' permission from manifest"
+    fi
+
     rm -f "$CHROME_DIR/manifest.json.bak" 2>/dev/null || true
+
+    # Verify the result
+    if grep -q '"menus"' "$CHROME_DIR/manifest.json" 2>/dev/null; then
+      echo "ERROR: Chrome manifest still contains 'menus' permission - build may fail"
+      echo "Please install jq for reliable manifest processing: sudo apt-get install jq"
+    fi
   fi
   
   # Create the ZIP file
@@ -130,6 +147,7 @@ build_firefox() {
   cp "$EXT_DIR/content.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/popup.html" "$FIREFOX_DIR/"
   cp "$EXT_DIR/popup.js" "$FIREFOX_DIR/"
+  cp "$EXT_DIR/multi-tab-utils.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/styles.css" "$FIREFOX_DIR/"
   
   # Create directories and copy additional files
@@ -148,10 +166,10 @@ build_firefox() {
         "id": "llmfeeder@j47.in",
         "strict_min_version": "109.0"
       }
-    } | 
+    } |
     if has("background") then
       .background = {
-        "scripts": ["background.js"]
+        "scripts": ["libs/jszip.min.js", "multi-tab-utils.js", "background.js"]
       }
     else
       .
@@ -161,7 +179,7 @@ build_firefox() {
     echo "jq not found, using manual modification..."
     cp "$EXT_DIR/manifest.json" "$FIREFOX_DIR/manifest.json"
     # This is a basic substitution but might not work for all cases
-    sed -i.bak 's/"service_worker": "background.js",\s*"type": "module"/"scripts": ["background.js"]/' "$FIREFOX_DIR/manifest.json" || true
+    sed -i.bak 's/"service_worker": "background.js",\s*"type": "module"/"scripts": ["libs\/jszip.min.js", "multi-tab-utils.js", "background.js"]/' "$FIREFOX_DIR/manifest.json" || true
     rm -f "$FIREFOX_DIR/manifest.json.bak" 2>/dev/null || true
   fi
   
@@ -191,6 +209,7 @@ build_source() {
   cp "$EXT_DIR/content.js" "$SOURCE_DIR/"
   cp "$EXT_DIR/popup.html" "$SOURCE_DIR/"
   cp "$EXT_DIR/popup.js" "$SOURCE_DIR/"
+  cp "$EXT_DIR/multi-tab-utils.js" "$SOURCE_DIR/"
   cp "$EXT_DIR/styles.css" "$SOURCE_DIR/"
   cp "$EXT_DIR/manifest.json" "$SOURCE_DIR/"
   

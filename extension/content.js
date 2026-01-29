@@ -222,6 +222,23 @@
       }
       return true;
     }
+
+    // Download file from data URL (used for ZIP downloads)
+    if (request.action === 'downloadFile') {
+      try {
+        const a = document.createElement('a');
+        a.href = request.dataUrl;
+        a.download = request.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        sendResponse({ success: true });
+      } catch (error) {
+        console.error('Download file error:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+      return true;
+    }
   });
 
   // ==========================================================================
