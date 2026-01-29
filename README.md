@@ -38,13 +38,7 @@ A browser extension that converts web page content to clean Markdown format and 
 
 
 ## Demo
-
-<div align="center">
-   
-[![llmfeeder_promo](https://github.com/user-attachments/assets/6585a653-79fc-4dab-81e9-9d12a1552223)](https://www.youtube.com/watch?v=JxHWqszlZDw)
-Click the image for YT Demo video. 👆
-
-</div>
+[llmfeeder-v2.webm](https://github.com/user-attachments/assets/7e05e7dc-2561-482f-957f-0c2eb1d903fd)
 
 ## Privacy & Security
 
