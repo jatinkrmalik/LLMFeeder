@@ -87,6 +87,22 @@
           </div>
           <div class="bottom-spacer"></div>
         </div>
+
+        <!-- Review Prompt Banner -->
+        <div id="reviewBanner" class="review-banner hidden">
+          <div class="review-content">
+            <div class="review-message">
+              <span class="review-icon">⭐</span>
+              <span>Enjoying LLMFeeder? Your review helps us grow!</span>
+            </div>
+            <div class="review-actions">
+              <button id="leaveReviewBtn" class="review-btn review-btn-primary">Leave a Review</button>
+              <button id="snoozeReviewBtn" class="review-btn review-btn-secondary">Maybe Later</button>
+              <button id="dismissReviewBtn" class="review-btn review-btn-text">No Thanks</button>
+            </div>
+          </div>
+        </div>
+
         <div class="footer">
           <div>
             Made with ❤️ by our contributors on
@@ -236,6 +252,19 @@ Source: [{title}]({url})</textarea>
                 <span class="btn-text">Copy Debug Logs</span>
               </button>
               <small style="display: block; margin-top: 4px; color: var(--text-secondary); text-align: center;">Logs are rewritten on each conversion</small>
+            </div>
+
+            <div class="setting-group rating-cta" id="ratingCta">
+              <button class="rating-dismiss" id="dismissRatingCta" title="Dismiss">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="rating-dismiss-icon">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <div class="rating-content">
+                <span class="rating-stars">⭐⭐⭐⭐⭐</span>
+                <p class="rating-text">Enjoying LLMFeeder?</p>
+                <a href="#" id="settingsReviewLink" class="rating-link">Rate us on <span id="storeName">Chrome Web Store</span></a>
+              </div>
             </div>
           </div>
         </div>
