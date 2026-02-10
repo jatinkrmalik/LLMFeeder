@@ -85,6 +85,7 @@ build_chrome() {
   cp "$EXT_DIR/popup.html" "$CHROME_DIR/"
   cp "$EXT_DIR/popup.js" "$CHROME_DIR/"
   cp "$EXT_DIR/styles.css" "$CHROME_DIR/"
+  cp "$EXT_DIR/token-counter.js" "$CHROME_DIR/" 2>/dev/null || echo "Warning: token-counter.js not found"
   
   # Create directories and copy additional files
   mkdir -p "$CHROME_DIR/icons"
@@ -131,6 +132,7 @@ build_firefox() {
   cp "$EXT_DIR/popup.html" "$FIREFOX_DIR/"
   cp "$EXT_DIR/popup.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/styles.css" "$FIREFOX_DIR/"
+  cp "$EXT_DIR/token-counter.js" "$FIREFOX_DIR/" 2>/dev/null || echo "Warning: token-counter.js not found"
   
   # Create directories and copy additional files
   mkdir -p "$FIREFOX_DIR/icons"
@@ -192,6 +194,7 @@ build_source() {
   cp "$EXT_DIR/popup.html" "$SOURCE_DIR/"
   cp "$EXT_DIR/popup.js" "$SOURCE_DIR/"
   cp "$EXT_DIR/styles.css" "$SOURCE_DIR/"
+  cp "$EXT_DIR/token-counter.js" "$SOURCE_DIR/" 2>/dev/null || echo "Warning: token-counter.js not found"
   cp "$EXT_DIR/manifest.json" "$SOURCE_DIR/"
   
   # Create directories and copy additional files
