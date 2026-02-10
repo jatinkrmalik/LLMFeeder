@@ -356,23 +356,32 @@ async function trackConversion() {
     });
 
     const newCount = data.conversionCount + 1;
+    const isSnoozed = data.snoozeThreshold !== null;
     const shouldShowBanner = !data.reviewPromptDismissed && 
                              (newCount === REVIEW_TRIGGER_COUNT || 
                               (data.snoozeThreshold && newCount === data.snoozeThreshold));
 
     await browserAPI.storage.sync.set({ conversionCount: newCount });
 
-    return shouldShowBanner;
+    return shouldShowBanner ? { show: true, isSnoozed } : { show: false, isSnoozed: false };
   } catch (error) {
     console.error("Error tracking conversion:", error);
-    return false;
+    return { show: false, isSnoozed: false };
   }
 }
 
 // Show review banner
-function showReviewBanner() {
+function showReviewBanner(isSnoozed = false) {
   if (reviewBanner) {
     reviewBanner.classList.remove("hidden");
+    // First appearance: show "Leave a Review" and "Maybe Later" only
+    // Second appearance (after snooze): show "Leave a Review" and "No Thanks" only
+    if (snoozeReviewBtn) {
+      snoozeReviewBtn.style.display = isSnoozed ? "none" : "inline-block";
+    }
+    if (dismissReviewBtn) {
+      dismissReviewBtn.style.display = isSnoozed ? "inline-block" : "none";
+    }
   }
 }
 
@@ -424,12 +433,13 @@ async function initReviewBanner() {
       snoozeThreshold: null
     });
 
+    const isSnoozed = data.snoozeThreshold !== null;
     const shouldShow = !data.reviewPromptDismissed && 
                       (data.conversionCount === REVIEW_TRIGGER_COUNT || 
                        (data.snoozeThreshold && data.conversionCount === data.snoozeThreshold));
 
     if (shouldShow) {
-      showReviewBanner();
+      showReviewBanner(isSnoozed);
     } else {
       hideReviewBanner();
     }
@@ -492,9 +502,9 @@ async function convertToMarkdown() {
     await saveSettings();
 
     // Track conversion and show review banner if needed
-    const shouldShowBanner = await trackConversion();
-    if (shouldShowBanner) {
-      showReviewBanner();
+    const bannerState = await trackConversion();
+    if (bannerState.show) {
+      showReviewBanner(bannerState.isSnoozed);
     }
   } catch (error) {
     console.error("Conversion error:", error);
@@ -558,9 +568,9 @@ async function downloadMarkdown() {
     await saveSettings();
 
     // Track conversion and show review banner if needed
-    const shouldShowBanner = await trackConversion();
-    if (shouldShowBanner) {
-      showReviewBanner();
+    const bannerState = await trackConversion();
+    if (bannerState.show) {
+      showReviewBanner(bannerState.isSnoozed);
     }
   } catch (error) {
     console.error("Download error:", error);
