@@ -3,6 +3,12 @@
 
 const MAX_FILENAME_LENGTH = 100;
 
+// Review prompt constants
+const REVIEW_TRIGGER_COUNT = 20;
+const REVIEW_SNOOZE_COUNT = 40;
+const CHROME_WEBSTORE_URL = "https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk/reviews";
+const FIREFOX_ADDONS_URL = "https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/reviews/";
+
 // Create a proper browserAPI wrapper for the popup
 const browserAPI = (function () {
   // Check if we're in Firefox (browser is defined) or Chrome (chrome is defined)
@@ -150,6 +156,12 @@ const metadataFormatContainer = document.getElementById("metadataFormatContainer
 const resetMetadataFormatBtn = document.getElementById("resetMetadataFormat");
 const debugModeCheckbox = document.getElementById("debugMode");
 const copyLogsBtn = document.getElementById("copyLogsBtn");
+
+// Review banner elements
+const reviewBanner = document.getElementById("reviewBanner");
+const leaveReviewBtn = document.getElementById("leaveReviewBtn");
+const snoozeReviewBtn = document.getElementById("snoozeReviewBtn");
+const dismissReviewBtn = document.getElementById("dismissReviewBtn");
 
 // Default metadata format
 const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
@@ -324,6 +336,109 @@ function updateDebugModeVisibility() {
   }
 }
 
+// Detect browser type
+function detectBrowser() {
+  return navigator.userAgent.toLowerCase().includes("firefox") ? "firefox" : "chrome";
+}
+
+// Get appropriate store URL based on browser
+function getStoreUrl() {
+  return detectBrowser() === "firefox" ? FIREFOX_ADDONS_URL : CHROME_WEBSTORE_URL;
+}
+
+// Track conversion and check if review banner should be shown
+async function trackConversion() {
+  try {
+    const data = await browserAPI.storage.sync.get({
+      conversionCount: 0,
+      reviewPromptDismissed: false,
+      snoozeThreshold: null
+    });
+
+    const newCount = data.conversionCount + 1;
+    const shouldShowBanner = !data.reviewPromptDismissed && 
+                             (newCount === REVIEW_TRIGGER_COUNT || 
+                              (data.snoozeThreshold && newCount === data.snoozeThreshold));
+
+    await browserAPI.storage.sync.set({ conversionCount: newCount });
+
+    return shouldShowBanner;
+  } catch (error) {
+    console.error("Error tracking conversion:", error);
+    return false;
+  }
+}
+
+// Show review banner
+function showReviewBanner() {
+  if (reviewBanner) {
+    reviewBanner.classList.remove("hidden");
+  }
+}
+
+// Hide review banner
+function hideReviewBanner() {
+  if (reviewBanner) {
+    reviewBanner.classList.add("hidden");
+  }
+}
+
+// Handle "Leave a Review" button click
+async function handleLeaveReview() {
+  try {
+    const storeUrl = getStoreUrl();
+    await browserAPI.storage.sync.set({ reviewPromptDismissed: true });
+    hideReviewBanner();
+    browserAPI.tabs.create({ url: storeUrl });
+  } catch (error) {
+    console.error("Error opening store:", error);
+  }
+}
+
+// Handle "Maybe Later" button click (snooze)
+async function handleSnoozeReview() {
+  try {
+    await browserAPI.storage.sync.set({ snoozeThreshold: REVIEW_SNOOZE_COUNT });
+    hideReviewBanner();
+  } catch (error) {
+    console.error("Error snoozing review prompt:", error);
+  }
+}
+
+// Handle "No Thanks" button click (dismiss permanently)
+async function handleDismissReview() {
+  try {
+    await browserAPI.storage.sync.set({ reviewPromptDismissed: true });
+    hideReviewBanner();
+  } catch (error) {
+    console.error("Error dismissing review prompt:", error);
+  }
+}
+
+// Initialize review banner state
+async function initReviewBanner() {
+  try {
+    const data = await browserAPI.storage.sync.get({
+      conversionCount: 0,
+      reviewPromptDismissed: false,
+      snoozeThreshold: null
+    });
+
+    const shouldShow = !data.reviewPromptDismissed && 
+                      (data.conversionCount === REVIEW_TRIGGER_COUNT || 
+                       (data.snoozeThreshold && data.conversionCount === data.snoozeThreshold));
+
+    if (shouldShow) {
+      showReviewBanner();
+    } else {
+      hideReviewBanner();
+    }
+  } catch (error) {
+    console.error("Error initializing review banner:", error);
+    hideReviewBanner();
+  }
+}
+
 // Convert current page to Markdown
 async function convertToMarkdown() {
   statusIndicator.textContent = "Converting...";
@@ -374,7 +489,13 @@ async function convertToMarkdown() {
     statusIndicator.className = "status success";
 
     // Save settings
-    saveSettings();
+    await saveSettings();
+
+    // Track conversion and show review banner if needed
+    const shouldShowBanner = await trackConversion();
+    if (shouldShowBanner) {
+      showReviewBanner();
+    }
   } catch (error) {
     console.error("Conversion error:", error);
     const errorMessage = error.message || error.toString() || "Failed to convert page";
@@ -434,7 +555,13 @@ async function downloadMarkdown() {
     statusIndicator.className = "status success";
 
     // Save settings
-    saveSettings();
+    await saveSettings();
+
+    // Track conversion and show review banner if needed
+    const shouldShowBanner = await trackConversion();
+    if (shouldShowBanner) {
+      showReviewBanner();
+    }
   } catch (error) {
     console.error("Download error:", error);
     const errorMessage = error.message || error.toString() || "Failed to download";
@@ -448,6 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   updateShortcutDisplay();
   loadSettings();
+  initReviewBanner();
 
   // Convert button click
   convertBtn.addEventListener("click", convertToMarkdown);
@@ -491,6 +619,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Copy logs button
   copyLogsBtn.addEventListener("click", copyLogs);
+
+  // Review banner buttons
+  if (leaveReviewBtn) {
+    leaveReviewBtn.addEventListener("click", handleLeaveReview);
+  }
+  if (snoozeReviewBtn) {
+    snoozeReviewBtn.addEventListener("click", handleSnoozeReview);
+  }
+  if (dismissReviewBtn) {
+    dismissReviewBtn.addEventListener("click", handleDismissReview);
+  }
 });
 
 async function generateFileNameFromPageTitle() {

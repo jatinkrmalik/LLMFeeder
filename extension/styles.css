@@ -640,3 +640,95 @@ input[type="checkbox"] {
 .settings-content::-webkit-scrollbar-thumb:hover {
   background-color: var(--dark-gray);
 }
+
+/* Review Banner Styles */
+.review-banner {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #5c9cff 100%);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 0;
+  margin: 0;
+  flex-shrink: 0;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.review-banner.hidden {
+  display: none !important;
+}
+
+.review-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.review-icon {
+  font-size: 16px;
+}
+
+.review-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.review-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.review-btn-primary {
+  background-color: white;
+  color: var(--primary-color);
+}
+
+.review-btn-primary:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.review-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.review-btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.review-btn-text {
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: underline;
+  padding: 6px 8px;
+}
+
+.review-btn-text:hover {
+  color: white;
+}
