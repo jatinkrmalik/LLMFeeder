@@ -463,6 +463,15 @@ async function initReviewBanner() {
 // Initialize settings rating CTA visibility
 async function initSettingsRatingCta() {
   try {
+    // Check if we should reset the CTA (60 days passed and hasn't rated)
+    const shouldReset = await shouldResetSettingsRatingCta();
+    if (shouldReset) {
+      await browserAPI.storage.sync.set({
+        settingsRatingCtaDismissed: false,
+        settingsRatingCtaDismissedAt: null
+      });
+    }
+
     const data = await browserAPI.storage.sync.get({
       settingsRatingCtaDismissed: false
     });
@@ -482,12 +491,46 @@ async function initSettingsRatingCta() {
 // Handle settings rating CTA dismiss
 async function handleDismissSettingsRatingCta() {
   try {
-    await browserAPI.storage.sync.set({ settingsRatingCtaDismissed: true });
+    const now = Date.now();
+    await browserAPI.storage.sync.set({ 
+      settingsRatingCtaDismissed: true,
+      settingsRatingCtaDismissedAt: now
+    });
     if (ratingCta) {
       ratingCta.style.display = 'none';
     }
   } catch (error) {
     console.error("Error dismissing settings rating CTA:", error);
+  }
+}
+
+// Check if we should reset the settings rating CTA (after 60 days)
+async function shouldResetSettingsRatingCta() {
+  try {
+    const data = await browserAPI.storage.sync.get({
+      settingsRatingCtaDismissed: false,
+      settingsRatingCtaDismissedAt: null,
+      hasClickedRatingLink: false
+    });
+
+    // If they've rated, don't show again
+    if (data.hasClickedRatingLink) {
+      return false;
+    }
+
+    // If not dismissed, no need to reset
+    if (!data.settingsRatingCtaDismissed || !data.settingsRatingCtaDismissedAt) {
+      return false;
+    }
+
+    // Check if 60 days have passed
+    const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+    const timeSinceDismissal = Date.now() - data.settingsRatingCtaDismissedAt;
+    
+    return timeSinceDismissal >= SIXTY_DAYS_MS;
+  } catch (error) {
+    console.error("Error checking settings rating CTA reset:", error);
+    return false;
   }
 }
 
@@ -686,10 +729,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Settings rating CTA link
   if (settingsReviewLink) {
-    settingsReviewLink.addEventListener("click", (e) => {
+    settingsReviewLink.addEventListener("click", async (e) => {
       e.preventDefault();
-      const storeUrl = getStoreUrl();
-      browserAPI.tabs.create({ url: storeUrl });
+      try {
+        await browserAPI.storage.sync.set({ hasClickedRatingLink: true });
+        const storeUrl = getStoreUrl();
+        browserAPI.tabs.create({ url: storeUrl });
+      } catch (error) {
+        console.error("Error tracking rating link click:", error);
+        const storeUrl = getStoreUrl();
+        browserAPI.tabs.create({ url: storeUrl });
+      }
     });
   }
 
