@@ -735,3 +735,43 @@ input[type="checkbox"] {
 .review-btn-text:hover {
   color: white;
 }
+
+/* Rating CTA in Settings */
+.rating-cta {
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.1) 0%, rgba(92, 156, 255, 0.1) 100%);
+  border: 1px solid rgba(66, 133, 244, 0.2);
+  text-align: center;
+  padding: 16px;
+}
+
+.rating-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.rating-stars {
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+.rating-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.rating-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.rating-link:hover {
+  text-decoration: underline;
+  transform: translateY(-1px);
+}

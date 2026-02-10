@@ -163,6 +163,10 @@ const leaveReviewBtn = document.getElementById("leaveReviewBtn");
 const snoozeReviewBtn = document.getElementById("snoozeReviewBtn");
 const dismissReviewBtn = document.getElementById("dismissReviewBtn");
 
+// Settings rating CTA elements
+const settingsReviewLink = document.getElementById("settingsReviewLink");
+const storeNameSpan = document.getElementById("storeName");
+
 // Default metadata format
 const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
 
@@ -206,6 +210,11 @@ function updateShortcutDisplay() {
         chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
       }
     });
+  }
+
+  // Update settings rating CTA store name
+  if (storeNameSpan) {
+    storeNameSpan.textContent = isFirefox ? "Firefox Add-ons" : "Chrome Web Store";
   }
 }
 
@@ -639,6 +648,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (dismissReviewBtn) {
     dismissReviewBtn.addEventListener("click", handleDismissReview);
+  }
+
+  // Settings rating CTA link
+  if (settingsReviewLink) {
+    settingsReviewLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      const storeUrl = getStoreUrl();
+      browserAPI.tabs.create({ url: storeUrl });
+    });
   }
 });
 
