@@ -166,6 +166,8 @@ const dismissReviewBtn = document.getElementById("dismissReviewBtn");
 // Settings rating CTA elements
 const settingsReviewLink = document.getElementById("settingsReviewLink");
 const storeNameSpan = document.getElementById("storeName");
+const ratingCta = document.getElementById("ratingCta");
+const dismissRatingCta = document.getElementById("dismissRatingCta");
 
 // Default metadata format
 const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
@@ -458,6 +460,37 @@ async function initReviewBanner() {
   }
 }
 
+// Initialize settings rating CTA visibility
+async function initSettingsRatingCta() {
+  try {
+    const data = await browserAPI.storage.sync.get({
+      settingsRatingCtaDismissed: false
+    });
+
+    if (ratingCta) {
+      if (data.settingsRatingCtaDismissed) {
+        ratingCta.style.display = 'none';
+      } else {
+        ratingCta.style.display = 'block';
+      }
+    }
+  } catch (error) {
+    console.error("Error initializing settings rating CTA:", error);
+  }
+}
+
+// Handle settings rating CTA dismiss
+async function handleDismissSettingsRatingCta() {
+  try {
+    await browserAPI.storage.sync.set({ settingsRatingCtaDismissed: true });
+    if (ratingCta) {
+      ratingCta.style.display = 'none';
+    }
+  } catch (error) {
+    console.error("Error dismissing settings rating CTA:", error);
+  }
+}
+
 // Convert current page to Markdown
 async function convertToMarkdown() {
   statusIndicator.textContent = "Converting...";
@@ -595,6 +628,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateShortcutDisplay();
   loadSettings();
   initReviewBanner();
+  initSettingsRatingCta();
 
   // Convert button click
   convertBtn.addEventListener("click", convertToMarkdown);
@@ -657,6 +691,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const storeUrl = getStoreUrl();
       browserAPI.tabs.create({ url: storeUrl });
     });
+  }
+
+  // Settings rating CTA dismiss button
+  if (dismissRatingCta) {
+    dismissRatingCta.addEventListener("click", handleDismissSettingsRatingCta);
   }
 });
 

@@ -254,7 +254,12 @@ Source: [{title}]({url})</textarea>
               <small style="display: block; margin-top: 4px; color: var(--text-secondary); text-align: center;">Logs are rewritten on each conversion</small>
             </div>
 
-            <div class="setting-group rating-cta">
+            <div class="setting-group rating-cta" id="ratingCta">
+              <button class="rating-dismiss" id="dismissRatingCta" title="Dismiss">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="rating-dismiss-icon">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               <div class="rating-content">
                 <span class="rating-stars">⭐⭐⭐⭐⭐</span>
                 <p class="rating-text">Enjoying LLMFeeder?</p>
