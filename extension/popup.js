@@ -3,6 +3,12 @@
 
 const MAX_FILENAME_LENGTH = 100;
 
+// Review prompt constants
+const REVIEW_TRIGGER_COUNT = 20;
+const REVIEW_SNOOZE_COUNT = 40;
+const CHROME_WEBSTORE_URL = "https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk/reviews";
+const FIREFOX_ADDONS_URL = "https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/reviews/";
+
 // Create a proper browserAPI wrapper for the popup
 const browserAPI = (function () {
   // Check if we're in Firefox (browser is defined) or Chrome (chrome is defined)
@@ -151,6 +157,7 @@ const resetMetadataFormatBtn = document.getElementById("resetMetadataFormat");
 const debugModeCheckbox = document.getElementById("debugMode");
 const copyLogsBtn = document.getElementById("copyLogsBtn");
 
+<<<<<<< HEAD
 // Token Counter DOM elements
 const tokenCounter = document.getElementById("tokenCounter");
 const tokenCountValue = document.getElementById("tokenCountValue");
@@ -165,6 +172,33 @@ const tagline = document.getElementById("tagline");
 
 // Current token count for display
 let currentTokenCount = 0;
+=======
+// Token Counter DOM elements
+const tokenCounter = document.getElementById("tokenCounter");
+const tokenCountValue = document.getElementById("tokenCountValue");
+const tokenLimitValue = document.getElementById("tokenLimitValue");
+const tokenProgressBar = document.getElementById("tokenProgressBar");
+const tokenWarning = document.getElementById("tokenWarning");
+const showTokenCountCheckbox = document.getElementById("showTokenCount");
+const tokenContextLimitSelect = document.getElementById("tokenContextLimit");
+
+// Tagline element
+const tagline = document.getElementById("tagline");
+
+// Current token count for display
+let currentTokenCount = 0;
+
+// Review banner elements
+const reviewBanner = document.getElementById("reviewBanner");
+const leaveReviewBtn = document.getElementById("leaveReviewBtn");
+const snoozeReviewBtn = document.getElementById("snoozeReviewBtn");
+const dismissReviewBtn = document.getElementById("dismissReviewBtn");
+
+// Settings rating CTA elements
+const settingsReviewLink = document.getElementById("settingsReviewLink");
+const storeNameSpan = document.getElementById("storeName");
+const ratingCta = document.getElementById("ratingCta");
+const dismissRatingCta = document.getElementById("dismissRatingCta");
 
 // Default metadata format
 const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
@@ -293,6 +327,11 @@ function updateShortcutDisplay() {
         chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
       }
     });
+  }
+
+  // Update settings rating CTA store name
+  if (storeNameSpan) {
+    storeNameSpan.textContent = isFirefox ? "Firefox Add-ons" : "Chrome Web Store";
   }
 }
 
@@ -431,6 +470,193 @@ function updateDebugModeVisibility() {
   }
 }
 
+// Detect browser type
+function detectBrowser() {
+  return navigator.userAgent.toLowerCase().includes("firefox") ? "firefox" : "chrome";
+}
+
+// Get appropriate store URL based on browser
+function getStoreUrl() {
+  return detectBrowser() === "firefox" ? FIREFOX_ADDONS_URL : CHROME_WEBSTORE_URL;
+}
+
+// Track conversion and check if review banner should be shown
+async function trackConversion() {
+  try {
+    const data = await browserAPI.storage.sync.get({
+      conversionCount: 0,
+      reviewPromptDismissed: false,
+      snoozeThreshold: null
+    });
+
+    const newCount = data.conversionCount + 1;
+    const isSnoozed = data.snoozeThreshold !== null;
+    const shouldShowBanner = !data.reviewPromptDismissed && 
+                             (newCount === REVIEW_TRIGGER_COUNT || 
+                              (data.snoozeThreshold && newCount === data.snoozeThreshold));
+
+    await browserAPI.storage.sync.set({ conversionCount: newCount });
+
+    return shouldShowBanner ? { show: true, isSnoozed } : { show: false, isSnoozed: false };
+  } catch (error) {
+    console.error("Error tracking conversion:", error);
+    return { show: false, isSnoozed: false };
+  }
+}
+
+// Show review banner
+function showReviewBanner(isSnoozed = false) {
+  if (reviewBanner) {
+    reviewBanner.classList.remove("hidden");
+    // First appearance: show "Leave a Review" and "Maybe Later" only
+    // Second appearance (after snooze): show "Leave a Review" and "No Thanks" only
+    if (snoozeReviewBtn) {
+      snoozeReviewBtn.style.display = isSnoozed ? "none" : "inline-block";
+    }
+    if (dismissReviewBtn) {
+      dismissReviewBtn.style.display = isSnoozed ? "inline-block" : "none";
+    }
+  }
+}
+
+// Hide review banner
+function hideReviewBanner() {
+  if (reviewBanner) {
+    reviewBanner.classList.add("hidden");
+  }
+}
+
+// Handle "Leave a Review" button click
+async function handleLeaveReview() {
+  try {
+    const storeUrl = getStoreUrl();
+    await browserAPI.storage.sync.set({ reviewPromptDismissed: true });
+    hideReviewBanner();
+    browserAPI.tabs.create({ url: storeUrl });
+  } catch (error) {
+    console.error("Error opening store:", error);
+  }
+}
+
+// Handle "Maybe Later" button click (snooze)
+async function handleSnoozeReview() {
+  try {
+    await browserAPI.storage.sync.set({ snoozeThreshold: REVIEW_SNOOZE_COUNT });
+    hideReviewBanner();
+  } catch (error) {
+    console.error("Error snoozing review prompt:", error);
+  }
+}
+
+// Handle "No Thanks" button click (dismiss permanently)
+async function handleDismissReview() {
+  try {
+    await browserAPI.storage.sync.set({ reviewPromptDismissed: true });
+    hideReviewBanner();
+  } catch (error) {
+    console.error("Error dismissing review prompt:", error);
+  }
+}
+
+// Initialize review banner state
+async function initReviewBanner() {
+  try {
+    const data = await browserAPI.storage.sync.get({
+      conversionCount: 0,
+      reviewPromptDismissed: false,
+      snoozeThreshold: null
+    });
+
+    const isSnoozed = data.snoozeThreshold !== null;
+    const shouldShow = !data.reviewPromptDismissed && 
+                      (data.conversionCount === REVIEW_TRIGGER_COUNT || 
+                       (data.snoozeThreshold && data.conversionCount === data.snoozeThreshold));
+
+    if (shouldShow) {
+      showReviewBanner(isSnoozed);
+    } else {
+      hideReviewBanner();
+    }
+  } catch (error) {
+    console.error("Error initializing review banner:", error);
+    hideReviewBanner();
+  }
+}
+
+// Initialize settings rating CTA visibility
+async function initSettingsRatingCta() {
+  try {
+    // Check if we should reset the CTA (60 days passed and hasn't rated)
+    const shouldReset = await shouldResetSettingsRatingCta();
+    if (shouldReset) {
+      await browserAPI.storage.sync.set({
+        settingsRatingCtaDismissed: false,
+        settingsRatingCtaDismissedAt: null
+      });
+    }
+
+    const data = await browserAPI.storage.sync.get({
+      settingsRatingCtaDismissed: false
+    });
+
+    if (ratingCta) {
+      if (data.settingsRatingCtaDismissed) {
+        ratingCta.style.display = 'none';
+      } else {
+        ratingCta.style.display = 'block';
+      }
+    }
+  } catch (error) {
+    console.error("Error initializing settings rating CTA:", error);
+  }
+}
+
+// Handle settings rating CTA dismiss
+async function handleDismissSettingsRatingCta() {
+  try {
+    const now = Date.now();
+    await browserAPI.storage.sync.set({ 
+      settingsRatingCtaDismissed: true,
+      settingsRatingCtaDismissedAt: now
+    });
+    if (ratingCta) {
+      ratingCta.style.display = 'none';
+    }
+  } catch (error) {
+    console.error("Error dismissing settings rating CTA:", error);
+  }
+}
+
+// Check if we should reset the settings rating CTA (after 60 days)
+async function shouldResetSettingsRatingCta() {
+  try {
+    const data = await browserAPI.storage.sync.get({
+      settingsRatingCtaDismissed: false,
+      settingsRatingCtaDismissedAt: null,
+      hasClickedRatingLink: false
+    });
+
+    // If they've rated, don't show again
+    if (data.hasClickedRatingLink) {
+      return false;
+    }
+
+    // If not dismissed, no need to reset
+    if (!data.settingsRatingCtaDismissed || !data.settingsRatingCtaDismissedAt) {
+      return false;
+    }
+
+    // Check if 60 days have passed
+    const SIXTY_DAYS_MS = 60 * 24 * 60 * 60 * 1000;
+    const timeSinceDismissal = Date.now() - data.settingsRatingCtaDismissedAt;
+    
+    return timeSinceDismissal >= SIXTY_DAYS_MS;
+  } catch (error) {
+    console.error("Error checking settings rating CTA reset:", error);
+    return false;
+  }
+}
+
 // Convert current page to Markdown
 async function convertToMarkdown() {
   statusIndicator.textContent = "Converting...";
@@ -497,7 +723,13 @@ async function convertToMarkdown() {
     updateTokenDisplay(tokenCount, contextLimit);
 
     // Save settings
-    saveSettings();
+    await saveSettings();
+
+    // Track conversion and show review banner if needed
+    const bannerState = await trackConversion();
+    if (bannerState.show) {
+      showReviewBanner(bannerState.isSnoozed);
+    }
   } catch (error) {
     console.error("Conversion error:", error);
     const errorMessage = error.message || error.toString() || "Failed to convert page";
@@ -574,7 +806,13 @@ async function downloadMarkdown() {
     updateTokenDisplay(tokenCount, contextLimit);
 
     // Save settings
-    saveSettings();
+    await saveSettings();
+
+    // Track conversion and show review banner if needed
+    const bannerState = await trackConversion();
+    if (bannerState.show) {
+      showReviewBanner(bannerState.isSnoozed);
+    }
   } catch (error) {
     console.error("Download error:", error);
     const errorMessage = error.message || error.toString() || "Failed to download";
@@ -589,6 +827,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   updateShortcutDisplay();
   loadSettings();
+  initReviewBanner();
+  initSettingsRatingCta();
 
   // Convert button click
   convertBtn.addEventListener("click", convertToMarkdown);
@@ -633,6 +873,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Copy logs button
   copyLogsBtn.addEventListener("click", copyLogs);
 
+<<<<<<< HEAD
   // Token counter settings
   showTokenCountCheckbox.addEventListener("change", () => {
     saveSettings();
@@ -661,6 +902,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }).catch(err => {
       console.error("Failed to initialize TokenCounter:", err);
     });
+  }
+
+  // Review banner buttons
+  if (leaveReviewBtn) {
+    leaveReviewBtn.addEventListener("click", handleLeaveReview);
+  }
+  if (snoozeReviewBtn) {
+    snoozeReviewBtn.addEventListener("click", handleSnoozeReview);
+  }
+  if (dismissReviewBtn) {
+    dismissReviewBtn.addEventListener("click", handleDismissReview);
+  }
+
+  // Settings rating CTA link
+  if (settingsReviewLink) {
+    settingsReviewLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try {
+        await browserAPI.storage.sync.set({ hasClickedRatingLink: true });
+        const storeUrl = getStoreUrl();
+        browserAPI.tabs.create({ url: storeUrl });
+      } catch (error) {
+        console.error("Error tracking rating link click:", error);
+        const storeUrl = getStoreUrl();
+        browserAPI.tabs.create({ url: storeUrl });
+      }
+    });
+  }
+
+  // Settings rating CTA dismiss button
+  if (dismissRatingCta) {
+    dismissRatingCta.addEventListener("click", handleDismissSettingsRatingCta);
   }
 });
 
