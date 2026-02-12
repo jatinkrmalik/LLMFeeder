@@ -12,6 +12,7 @@ const SettingsUtils = (function() {
       preserveTables: true,
       includeImages: true,
       includeTitle: true,
+      includeLinks: true,
       includeMetadata: true,
       metadataFormat: DEFAULT_METADATA_FORMAT,
       debugMode: false

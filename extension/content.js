@@ -319,7 +319,8 @@
       contentScope: settings.contentScope,
       preserveTables: settings.preserveTables,
       includeImages: settings.includeImages,
-      includeTitle: settings.includeTitle
+      includeTitle: settings.includeTitle,
+      includeLinks: settings.includeLinks
     });
 
     const docClone = document.cloneNode(true);
@@ -1003,6 +1004,17 @@
         filter: 'img',
         replacement: function() {
           return '';
+        }
+      });
+    }
+
+    if (!settings.includeLinks) {
+      turndownService.addRule('stripLinks', {
+        filter: function(node) {
+          return node.nodeName === 'A' && node.href;
+        },
+        replacement: function(content, node) {
+          return content;
         }
       });
     }
