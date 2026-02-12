@@ -150,6 +150,7 @@ const contentScopeRadios = document.querySelectorAll('input[name="contentScope"]
 const preserveTablesCheckbox = document.getElementById("preserveTables");
 const includeImagesCheckbox = document.getElementById("includeImages");
 const includeTitleCheckbox = document.getElementById("includeTitle");
+const includeLinksCheckbox = document.getElementById("includeLinks");
 const includeMetadataCheckbox = document.getElementById("includeMetadata");
 const metadataFormatTextarea = document.getElementById("metadataFormat");
 const metadataFormatContainer = document.getElementById("metadataFormatContainer");
@@ -157,22 +158,6 @@ const resetMetadataFormatBtn = document.getElementById("resetMetadataFormat");
 const debugModeCheckbox = document.getElementById("debugMode");
 const copyLogsBtn = document.getElementById("copyLogsBtn");
 
-<<<<<<< HEAD
-// Token Counter DOM elements
-const tokenCounter = document.getElementById("tokenCounter");
-const tokenCountValue = document.getElementById("tokenCountValue");
-const tokenLimitValue = document.getElementById("tokenLimitValue");
-const tokenProgressBar = document.getElementById("tokenProgressBar");
-const tokenWarning = document.getElementById("tokenWarning");
-const showTokenCountCheckbox = document.getElementById("showTokenCount");
-const tokenContextLimitSelect = document.getElementById("tokenContextLimit");
-
-// Tagline element
-const tagline = document.getElementById("tagline");
-
-// Current token count for display
-let currentTokenCount = 0;
-=======
 // Token Counter DOM elements
 const tokenCounter = document.getElementById("tokenCounter");
 const tokenCountValue = document.getElementById("tokenCountValue");
@@ -343,6 +328,7 @@ async function loadSettings() {
       preserveTables: true,
       includeImages: true,
       includeTitle: true,
+      includeLinks: true,
       includeMetadata: true,
       metadataFormat: DEFAULT_METADATA_FORMAT,
       debugMode: false,
@@ -355,6 +341,7 @@ async function loadSettings() {
     preserveTablesCheckbox.checked = data.preserveTables;
     includeImagesCheckbox.checked = data.includeImages;
     includeTitleCheckbox.checked = data.includeTitle;
+    includeLinksCheckbox.checked = data.includeLinks !== false;
     includeMetadataCheckbox.checked = data.includeMetadata;
     metadataFormatTextarea.value = data.metadataFormat;
     debugModeCheckbox.checked = data.debugMode;
@@ -380,6 +367,7 @@ async function saveSettings() {
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
+    const includeLinks = includeLinksCheckbox.checked;
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
@@ -391,6 +379,7 @@ async function saveSettings() {
       preserveTables,
       includeImages,
       includeTitle,
+      includeLinks,
       includeMetadata,
       metadataFormat,
       debugMode,
@@ -677,6 +666,7 @@ async function convertToMarkdown() {
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
+    const includeLinks = includeLinksCheckbox.checked;
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
@@ -689,6 +679,7 @@ async function convertToMarkdown() {
         preserveTables,
         includeImages,
         includeTitle,
+        includeLinks,
         includeMetadata,
         metadataFormat,
         debugMode,
@@ -759,6 +750,7 @@ async function downloadMarkdown() {
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
+    const includeLinks = includeLinksCheckbox.checked;
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
@@ -771,6 +763,7 @@ async function downloadMarkdown() {
         preserveTables,
         includeImages,
         includeTitle,
+        includeLinks,
         includeMetadata,
         metadataFormat,
         debugMode,
@@ -852,6 +845,7 @@ document.addEventListener("DOMContentLoaded", () => {
   preserveTablesCheckbox.addEventListener("change", saveSettings);
   includeImagesCheckbox.addEventListener("change", saveSettings);
   includeTitleCheckbox.addEventListener("change", saveSettings);
+  includeLinksCheckbox.addEventListener("change", saveSettings);
   debugModeCheckbox.addEventListener("change", () => {
     updateDebugModeVisibility();
     saveSettings();
@@ -873,7 +867,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Copy logs button
   copyLogsBtn.addEventListener("click", copyLogs);
 
-<<<<<<< HEAD
   // Token counter settings
   showTokenCountCheckbox.addEventListener("change", () => {
     saveSettings();
