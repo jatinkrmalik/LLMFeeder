@@ -16,6 +16,9 @@
     "storage",
     "scripting"
   ],
+  "host_permissions": [
+    "https://tiktoken.pages.dev/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

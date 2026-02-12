@@ -178,7 +178,19 @@
           const settings = request.settings || request.options || {};
           const markdown = await convertToMarkdown(settings);
           clearTimeout(timeoutId);
-          sendResponse({ success: true, markdown });
+          
+          // Calculate token count estimation for response
+          let tokenCount = 0;
+          try {
+            // Rough estimation: ~0.75 tokens per word, ~1 token per 4 chars
+            const wordCount = markdown.split(/\s+/).filter(w => w.length > 0).length;
+            const charCount = markdown.length;
+            tokenCount = Math.ceil(Math.max(wordCount * 0.75, charCount / 4));
+          } catch (e) {
+            console.error('Token estimation error:', e);
+          }
+          
+          sendResponse({ success: true, markdown, tokenCount });
         } catch (error) {
           clearTimeout(timeoutId);
           console.error('Conversion error:', error);
@@ -1134,14 +1146,29 @@
     `;
 
     const messageElement = document.createElement('div');
-    messageElement.textContent = message;
     messageElement.style.cssText = `
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.5;
       margin: 0;
       color: rgba(255, 255, 255, 0.9);
       word-wrap: break-word;
+      white-space: pre-line;
     `;
+    
+    // Handle multiline messages
+    const lines = message.split('\n').filter(line => line.trim() !== '');
+    if (lines.length > 1) {
+      lines.forEach((line, index) => {
+        const lineDiv = document.createElement('div');
+        lineDiv.textContent = line;
+        if (index > 0) {
+          lineDiv.style.marginTop = '4px';
+        }
+        messageElement.appendChild(lineDiv);
+      });
+    } else {
+      messageElement.textContent = message;
+    }
 
     const closeButton = document.createElement('button');
     closeButton.style.cssText = `

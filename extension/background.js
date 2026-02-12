@@ -165,6 +165,25 @@ browserAPI.commands.onCommand.addListener(async (command) => {
         });
         
         if (response && response.success) {
+          // Get token count settings
+          let tokenSettings;
+          try {
+            tokenSettings = await browserAPI.storage.sync.get({
+              showTokenCount: true,
+              tokenContextLimit: 8192
+            });
+          } catch (e) {
+            tokenSettings = { showTokenCount: true, tokenContextLimit: 8192 };
+          }
+
+          // Format token count message
+          let tokenMessage = "";
+          if (tokenSettings.showTokenCount && response.tokenCount > 0) {
+            const limit = tokenSettings.tokenContextLimit;
+            const percentage = Math.round((response.tokenCount / limit) * 100);
+            tokenMessage = `\n${response.tokenCount.toLocaleString()} tokens (${percentage}% of ${(limit/1000).toFixed(0)}K limit)`;
+          }
+
           if (command === "download_markdown") {
             // Download as file
             const pageTitle = activeTab.title || "llmfeeder";
@@ -173,14 +192,14 @@ browserAPI.commands.onCommand.addListener(async (command) => {
               markdown: response.markdown,
               title: pageTitle
             });
-            await showNotificationInTab("Success", "Markdown file downloaded");
+            await showNotificationInTab("Success", `Markdown file downloaded${tokenMessage}`);
           } else {
             // Copy to clipboard via content script
             await browserAPI.tabs.sendMessage(activeTab.id, {
               action: "copyToClipboard",
               text: response.markdown
             });
-            await showNotificationInTab("Success", "Content converted to Markdown and copied to clipboard");
+            await showNotificationInTab("Success", `Content converted and copied to clipboard${tokenMessage}`);
           }
           console.log("Markdown conversion successful");
         } else {

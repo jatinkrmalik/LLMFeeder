@@ -62,7 +62,7 @@
                 </button>
               </div>
             </header>
-            <p class="tagline">
+            <p id="tagline" class="tagline">
               Instantly convert any webpage to clean, LLM-ready Markdown. Perfect for ChatGPT, Claude, and more.
             </p>
           </div>
@@ -83,6 +83,25 @@
                 <span id="downloadBtnShortcut" class="shortcut-badge"></span>
               </button>
               <div id="statusIndicator" class="status">Ready</div>
+              
+              <!-- Token Counter Display -->
+              <div id="tokenCounter" class="token-counter hidden">
+                <div class="token-counter-header">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="token-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                  <span class="token-label">Token Count</span>
+                </div>
+                <div class="token-count-display">
+                  <span id="tokenCountValue" class="token-value">--</span>
+                  <span class="token-separator">/</span>
+                  <span id="tokenLimitValue" class="token-limit">4K</span>
+                </div>
+                <div class="token-progress-container">
+                  <div id="tokenProgressBar" class="token-progress-bar"></div>
+                </div>
+                <div id="tokenWarning" class="token-warning hidden"></div>
+              </div>
             </div>
           </div>
           <div class="bottom-spacer"></div>
@@ -240,6 +259,26 @@ Source: [{title}]({url})</textarea>
             </div>
 
             <div class="setting-group">
+              <h3>Token Counter</h3>
+              <label class="setting-option">
+                <input type="checkbox" id="showTokenCount" checked />
+                <span>Show token count after conversion</span>
+              </label>
+              <label class="setting-option">
+                <span>Context Limit:</span>
+                <select id="tokenContextLimit" class="token-limit-select">
+                  <option value="4096">Small (4K)</option>
+                  <option value="8192" selected>Medium (8K)</option>
+                  <option value="16384">Large (16K)</option>
+                  <option value="32768">Extra Large (32K)</option>
+                </select>
+              </label>
+              <small style="display: block; margin-top: 8px; color: var(--text-secondary);">
+                Token count is estimated using GPT-4/Claude tokenizer (cl100k_base)
+              </small>
+            </div>
+
+            <div class="setting-group">
               <h3>Debug Mode</h3>
               <label class="setting-option">
                 <input type="checkbox" id="debugMode" />
@@ -271,6 +310,7 @@ Source: [{title}]({url})</textarea>
       </div>
     </div>
     <script src="libs/browser-polyfill.js"></script>
+    <script src="token-counter.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

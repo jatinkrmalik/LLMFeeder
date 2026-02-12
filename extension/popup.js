@@ -157,6 +157,37 @@ const resetMetadataFormatBtn = document.getElementById("resetMetadataFormat");
 const debugModeCheckbox = document.getElementById("debugMode");
 const copyLogsBtn = document.getElementById("copyLogsBtn");
 
+<<<<<<< HEAD
+// Token Counter DOM elements
+const tokenCounter = document.getElementById("tokenCounter");
+const tokenCountValue = document.getElementById("tokenCountValue");
+const tokenLimitValue = document.getElementById("tokenLimitValue");
+const tokenProgressBar = document.getElementById("tokenProgressBar");
+const tokenWarning = document.getElementById("tokenWarning");
+const showTokenCountCheckbox = document.getElementById("showTokenCount");
+const tokenContextLimitSelect = document.getElementById("tokenContextLimit");
+
+// Tagline element
+const tagline = document.getElementById("tagline");
+
+// Current token count for display
+let currentTokenCount = 0;
+=======
+// Token Counter DOM elements
+const tokenCounter = document.getElementById("tokenCounter");
+const tokenCountValue = document.getElementById("tokenCountValue");
+const tokenLimitValue = document.getElementById("tokenLimitValue");
+const tokenProgressBar = document.getElementById("tokenProgressBar");
+const tokenWarning = document.getElementById("tokenWarning");
+const showTokenCountCheckbox = document.getElementById("showTokenCount");
+const tokenContextLimitSelect = document.getElementById("tokenContextLimit");
+
+// Tagline element
+const tagline = document.getElementById("tagline");
+
+// Current token count for display
+let currentTokenCount = 0;
+
 // Review banner elements
 const reviewBanner = document.getElementById("reviewBanner");
 const leaveReviewBtn = document.getElementById("leaveReviewBtn");
@@ -171,6 +202,90 @@ const dismissRatingCta = document.getElementById("dismissRatingCta");
 
 // Default metadata format
 const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
+
+// Default token counter settings
+const DEFAULT_TOKEN_SETTINGS = {
+  showTokenCount: true,
+  tokenContextLimit: 8192
+};
+
+/**
+ * Format large numbers for display (e.g., 128000 -> "128K")
+ * @param {number} num - Number to format
+ * @returns {string} Formatted string
+ */
+function formatTokenLimit(num) {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(0) + 'K';
+  }
+  return num.toString();
+}
+
+/**
+ * Update token counter display
+ * @param {number} count - Token count
+ * @param {number} limit - Context limit
+ */
+function updateTokenDisplay(count, limit) {
+  currentTokenCount = count;
+  
+  // Update values
+  tokenCountValue.textContent = count.toLocaleString();
+  tokenLimitValue.textContent = formatTokenLimit(limit);
+  
+  // Calculate percentage
+  const percentage = Math.min((count / limit) * 100, 100);
+  tokenProgressBar.style.width = percentage + '%';
+  
+  // Update progress bar color based on percentage
+  tokenProgressBar.classList.remove('warning', 'error');
+  if (percentage >= 100) {
+    tokenProgressBar.classList.add('error');
+  } else if (percentage >= 75) {
+    tokenProgressBar.classList.add('warning');
+  }
+  
+  // Show/hide counter and tagline
+  if (showTokenCountCheckbox.checked) {
+    tokenCounter.classList.remove('hidden');
+    // Hide tagline with animation when token counter is shown
+    if (tagline) {
+      tagline.classList.add('hidden');
+    }
+  } else {
+    tokenCounter.classList.add('hidden');
+    // Show tagline when token counter is hidden
+    if (tagline) {
+      tagline.classList.remove('hidden');
+    }
+  }
+  
+  // Update warning message
+  tokenWarning.classList.remove('hidden', 'error');
+  if (percentage >= 100) {
+    tokenWarning.textContent = `⚠️ Exceeds limit by ${(count - limit).toLocaleString()} tokens`;
+    tokenWarning.classList.add('error');
+  } else if (percentage >= 90) {
+    tokenWarning.textContent = `⚠️ ${(limit - count).toLocaleString()} tokens remaining`;
+  } else if (percentage >= 75) {
+    tokenWarning.textContent = `${(limit - count).toLocaleString()} tokens remaining`;
+  } else {
+    tokenWarning.classList.add('hidden');
+  }
+}
+
+/**
+ * Hide token counter display
+ */
+function hideTokenDisplay() {
+  tokenCounter.classList.add('hidden');
+  // Show tagline when token counter is hidden
+  if (tagline) {
+    tagline.classList.remove('hidden');
+  }
+}
 
 // Show proper keyboard shortcuts based on OS
 function updateShortcutDisplay() {
@@ -231,6 +346,8 @@ async function loadSettings() {
       includeMetadata: true,
       metadataFormat: DEFAULT_METADATA_FORMAT,
       debugMode: false,
+      showTokenCount: DEFAULT_TOKEN_SETTINGS.showTokenCount,
+      tokenContextLimit: DEFAULT_TOKEN_SETTINGS.tokenContextLimit,
     });
 
     // Apply settings to UI
@@ -241,6 +358,8 @@ async function loadSettings() {
     includeMetadataCheckbox.checked = data.includeMetadata;
     metadataFormatTextarea.value = data.metadataFormat;
     debugModeCheckbox.checked = data.debugMode;
+    showTokenCountCheckbox.checked = data.showTokenCount;
+    tokenContextLimitSelect.value = data.tokenContextLimit.toString();
 
     // Show/hide metadata format container based on checkbox state
     updateMetadataFormatVisibility(data.includeMetadata);
@@ -264,6 +383,8 @@ async function saveSettings() {
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
+    const showTokenCount = showTokenCountCheckbox.checked;
+    const tokenContextLimit = parseInt(tokenContextLimitSelect.value, 10);
 
     await browserAPI.storage.sync.set({
       contentScope,
@@ -273,6 +394,8 @@ async function saveSettings() {
       includeMetadata,
       metadataFormat,
       debugMode,
+      showTokenCount,
+      tokenContextLimit,
     });
   } catch (error) {
     console.error("Error saving settings:", error);
@@ -576,12 +699,28 @@ async function convertToMarkdown() {
       throw new Error(response.error || "Unknown error");
     }
 
+    // Use token count from content script response for consistency
+    let tokenCount = response.tokenCount || 0;
+    
+    // Fallback to TokenCounter if needed (shouldn't happen)
+    if (tokenCount === 0 && typeof TokenCounter !== 'undefined') {
+      try {
+        tokenCount = await TokenCounter.count(response.markdown);
+      } catch (tokenError) {
+        console.error("Token counting error:", tokenError);
+      }
+    }
+
     // Copy to clipboard
     await navigator.clipboard.writeText(response.markdown);
 
     // Update UI
     statusIndicator.textContent = "Copied to clipboard!";
     statusIndicator.className = "status success";
+
+    // Update token display
+    const contextLimit = parseInt(tokenContextLimitSelect.value, 10);
+    updateTokenDisplay(tokenCount, contextLimit);
 
     // Save settings
     await saveSettings();
@@ -596,6 +735,7 @@ async function convertToMarkdown() {
     const errorMessage = error.message || error.toString() || "Failed to convert page";
     statusIndicator.textContent = `Error: ${errorMessage}`;
     statusIndicator.className = "status error";
+    hideTokenDisplay();
   }
 }
 
@@ -641,6 +781,18 @@ async function downloadMarkdown() {
       throw new Error(response.error || "Unknown error");
     }
 
+    // Use token count from content script response for consistency
+    let tokenCount = response.tokenCount || 0;
+    
+    // Fallback to TokenCounter if needed (shouldn't happen)
+    if (tokenCount === 0 && typeof TokenCounter !== 'undefined') {
+      try {
+        tokenCount = await TokenCounter.count(response.markdown);
+      } catch (tokenError) {
+        console.error("Token counting error:", tokenError);
+      }
+    }
+
     // Download the file
     const filename = await generateFileNameFromPageTitle();
     downloadMarkdownFile(filename, response.markdown);
@@ -648,6 +800,10 @@ async function downloadMarkdown() {
     // Update UI
     statusIndicator.textContent = "Downloaded!";
     statusIndicator.className = "status success";
+
+    // Update token display
+    const contextLimit = parseInt(tokenContextLimitSelect.value, 10);
+    updateTokenDisplay(tokenCount, contextLimit);
 
     // Save settings
     await saveSettings();
@@ -662,6 +818,7 @@ async function downloadMarkdown() {
     const errorMessage = error.message || error.toString() || "Failed to download";
     statusIndicator.textContent = `Error: ${errorMessage}`;
     statusIndicator.className = "status error";
+    hideTokenDisplay();
   }
 }
 
@@ -715,6 +872,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Copy logs button
   copyLogsBtn.addEventListener("click", copyLogs);
+
+<<<<<<< HEAD
+  // Token counter settings
+  showTokenCountCheckbox.addEventListener("change", () => {
+    saveSettings();
+    // Toggle visibility immediately
+    if (showTokenCountCheckbox.checked && currentTokenCount > 0) {
+      const contextLimit = parseInt(tokenContextLimitSelect.value, 10);
+      updateTokenDisplay(currentTokenCount, contextLimit);
+    } else {
+      hideTokenDisplay();
+    }
+  });
+
+  tokenContextLimitSelect.addEventListener("change", () => {
+    saveSettings();
+    // Update display if we have a current count
+    if (currentTokenCount > 0) {
+      const contextLimit = parseInt(tokenContextLimitSelect.value, 10);
+      updateTokenDisplay(currentTokenCount, contextLimit);
+    }
+  });
+
+  // Initialize token counter
+  if (typeof TokenCounter !== 'undefined') {
+    TokenCounter.init().then(() => {
+      console.log("TokenCounter initialized");
+    }).catch(err => {
+      console.error("Failed to initialize TokenCounter:", err);
+    });
+  }
 
   // Review banner buttons
   if (leaveReviewBtn) {
