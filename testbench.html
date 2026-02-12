@@ -176,5 +176,21 @@
         <div class="expected"><span class="success">Expected:</span> Empty cells handled correctly with |</div>
     </div>
 
+    <div class="test-section">
+        <h2>Test 9: Links (Include Links Toggle)</h2>
+        <p>This section tests the "Include Links" toggle setting:</p>
+        <ul>
+            <li><a href="https://github.com/jatinkrmalik/LLMFeeder">Link to GitHub repository</a> - external link</li>
+            <li><a href="#test-section-1">Link to Test 1 (anchor)</a> - internal anchor link</li>
+            <li><a href="/about">Relative link to about page</a> - relative link</li>
+            <li><a href="mailto:test@example.com">Email link</a> - mailto protocol</li>
+            <li>Nested link: <a href="https://example.com">This has <strong>bold</strong> and <em>italic</em> text</a></li>
+            <li><a href="https://en.wikipedia.org/wiki/Markdown">Wikipedia article about Markdown</a></li>
+            <li><a href="https://developer.mozilla.org/en-US/">MDN Web Docs</a></li>
+        </ul>
+        <div class="expected"><span class="success">Expected (Include Links ON):</span> Links as <code>[text](url)</code></div>
+        <div class="expected"><span class="warning">Expected (Include Links OFF):</span> Only text, no URLs</div>
+    </div>
+
 </body>
 </html>
