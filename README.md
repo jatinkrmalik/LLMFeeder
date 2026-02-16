@@ -14,7 +14,19 @@
 
 A browser extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs). Available for both [Chrome](https://chromewebstore.google.com/detail/llmfeeder-webpage-to-mark/cjjfhhapabcpcokkfldbiiojiphbifdk) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/).
 
-## ✨ What's New in v2.0.0
+## ✨ What's New in v2.1.0
+
+- 🗂️ **Multi-Tab Support** - Convert multiple tabs at once! Select multiple tabs with Ctrl/Cmd+Shift and use Copy All, Download Merged, or Download as ZIP
+- 🖱️ **Right-Click Context Menus** - Quick access to conversion options directly from the right-click menu on any webpage
+- 📊 **Token Counter** - Real-time token count estimation (GPT-4/Claude tokenizer) with configurable context limits (4K to 32K)
+- 🔗 **Include Links Toggle** - New option to include or strip links from Markdown output (reduce token usage when URLs aren't needed)
+- 🐛 **Debug Mode & Logging** - Built-in diagnostic system to help troubleshoot conversion issues
+- 🖼️ **Cross-Origin Iframe Support** - Improved extraction of embedded content from iframes
+- 📋 **Better Table Conversion** - Fixed table-to-markdown conversion for various HTML table formats
+- ⭐ **Review Prompt** - Gentle reminder to rate the extension after 20 successful conversions
+- 🔧 **Bug Fixes** - Fixed race condition in context menu initialization, CSS syntax errors, and removed dead code
+
+### Previous Release (v2.0.0)
 
 - 🎨 **Complete UI Redesign** - Modern, cleaner interface with dedicated Settings view and improved layout
 - 📝 **Customizable Metadata Format** - Template-based system with 6 variables ({title}, {url}, {date}, {author}, {siteName}, {excerpt}) for flexible citation styles
@@ -25,16 +37,6 @@ A browser extension that converts web page content to clean Markdown format and 
 - 🐛 **Bug Fixes** - Fixed ReferenceError and improved error message display in popup
 - 🚀 **GitHub Actions Integration** - Automated release artifact uploads
 - ❓ **Help & FAQ Link** - Quick access to community discussions and support
-
-### Previous Release (v1.1.0)
-
-- 🌙 **Dark/Light Mode Toggle** - Complete theme system with automatic preference persistence
-- 📥 **Download as File** - Save converted Markdown directly as .md files  
-- 📄 **Page Title Integration** - Option to include webpage titles in output
-- 🔔 **Redesigned Notifications** - Modern UI banner with improved accessibility and visual feedback
-- 🎨 **Enhanced Theme Controls** - Better icon semantics and improved alignment
-- 🖼️ **Enhanced Image Processing** - Smart alt text generation with intelligent fallbacks
-- 🤝 **Contributors Recognition** - Updated footer to acknowledge all community contributors
 
 
 ## Demo
@@ -57,6 +59,10 @@ This architecture ensures that your content remains exclusively on your device t
 
 ## Features
 
+- **Multi-Tab Support**: Convert multiple selected tabs at once - merge into single file or download as ZIP
+- **Right-Click Context Menus**: Quick conversion access from anywhere on a page
+- **Token Counter**: Real-time token estimation with configurable LLM context limits
+- **Include Links Toggle**: Option to include or strip URLs from links in output (great for reducing token usage)
 - **Smart Content Extraction**: Uses Readability algorithm to focus on main content
 - **Dark/Light Mode**: Toggle between themes with automatic preference persistence
 - **Enhanced Image Processing**: Smart alt text generation with intelligent fallbacks for better image descriptions
@@ -64,10 +70,11 @@ This architecture ensures that your content remains exclusively on your device t
 - **Download as File**: Save converted Markdown directly as .md files to your device
 - **Page Title Integration**: Option to include webpage titles in your Markdown output
 - **Customizable Metadata Format**: Template-based system with 6 variables for flexible citation styles
+- **Debug Mode**: Built-in logging system for troubleshooting
 - **Modern Notifications**: Redesigned UI banner with improved accessibility and visual feedback
 - **LLM-Optimized Output**: Clean, structured Markdown perfect for AI consumption
 - **Customizable**: Configure content scope and formatting options
-- **Keyboard Shortcuts**: Quick convert (Alt+Shift+M) and download (Alt+Shift+D) without opening popup
+- **Keyboard Shortcuts**: Quick convert (Alt+Shift+M), download (Alt+Shift+D), and ZIP (Alt+Shift+Z)
 - **Multi-Browser Support**: Works seamlessly on both Chrome and Firefox
 
 ## Installation
@@ -171,6 +178,7 @@ This architecture ensures that your content remains exclusively on your device t
 - **Open Extension Popup**: `Alt+Shift+L` (Windows/Linux) or `⌥⇧L` (Mac)
 - **Convert & Copy without Opening Popup**: `Alt+Shift+M` (Windows/Linux) or `⌥⇧M` (Mac)
 - **Download as Markdown File**: `Alt+Shift+D` (Windows/Linux) or `⌥⇧D` (Mac)
+- **Download Multiple Tabs as ZIP**: `Alt+Shift+Z` (Windows/Linux) or `⌥⇧Z` (Mac)
 
 #### Customizing Shortcuts
 
@@ -193,6 +201,7 @@ Users can customize keyboard shortcuts by following these steps:
 - **Formatting Options**:
   - Preserve table formatting
   - Include/exclude images
+  - Include/exclude links (strip URLs to reduce token usage)
 
 - **Metadata Format**:
   - Toggle metadata inclusion on/off
