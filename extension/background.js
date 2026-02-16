@@ -161,6 +161,7 @@ const CONTEXT_MENU_IDS = {
 // Current menu state
 let currentMenuMode = null; // 'single' or 'multi'
 let currentMenuTabCount = 0; // Track tab count for multi-tab mode
+let menuUpdateLock = Promise.resolve(); // Mutex lock for menu operations
 
 // Browser-specific contexts ('tab' is Firefox-only)
 // Detect Firefox by checking for browser.menus API
@@ -172,19 +173,27 @@ const PAGE_CONTEXTS = isFirefox
   ? ['page', 'selection', 'link', 'tab']  // Firefox supports 'tab' context
   : ['page', 'selection', 'link'];        // Chrome doesn't support 'tab'
 
+// Helper to run menu operations with mutex lock
+async function withMenuLock(operation) {
+  menuUpdateLock = menuUpdateLock.then(async () => {
+    await operation();
+  }).catch(err => {
+    console.error('Menu operation error:', err);
+  });
+  return menuUpdateLock;
+}
+
 // Create single-tab context menus
 async function createSingleTabMenus() {
-  try {
+  return withMenuLock(async () => {
     await browserAPI.contextMenus.removeAll();
 
-    // Parent menu - appears in page/selection/link contexts (and tab in Firefox)
     const parentMenuProps = {
       id: CONTEXT_MENU_IDS.PARENT,
       title: 'Copy to Markdown',
       contexts: PAGE_CONTEXTS
     };
 
-    // Icons are only supported in Firefox
     if (isFirefox) {
       parentMenuProps.icons = {
         16: 'icons/icon16.png',
@@ -194,7 +203,6 @@ async function createSingleTabMenus() {
 
     await browserAPI.contextMenus.create(parentMenuProps);
 
-    // Single-tab options
     await browserAPI.contextMenus.create({
       id: CONTEXT_MENU_IDS.SINGLE_COPY,
       parentId: CONTEXT_MENU_IDS.PARENT,
@@ -211,24 +219,20 @@ async function createSingleTabMenus() {
 
     currentMenuMode = 'single';
     currentMenuTabCount = 0;
-  } catch (error) {
-    console.error('Error creating single-tab menus:', error);
-  }
+  });
 }
 
 // Create multi-tab context menus
 async function createMultiTabMenus(tabCount) {
-  try {
+  return withMenuLock(async () => {
     await browserAPI.contextMenus.removeAll();
 
-    // Parent menu - appears in page/selection/link contexts (and tab in Firefox)
     const parentMenuProps = {
       id: CONTEXT_MENU_IDS.PARENT,
       title: `Copy to Markdown (${tabCount} tabs)`,
       contexts: PAGE_CONTEXTS
     };
 
-    // Icons are only supported in Firefox
     if (isFirefox) {
       parentMenuProps.icons = {
         16: 'icons/icon16.png',
@@ -238,7 +242,6 @@ async function createMultiTabMenus(tabCount) {
 
     await browserAPI.contextMenus.create(parentMenuProps);
 
-    // Multi-tab options
     await browserAPI.contextMenus.create({
       id: CONTEXT_MENU_IDS.MULTI_COPY,
       parentId: CONTEXT_MENU_IDS.PARENT,
@@ -262,9 +265,7 @@ async function createMultiTabMenus(tabCount) {
 
     currentMenuMode = 'multi';
     currentMenuTabCount = tabCount;
-  } catch (error) {
-    console.error('Error creating multi-tab menus:', error);
-  }
+  });
 }
 
 // Update context menus based on tab selection
