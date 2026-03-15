@@ -407,3 +407,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 Thanks a lot for spending your time helping LLMFeeder grow.🍻
 
 [![Contributors](https://contrib.rocks/image?repo=jatinkrmalik/LLMFeeder)](https://github.com/jatinkrmalik/LLMFeeder/graphs/contributors)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=jatinkrmalik/LLMFeeder&type=Date)](https://star-history.com/#jatinkrmalik/LLMFeeder&Date)
