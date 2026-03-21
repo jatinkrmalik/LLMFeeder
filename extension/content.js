@@ -15,11 +15,14 @@
     GENERAL: 'An error occurred during conversion.'
   };
 
-  const CONVERSION_TIMEOUT = 15000; // 15 seconds (increased for iframe handling)
+  const CONVERSION_TIMEOUT = 15000; // 15 seconds baseline (extended dynamically when scrolling lazy-loaded pages)
   const IFRAME_EXTRACTION_TIMEOUT = 1000; // 1 second per iframe
   const MIN_CONTENT_LENGTH = 50; // Minimum meaningful content length
   const MAX_IFRAME_BATCH_SIZE = 5; // Process up to 5 iframes in parallel
   const MAX_DEBUG_LOG_ENTRIES = 500; // Keep memory usage in check
+  const SCROLL_LOAD_DELAY = 300; // ms to wait after scroll for content to load
+  const MAX_SCROLL_ATTEMPTS = 50; // Maximum scroll iterations to prevent infinite loops
+  const SCROLL_TIMEOUT_HEADROOM = MAX_SCROLL_ATTEMPTS * SCROLL_LOAD_DELAY; // ms of extra time we may need when scrolling
 
   // Message action constants for security validation
   const MESSAGE_ACTIONS = {
@@ -166,12 +169,19 @@
 
     // Main conversion handler - async
     if (request.action === 'convertToMarkdown') {
+      // Extend the conversion timeout when the user has opted into the
+      // scroll-to-load pass, since that step alone can take up to
+      // SCROLL_TIMEOUT_HEADROOM ms before extraction even begins.
+      const requestSettings = request.settings || request.options || {};
+      const conversionTimeout = requestSettings.triggerLazyLoading === true
+        ? CONVERSION_TIMEOUT + SCROLL_TIMEOUT_HEADROOM
+        : CONVERSION_TIMEOUT;
       const timeoutId = setTimeout(() => {
         sendResponse({
           success: false,
           error: ERROR_MESSAGES.TIMEOUT
         });
-      }, CONVERSION_TIMEOUT);
+      }, conversionTimeout);
 
       (async () => {
         try {
@@ -310,6 +320,218 @@
   }
 
   // ==========================================================================
+  // LAZY LOADING DETECTION AND SCROLL EXTRACTION
+  // ==========================================================================
+
+  /**
+   * Hosts that we know ship lazy-loaded conversational UIs. Exact/subdomain
+   * matching keeps the detector focused without treating unrelated domains
+   * like `notchatgpt.com` as positive matches.
+   */
+  const KNOWN_LAZY_HOSTS = [
+    'gemini.google.com',
+    'chat.openai.com',
+    'chatgpt.com',
+    'claude.ai',
+    'poe.com',
+    'perplexity.ai',
+    'copilot.microsoft.com'
+  ];
+
+  /**
+   * Tight, semantically-meaningful selectors. We deliberately avoid loose
+   * `[class*="..."]` matches here because they fire on too many ordinary
+   * pages (any class containing "chat", "scroll", "conversation", etc.) and
+   * trigger a noisy scroll pass + footer warning when nothing is actually
+   * lazy-loaded.
+   */
+  const LAZY_CONTAINER_SELECTORS = [
+    '[role="log"]',
+    '[role="feed"]',
+    '[data-conversation]',
+    '[data-virtual]',
+    '[data-test-id*="conversation"]'
+  ];
+
+  /**
+   * Single source of truth for "is this DOM node a scrollable container we
+   * could meaningfully scroll through?". Used by both the detector and the
+   * scroll-pass collector so the threshold lives in one place.
+   */
+  function isMeaningfullyScrollable(el) {
+    const style = window.getComputedStyle(el);
+    const overflowsY = style.overflowY === 'auto' || style.overflowY === 'scroll';
+    return overflowsY && el.clientHeight > 0 && el.scrollHeight > el.clientHeight * 2;
+  }
+
+  /**
+   * Detects if a page likely uses virtual scrolling/lazy loading for content.
+   * Cheap and short-circuits on the first positive signal so we don't pay
+   * an O(DOM) scan on every conversion.
+   */
+  function detectLazyLoadingPattern() {
+    const host = window.location.hostname || '';
+    const matchedHost = KNOWN_LAZY_HOSTS.find(h => host === h || host.endsWith('.' + h)) || null;
+    if (matchedHost) {
+      DebugLog.log('Lazy loading detection', { matchedHost, isLazyLoaded: true });
+      return { isLazyLoaded: true, reason: 'host:' + matchedHost };
+    }
+
+    if (document.querySelector(LAZY_CONTAINER_SELECTORS.join(', '))) {
+      DebugLog.log('Lazy loading detection', { reason: 'semantic-selector', isLazyLoaded: true });
+      return { isLazyLoaded: true, reason: 'semantic' };
+    }
+
+    DebugLog.log('Lazy loading detection', { isLazyLoaded: false });
+    return { isLazyLoaded: false, reason: null };
+  }
+
+  /**
+   * Attempts to load all lazy-loaded content by scrolling through the page.
+   * Returns information about what was loaded; `scrolled: false` means no
+   * suitable container was found and the caller should not warn the user
+   * about partial content.
+   */
+  async function scrollToLoadAllContent(scrollables) {
+    if (scrollables.length === 0) {
+      DebugLog.log('No scrollable containers found');
+      return { scrolled: false, heightDelta: 0, contentChanged: false };
+    }
+
+    DebugLog.log('Found scrollable containers', { count: scrollables.length });
+
+    // Save the user's viewport position so we can restore it after the
+    // scroll-pass instead of dumping them at the top of the page.
+    const savedScrollX = window.scrollX;
+    const savedScrollY = window.scrollY;
+
+    let totalHeightDelta = 0;
+    let contentChanged = false;
+    for (const container of scrollables) {
+      const result = await scrollContainerToLoadContent(container);
+      totalHeightDelta += result.heightDelta;
+      contentChanged = contentChanged || result.contentChanged;
+    }
+
+    window.scrollTo(savedScrollX, savedScrollY);
+
+    DebugLog.log('Scroll loading complete', { totalHeightDelta, contentChanged });
+    return { scrolled: true, heightDelta: totalHeightDelta, contentChanged };
+  }
+
+  /**
+   * Find all scrollable containers on the page using the same
+   * `isMeaningfullyScrollable` heuristic as the detector.
+   */
+  function findScrollableContainers() {
+    const containers = [];
+
+    if (document.documentElement.scrollHeight > window.innerHeight * 1.5) {
+      containers.push({ element: document.documentElement, isWindow: true });
+    }
+
+    const candidates = document.querySelectorAll(LAZY_CONTAINER_SELECTORS.join(', ') +
+      ', main, article, .main-content, #content');
+
+    candidates.forEach(el => {
+      if (isMeaningfullyScrollable(el)) {
+        containers.push({ element: el, isWindow: false });
+      }
+    });
+
+    return containers;
+  }
+
+  /**
+   * Scroll a container to load lazy-loaded content.
+   * Stall detection looks at `scrollHeight` and a bounded text signature
+   * because virtualised lists can recycle DOM nodes without growing height.
+   */
+  async function scrollContainerToLoadContent(containerInfo) {
+    const { element, isWindow } = containerInfo;
+    const getScrollHeight = () => isWindow ? document.documentElement.scrollHeight : element.scrollHeight;
+    const getClientHeight = () => isWindow ? window.innerHeight : element.clientHeight;
+    const getTextSignature = () => {
+      const text = ((isWindow ? document.body : element).innerText || '').trim();
+      return text.slice(0, 2000) + '|' + text.slice(-2000);
+    };
+    const getCurrentScroll = () => isWindow ? window.scrollY : element.scrollTop;
+    const scrollTo = (pos) => {
+      if (isWindow) {
+        window.scrollTo(0, pos);
+      } else {
+        element.scrollTop = pos;
+      }
+    };
+
+    const originalScroll = getCurrentScroll();
+    const startHeight = getScrollHeight();
+    const startTextSignature = getTextSignature();
+    let previousHeight = startHeight;
+    let previousTextSignature = startTextSignature;
+    let attempts = 0;
+    let stallCount = 0;
+
+    // First, scroll to top to ensure top content is loaded
+    scrollTo(0);
+    await sleep(SCROLL_LOAD_DELAY);
+
+    const clientHeight = getClientHeight();
+    const scrollStep = clientHeight * 0.8;
+    let currentPos = 0;
+
+    while (attempts < MAX_SCROLL_ATTEMPTS) {
+      attempts++;
+
+      currentPos += scrollStep;
+      scrollTo(currentPos);
+      await sleep(SCROLL_LOAD_DELAY);
+
+      const newHeight = getScrollHeight();
+      const newTextSignature = getTextSignature();
+
+      const grewHeight = newHeight > previousHeight;
+      const changedText = newTextSignature !== previousTextSignature;
+
+      if (grewHeight || changedText) {
+        previousHeight = newHeight;
+        previousTextSignature = newTextSignature;
+        stallCount = 0;
+      } else {
+        stallCount++;
+      }
+
+      const maxScroll = newHeight - clientHeight;
+      if (currentPos >= maxScroll - 10) {
+        if (stallCount >= 3) {
+          DebugLog.log('Reached bottom of scrollable container', {
+            attempts,
+            finalHeight: newHeight,
+            heightDelta: newHeight - startHeight,
+            contentChanged: newTextSignature !== startTextSignature
+          });
+          break;
+        }
+        // Nudge past the bottom to trigger any remaining lazy loaders.
+        currentPos = maxScroll + 100;
+        scrollTo(currentPos);
+        await sleep(SCROLL_LOAD_DELAY);
+      }
+    }
+
+    scrollTo(originalScroll);
+
+    return {
+      heightDelta: previousHeight - startHeight,
+      contentChanged: previousTextSignature !== startTextSignature
+    };
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // ==========================================================================
   // MAIN CONVERSION FUNCTION
   // ==========================================================================
 
@@ -322,6 +544,36 @@
       includeTitle: settings.includeTitle,
       includeLinks: settings.includeLinks
     });
+
+    // Detect and handle lazy-loaded content before extraction.
+    // The detector itself is gated on the user setting so we don't pay for
+    // host/selector lookups (or surface a false-positive footer warning) on
+    // pages where the user has explicitly opted out. We also skip the
+    // scroll-pass when the user is converting a selection: scrolling moves
+    // the page out from under them and `window.getSelection()` would be
+    // collapsed by the time we read it.
+    let lazyLoadInfo = { isLazyLoaded: false, reason: null };
+    let scrollResult = { scrolled: false, heightDelta: 0, contentChanged: false };
+    const lazyLoadingEnabled = settings.triggerLazyLoading === true &&
+                               settings.contentScope !== 'selection';
+
+    if (lazyLoadingEnabled) {
+      lazyLoadInfo = detectLazyLoadingPattern();
+      if (lazyLoadInfo.isLazyLoaded) {
+        // Probe for actual containers before notifying the user. If there's
+        // nothing meaningful to scroll we'd rather stay silent than flash a
+        // toast that doesn't reflect any real work.
+        const probe = findScrollableContainers();
+        if (probe.length > 0) {
+          DebugLog.log('Attempting to load lazy-loaded content via scrolling', { reason: lazyLoadInfo.reason });
+          showNotification('Loading content...', 'Scrolling to load all content before extraction');
+          scrollResult = await scrollToLoadAllContent(probe);
+          DebugLog.log('Scroll loading result', scrollResult);
+        } else {
+          DebugLog.log('Lazy load detected but no scrollable container; skipping scroll-pass');
+        }
+      }
+    }
 
     const docClone = document.cloneNode(true);
     let content;
@@ -393,6 +645,16 @@
         const warningText = `\n\n---\n> **Note:** This page contains ${iframeWarning.count} cross-origin iframe(s) that could not be accessed due to browser security policies. Some content may be missing. Links to these iframes have been preserved where possible.\n`;
         markdown += warningText;
         DebugLog.log('Added iframe warning', { count: iframeWarning.count });
+      }
+
+      // Only warn when we have evidence the scroll-pass changed the rendered
+      // content. Emitting this for every positive detector hit is noisier
+      // than helpful on pages that use ARIA logs for non-lazy content.
+      if (lazyLoadInfo.isLazyLoaded && scrollResult.scrolled &&
+          (scrollResult.heightDelta > 0 || scrollResult.contentChanged)) {
+        const lazyLoadWarning = `\n\n---\n> **Note:** This page uses dynamic content loading (virtual scrolling). The extension scrolled to load all visible content, but some may still be missing if it wasn't rendered in the DOM. For long conversations or feeds, try scrolling through the entire content manually before converting.\n`;
+        markdown += lazyLoadWarning;
+        DebugLog.log('Added lazy load warning', { scrollResult, reason: lazyLoadInfo.reason });
       }
 
       return postProcessMarkdown(markdown, settings, articleData);
