@@ -154,7 +154,8 @@ browserAPI.commands.onCommand.addListener(async (command) => {
         includeImages: true,
         includeTitle: true,
         includeMetadata: true,
-        metadataFormat: "---\nSource: [{title}]({url})"
+        metadataFormat: "---\nSource: [{title}]({url})",
+        triggerLazyLoading: true
       });
       
       // Send message to content script to perform conversion

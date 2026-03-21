@@ -150,6 +150,7 @@ const metadataFormatContainer = document.getElementById("metadataFormatContainer
 const resetMetadataFormatBtn = document.getElementById("resetMetadataFormat");
 const debugModeCheckbox = document.getElementById("debugMode");
 const copyLogsBtn = document.getElementById("copyLogsBtn");
+const triggerLazyLoadingCheckbox = document.getElementById("triggerLazyLoading");
 
 // Default metadata format
 const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
@@ -208,6 +209,7 @@ async function loadSettings() {
       includeMetadata: true,
       metadataFormat: DEFAULT_METADATA_FORMAT,
       debugMode: false,
+      triggerLazyLoading: true,
     });
 
     // Apply settings to UI
@@ -218,6 +220,7 @@ async function loadSettings() {
     includeMetadataCheckbox.checked = data.includeMetadata;
     metadataFormatTextarea.value = data.metadataFormat;
     debugModeCheckbox.checked = data.debugMode;
+    triggerLazyLoadingCheckbox.checked = data.triggerLazyLoading;
 
     // Show/hide metadata format container based on checkbox state
     updateMetadataFormatVisibility(data.includeMetadata);
@@ -241,6 +244,7 @@ async function saveSettings() {
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
+    const triggerLazyLoading = triggerLazyLoadingCheckbox.checked;
 
     await browserAPI.storage.sync.set({
       contentScope,
@@ -250,6 +254,7 @@ async function saveSettings() {
       includeMetadata,
       metadataFormat,
       debugMode,
+      triggerLazyLoading,
     });
   } catch (error) {
     console.error("Error saving settings:", error);
@@ -347,6 +352,7 @@ async function convertToMarkdown() {
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
+    const triggerLazyLoading = triggerLazyLoadingCheckbox.checked;
 
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
@@ -359,6 +365,7 @@ async function convertToMarkdown() {
         includeMetadata,
         metadataFormat,
         debugMode,
+        triggerLazyLoading,
       },
     });
 
@@ -406,6 +413,7 @@ async function downloadMarkdown() {
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
+    const triggerLazyLoading = triggerLazyLoadingCheckbox.checked;
 
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
@@ -418,6 +426,7 @@ async function downloadMarkdown() {
         includeMetadata,
         metadataFormat,
         debugMode,
+        triggerLazyLoading,
       },
     });
 
@@ -475,6 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateDebugModeVisibility();
     saveSettings();
   });
+  triggerLazyLoadingCheckbox.addEventListener("change", saveSettings);
 
   // Metadata format settings
   includeMetadataCheckbox.addEventListener("change", () => {
