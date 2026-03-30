@@ -35,15 +35,16 @@ jobs:
     - name: Verify build artifacts
       run: |
         echo "Checking build artifacts..."
-        if [ ! -f "dist/LLMFeeder-Chrome-v2.0.0.zip" ]; then
+        VERSION=$(jq -r '.version' extension/manifest.json)
+        if [ ! -f "dist/LLMFeeder-Chrome-v${VERSION}.zip" ]; then
           echo "::error::Chrome build artifact not found"
           exit 1
         fi
-        if [ ! -f "dist/LLMFeeder-Firefox-v2.0.0.zip" ]; then
+        if [ ! -f "dist/LLMFeeder-Firefox-v${VERSION}.zip" ]; then
           echo "::error::Firefox build artifact not found"
           exit 1
         fi
-        if [ ! -f "dist/LLMFeeder-Source-v2.0.0.zip" ]; then
+        if [ ! -f "dist/LLMFeeder-Source-v${VERSION}.zip" ]; then
           echo "::error::Source build artifact not found"
           exit 1
         fi
@@ -52,17 +53,18 @@ jobs:
     - name: Validate Chrome manifest
       run: |
         echo "Validating Chrome manifest.json..."
-        # Extract and validate the Chrome manifest from the zip
+        VERSION=$(jq -r '.version' extension/manifest.json)
         mkdir -p /tmp/chrome-extract
-        unzip -q -o dist/LLMFeeder-Chrome-v2.0.0.zip manifest.json -d /tmp/chrome-extract
+        unzip -q -o "dist/LLMFeeder-Chrome-v${VERSION}.zip" manifest.json -d /tmp/chrome-extract
         jq empty /tmp/chrome-extract/manifest.json
         echo "Chrome manifest.json is valid JSON"
 
     - name: Validate Firefox manifest
       run: |
         echo "Validating Firefox manifest.json..."
+        VERSION=$(jq -r '.version' extension/manifest.json)
         mkdir -p /tmp/firefox-extract
-        unzip -q -o dist/LLMFeeder-Firefox-v2.0.0.zip manifest.json -d /tmp/firefox-extract
+        unzip -q -o "dist/LLMFeeder-Firefox-v${VERSION}.zip" manifest.json -d /tmp/firefox-extract
         jq empty /tmp/firefox-extract/manifest.json
         echo "Firefox manifest.json is valid JSON"
 

@@ -62,31 +62,98 @@
                 </button>
               </div>
             </header>
-            <p class="tagline">
+            <p id="tagline" class="tagline">
               Instantly convert any webpage to clean, LLM-ready Markdown. Perfect for ChatGPT, Claude, and more.
             </p>
           </div>
           <div class="center-section">
             <div class="main-controls">
-              <button id="convertBtn" class="primary-btn" title="Convert this page to Markdown and copy to clipboard">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
-                </svg>
-                <span class="btn-text">Convert & Copy</span>
-                <span id="convertShortcut" class="shortcut-badge"></span>
-              </button>
-              <button id="downloadBtn" class="secondary-btn" title="Convert this page to Markdown and download as a file">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                <span class="btn-text">Download Markdown</span>
-                <span id="downloadBtnShortcut" class="shortcut-badge"></span>
-              </button>
+              <!-- Single-tab actions -->
+              <div id="singleTabActions" class="action-buttons">
+                <button id="convertBtn" class="primary-btn" title="Convert this page to Markdown and copy to clipboard">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                  </svg>
+                  <span class="btn-text">Convert & Copy</span>
+                  <span id="convertShortcut" class="shortcut-badge"></span>
+                </button>
+                <button id="downloadBtn" class="secondary-btn" title="Convert this page to Markdown and download as a file">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  <span class="btn-text">Download Markdown</span>
+                  <span id="downloadBtnShortcut" class="shortcut-badge"></span>
+                </button>
+              </div>
+
+              <!-- Multi-tab actions (hidden by default) -->
+              <div id="multiTabActions" class="multi-tab-actions hidden">
+                <div class="tab-count-badge">
+                  <span id="selectedTabCount">0</span> tabs selected
+                </div>
+                <button id="copyAllBtn" class="primary-btn" title="Merge all selected tabs and copy to clipboard">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                  </svg>
+                  <span class="btn-text">Copy All</span>
+                  <span id="copyAllShortcut" class="shortcut-badge"></span>
+                </button>
+                <button id="downloadMergedBtn" class="secondary-btn" title="Merge all selected tabs and download as single file">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  <span class="btn-text">Download Merged</span>
+                  <span id="downloadMergedShortcut" class="shortcut-badge"></span>
+                </button>
+                <button id="downloadZipBtn" class="secondary-btn" title="Download each tab as separate file in ZIP archive">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="btn-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                  </svg>
+                  <span class="btn-text">Download ZIP</span>
+                  <span id="downloadZipShortcut" class="shortcut-badge"></span>
+                </button>
+              </div>
+
               <div id="statusIndicator" class="status">Ready</div>
+              
+              <!-- Token Counter Display -->
+              <div id="tokenCounter" class="token-counter hidden">
+                <div class="token-counter-header">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="token-icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                  <span class="token-label">Token Count</span>
+                </div>
+                <div class="token-count-display">
+                  <span id="tokenCountValue" class="token-value">--</span>
+                  <span class="token-separator">/</span>
+                  <span id="tokenLimitValue" class="token-limit">4K</span>
+                </div>
+                <div class="token-progress-container">
+                  <div id="tokenProgressBar" class="token-progress-bar"></div>
+                </div>
+                <div id="tokenWarning" class="token-warning hidden"></div>
+              </div>
             </div>
           </div>
           <div class="bottom-spacer"></div>
         </div>
+
+        <!-- Review Prompt Banner -->
+        <div id="reviewBanner" class="review-banner hidden">
+          <div class="review-content">
+            <div class="review-message">
+              <span class="review-icon">⭐</span>
+              <span>Enjoying LLMFeeder? Your review helps us grow!</span>
+            </div>
+            <div class="review-actions">
+              <button id="leaveReviewBtn" class="review-btn review-btn-primary">Leave a Review</button>
+              <button id="snoozeReviewBtn" class="review-btn review-btn-secondary">Maybe Later</button>
+              <button id="dismissReviewBtn" class="review-btn review-btn-text">No Thanks</button>
+            </div>
+          </div>
+        </div>
+
         <div class="footer">
           <div>
             Made with ❤️ by our contributors on
@@ -178,6 +245,10 @@
                 <input type="checkbox" id="includeTitle" checked />
                 <span>Include page title as heading</span>
               </label>
+              <label class="setting-option">
+                <input type="checkbox" id="includeLinks" checked />
+                <span>Include links in markdown</span>
+              </label>
             </div>
 
             <div class="setting-group">
@@ -224,6 +295,26 @@ Source: [{title}]({url})</textarea>
             </div>
 
             <div class="setting-group">
+              <h3>Token Counter</h3>
+              <label class="setting-option">
+                <input type="checkbox" id="showTokenCount" checked />
+                <span>Show token count after conversion</span>
+              </label>
+              <label class="setting-option">
+                <span>Context Limit:</span>
+                <select id="tokenContextLimit" class="token-limit-select">
+                  <option value="4096">Small (4K)</option>
+                  <option value="8192" selected>Medium (8K)</option>
+                  <option value="16384">Large (16K)</option>
+                  <option value="32768">Extra Large (32K)</option>
+                </select>
+              </label>
+              <small style="display: block; margin-top: 8px; color: var(--text-secondary);">
+                Token count is estimated using GPT-4/Claude tokenizer (cl100k_base)
+              </small>
+            </div>
+
+            <div class="setting-group">
               <h3>Debug Mode</h3>
               <label class="setting-option">
                 <input type="checkbox" id="debugMode" />
@@ -248,11 +339,28 @@ Source: [{title}]({url})</textarea>
                 For pages with virtual scrolling (e.g., Gemini, ChatGPT), attempts to scroll through all content before extraction.
               </small>
             </div>
+
+            <div class="setting-group rating-cta" id="ratingCta">
+              <button class="rating-dismiss" id="dismissRatingCta" title="Dismiss">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="rating-dismiss-icon">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <div class="rating-content">
+                <span class="rating-stars">⭐⭐⭐⭐⭐</span>
+                <p class="rating-text">Enjoying LLMFeeder?</p>
+                <a href="#" id="settingsReviewLink" class="rating-link">Rate us on <span id="storeName">Chrome Web Store</span></a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
     <script src="libs/browser-polyfill.js"></script>
+    <script src="libs/jszip.min.js"></script>
+    <script src="settings.js"></script>
+    <script src="multi-tab-utils.js"></script>
+    <script src="token-counter.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

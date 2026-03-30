@@ -219,6 +219,17 @@ h3 {
   font-size: 14px;
   line-height: 1.5;
   flex-shrink: 0;
+  transition: opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease;
+  max-height: 100px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.tagline.hidden {
+  opacity: 0;
+  max-height: 0;
+  margin: 0;
+  pointer-events: none;
 }
 
 .main-controls {
@@ -226,6 +237,51 @@ h3 {
   flex-direction: column;
   gap: 14px;
   flex-shrink: 0;
+}
+
+/* Action buttons container (single-tab mode) */
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Multi-tab actions container */
+.multi-tab-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.multi-tab-actions.hidden {
+  display: none;
+}
+
+/* Tab count badge */
+.tab-count-badge {
+  text-align: center;
+  padding: 8px 12px;
+  background: var(--light-gray);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dark-gray);
+}
+
+.tab-count-badge span {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Multi-tab button styling */
+.multi-tab-actions .primary-btn,
+.multi-tab-actions .secondary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .primary-btn {
@@ -639,4 +695,287 @@ input[type="checkbox"] {
 
 .settings-content::-webkit-scrollbar-thumb:hover {
   background-color: var(--dark-gray);
+}
+
+/* Token Counter Styles */
+.token-counter {
+  margin-top: 0;
+  padding: 12px 16px;
+  background: var(--section-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  text-align: center;
+  transition: opacity 0.3s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+  max-height: 200px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.token-counter.hidden {
+  opacity: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+}
+
+.token-counter-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.token-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--primary-color);
+}
+
+.token-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dark-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.token-count-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.token-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1;
+}
+
+.token-separator {
+  font-size: 14px;
+  color: var(--dark-gray);
+}
+
+.token-limit {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark-gray);
+}
+
+.token-progress-container {
+  width: 100%;
+  height: 4px;
+  background-color: var(--light-gray);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.token-progress-bar {
+  height: 100%;
+  background-color: var(--success-color);
+  border-radius: 2px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  width: 0%;
+}
+
+.token-progress-bar.warning {
+  background-color: var(--warning-color);
+}
+
+.token-progress-bar.error {
+  background-color: var(--error-color);
+}
+
+.token-warning {
+  font-size: 12px;
+  color: var(--warning-color);
+  font-weight: 500;
+}
+
+.token-warning.error {
+  color: var(--error-color);
+}
+
+/* Token limit selector */
+.token-limit-select {
+  margin-left: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--background-color);
+  color: var(--text-color);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.token-limit-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Review Banner Styles */
+.review-banner {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #5c9cff 100%);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 0;
+  margin: 0;
+  flex-shrink: 0;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.review-banner.hidden {
+  display: none !important;
+}
+
+.review-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.review-icon {
+  font-size: 16px;
+}
+
+.review-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.review-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.review-btn-primary {
+  background-color: white;
+  color: var(--primary-color);
+}
+
+.review-btn-primary:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+.review-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.review-btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.review-btn-text {
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: underline;
+  padding: 6px 8px;
+}
+
+.review-btn-text:hover {
+  color: white;
+}
+
+/* Rating CTA in Settings */
+.rating-cta {
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.1) 0%, rgba(92, 156, 255, 0.1) 100%);
+  border: 1px solid rgba(66, 133, 244, 0.2);
+  text-align: center;
+  padding: 16px;
+}
+
+.rating-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.rating-stars {
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+.rating-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.rating-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.rating-link:hover {
+  text-decoration: underline;
+  transform: translateY(-1px);
+}
+
+.rating-cta {
+  position: relative;
+}
+
+.rating-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  color: var(--dark-gray);
+}
+
+.rating-dismiss:hover {
+  opacity: 1;
+}
+
+.rating-dismiss-icon {
+  width: 16px;
+  height: 16px;
 }
