@@ -15,11 +15,13 @@
     GENERAL: 'An error occurred during conversion.'
   };
 
-  const CONVERSION_TIMEOUT = 15000; // 15 seconds (increased for iframe handling)
+  const CONVERSION_TIMEOUT = 30000; // 30 seconds (increased for scroll loading)
   const IFRAME_EXTRACTION_TIMEOUT = 1000; // 1 second per iframe
   const MIN_CONTENT_LENGTH = 50; // Minimum meaningful content length
   const MAX_IFRAME_BATCH_SIZE = 5; // Process up to 5 iframes in parallel
   const MAX_DEBUG_LOG_ENTRIES = 500; // Keep memory usage in check
+  const SCROLL_LOAD_DELAY = 300; // ms to wait after scroll for content to load
+  const MAX_SCROLL_ATTEMPTS = 50; // Maximum scroll iterations to prevent infinite loops
 
   // Message action constants for security validation
   const MESSAGE_ACTIONS = {
@@ -310,6 +312,202 @@
   }
 
   // ==========================================================================
+  // LAZY LOADING DETECTION AND SCROLL EXTRACTION
+  // ==========================================================================
+
+  /**
+   * Detects if a page likely uses virtual scrolling/lazy loading for content.
+   * Common patterns: chat interfaces, infinite scroll feeds, long documents.
+   */
+  function detectLazyLoadingPattern() {
+    const indicators = {
+      // Chat/conversation patterns
+      hasChatContainer: !!document.querySelector('[data-conversation], [role="log"], .chat, .conversation, [class*="chat"], [class*="conversation"]'),
+      // Gemini/AI assistant patterns
+      hasAIChat: !!document.querySelector('[class*="gemini"], [class*="bard"], [class*="claude"], [class*="chatgpt"], [data-test-id*="conversation"]'),
+      // Virtual scroll containers
+      hasVirtualScroll: !!document.querySelector('[class*="virtual"], [class*="infinite"], [data-virtual]'),
+      // Long content with scroll
+      hasScrollableArea: (() => {
+        const scrollables = Array.from(document.querySelectorAll('*')).filter(el => {
+          const style = window.getComputedStyle(el);
+          return (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                 el.scrollHeight > el.clientHeight * 3;
+        });
+        return scrollables.length > 0;
+      })()
+    };
+
+    const isLazyLoaded = indicators.hasChatContainer ||
+                         indicators.hasAIChat ||
+                         indicators.hasVirtualScroll ||
+                         indicators.hasScrollableArea;
+
+    DebugLog.log('Lazy loading detection', { indicators, isLazyLoaded });
+    return { isLazyLoaded, indicators };
+  }
+
+  /**
+   * Attempts to load all lazy-loaded content by scrolling through the page.
+   * Returns information about what was loaded.
+   */
+  async function scrollToLoadAllContent(settings = {}) {
+    const { maxAttempts = MAX_SCROLL_ATTEMPTS, delay = SCROLL_LOAD_DELAY } = settings;
+    
+    // Find all scrollable containers
+    const scrollables = findScrollableContainers();
+    
+    if (scrollables.length === 0) {
+      DebugLog.log('No scrollable containers found');
+      return { scrolled: false, elementsLoaded: 0 };
+    }
+
+    DebugLog.log('Found scrollable containers', { count: scrollables.length });
+
+    let totalNewElements = 0;
+    const previousCounts = new Map();
+
+    // Store initial element counts
+    scrollables.forEach((container, idx) => {
+      previousCounts.set(idx, container.querySelectorAll('*').length);
+    });
+
+    // Scroll each container from top to bottom
+    for (const container of scrollables) {
+      const loaded = await scrollContainerToLoadContent(container, maxAttempts, delay);
+      totalNewElements += loaded;
+    }
+
+    DebugLog.log('Scroll loading complete', { totalNewElements });
+    return { scrolled: true, elementsLoaded: totalNewElements };
+  }
+
+  /**
+   * Find all scrollable containers on the page
+   */
+  function findScrollableContainers() {
+    const containers = [];
+    
+    // Check main document
+    if (document.documentElement.scrollHeight > window.innerHeight * 1.5) {
+      containers.push({ element: document.documentElement, isWindow: true });
+    }
+
+    // Check for scrollable elements (common patterns for chat/conversation containers)
+    const scrollSelectors = [
+      '[role="log"]',
+      '[role="feed"]',
+      '[data-conversation]',
+      '.chat-container', '.chat-messages', '.conversation-container',
+      '[class*="chat"]', '[class*="conversation"]', '[class*="messages"]',
+      '[class*="scroll"]', '[class*="content-area"]',
+      'main', 'article', '.main-content', '#content'
+    ];
+
+    const candidates = document.querySelectorAll(scrollSelectors.join(', '));
+    
+    candidates.forEach(el => {
+      const style = window.getComputedStyle(el);
+      if ((style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+          el.scrollHeight > el.clientHeight * 2) {
+        containers.push({ element: el, isWindow: false });
+      }
+    });
+
+    // Remove duplicates
+    const uniqueContainers = [];
+    const seen = new Set();
+    containers.forEach(c => {
+      const key = c.isWindow ? 'window' : c.element;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueContainers.push(c);
+      }
+    });
+
+    return uniqueContainers;
+  }
+
+  /**
+   * Scroll a container to load all its lazy-loaded content
+   */
+  async function scrollContainerToLoadContent(containerInfo, maxAttempts, delay) {
+    const { element, isWindow } = containerInfo;
+    const getScrollHeight = () => isWindow ? document.documentElement.scrollHeight : element.scrollHeight;
+    const getClientHeight = () => isWindow ? window.innerHeight : element.clientHeight;
+    const scrollTo = (pos) => {
+      if (isWindow) {
+        window.scrollTo(0, pos);
+      } else {
+        element.scrollTop = pos;
+      }
+    };
+    const getCurrentScroll = () => isWindow ? window.scrollY : element.scrollTop;
+
+    let previousHeight = getScrollHeight();
+    let attempts = 0;
+    let stallCount = 0;
+    let newElementsLoaded = 0;
+
+    // First, scroll to top to ensure top content is loaded
+    scrollTo(0);
+    await sleep(delay);
+    
+    // Scroll down in increments to trigger lazy loading
+    const clientHeight = getClientHeight();
+    const scrollStep = clientHeight * 0.8; // Scroll 80% of visible area at a time
+    let currentPos = 0;
+    
+    while (attempts < maxAttempts) {
+      attempts++;
+      
+      // Scroll to next position
+      currentPos += scrollStep;
+      scrollTo(currentPos);
+      await sleep(delay);
+
+      const newHeight = getScrollHeight();
+      
+      // Check if new content was loaded
+      if (newHeight > previousHeight) {
+        newElementsLoaded += (newHeight - previousHeight);
+        previousHeight = newHeight;
+        stallCount = 0;
+      } else {
+        stallCount++;
+      }
+
+      // Check if we've reached the bottom
+      const maxScroll = newHeight - clientHeight;
+      if (currentPos >= maxScroll - 10) {
+        // If we're at the bottom and content hasn't changed for 3 attempts, we're done
+        if (stallCount >= 3) {
+          DebugLog.log('Reached bottom of scrollable container', { 
+            attempts, 
+            finalHeight: newHeight,
+            newElementsLoaded 
+          });
+          break;
+        }
+        
+        // Try scrolling a bit more to trigger any remaining lazy loaders
+        currentPos = maxScroll + 100;
+        scrollTo(currentPos);
+        await sleep(delay);
+      }
+    }
+
+    // Scroll back to top for a cleaner experience
+    scrollTo(0);
+    
+    return newElementsLoaded;
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // ==========================================================================
   // MAIN CONVERSION FUNCTION
   // ==========================================================================
 
@@ -322,6 +520,17 @@
       includeTitle: settings.includeTitle,
       includeLinks: settings.includeLinks
     });
+
+    // Detect and handle lazy-loaded content before extraction
+    const lazyLoadInfo = detectLazyLoadingPattern();
+    let scrollResult = { scrolled: false, elementsLoaded: 0 };
+    
+    if (lazyLoadInfo.isLazyLoaded && settings.triggerLazyLoading !== false) {
+      DebugLog.log('Attempting to load lazy-loaded content via scrolling');
+      showNotification('Loading content...', 'Scrolling to load all content before extraction');
+      scrollResult = await scrollToLoadAllContent(settings.scrollOptions || {});
+      DebugLog.log('Scroll loading result', scrollResult);
+    }
 
     const docClone = document.cloneNode(true);
     let content;
@@ -393,6 +602,13 @@
         const warningText = `\n\n---\n> **Note:** This page contains ${iframeWarning.count} cross-origin iframe(s) that could not be accessed due to browser security policies. Some content may be missing. Links to these iframes have been preserved where possible.\n`;
         markdown += warningText;
         DebugLog.log('Added iframe warning', { count: iframeWarning.count });
+      }
+
+      // Add warning for pages with virtual scrolling / lazy loading
+      if (lazyLoadInfo.isLazyLoaded) {
+        const lazyLoadWarning = `\n\n---\n> **Note:** This page uses dynamic content loading (virtual scrolling). The extension attempted to scroll and load all content, but some may still be missing if it wasn't rendered in the DOM. For long conversations or feeds, try scrolling through the entire content manually before converting.\n`;
+        markdown += lazyLoadWarning;
+        DebugLog.log('Added lazy load warning', { scrollResult });
       }
 
       return postProcessMarkdown(markdown, settings, articleData);

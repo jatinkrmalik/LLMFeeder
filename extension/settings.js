@@ -15,7 +15,8 @@ const SettingsUtils = (function() {
       includeLinks: true,
       includeMetadata: true,
       metadataFormat: DEFAULT_METADATA_FORMAT,
-      debugMode: false
+      debugMode: false,
+      triggerLazyLoading: true
     });
   }
 

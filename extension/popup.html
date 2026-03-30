@@ -329,6 +329,17 @@ Source: [{title}]({url})</textarea>
               <small style="display: block; margin-top: 4px; color: var(--text-secondary); text-align: center;">Logs are rewritten on each conversion</small>
             </div>
 
+            <div class="setting-group">
+              <h3>Lazy Loading Support</h3>
+              <label class="setting-option">
+                <input type="checkbox" id="triggerLazyLoading" checked />
+                <span>Auto-scroll to load all content</span>
+              </label>
+              <small style="display: block; margin-top: 4px; color: var(--text-secondary);">
+                For pages with virtual scrolling (e.g., Gemini, ChatGPT), attempts to scroll through all content before extraction.
+              </small>
+            </div>
+
             <div class="setting-group rating-cta" id="ratingCta">
               <button class="rating-dismiss" id="dismissRatingCta" title="Dismiss">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="rating-dismiss-icon">

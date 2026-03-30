@@ -199,6 +199,8 @@ function initTheme() {
   }
 }
 
+const triggerLazyLoadingCheckbox = document.getElementById("triggerLazyLoading");
+
 /**
  * Format large numbers for display (e.g., 128000 -> "128K")
  * @param {number} num - Number to format
@@ -349,6 +351,7 @@ async function loadSettings() {
     const tokenSettings = await browserAPI.storage.sync.get({
       showTokenCount: DEFAULT_TOKEN_SETTINGS.showTokenCount,
       tokenContextLimit: DEFAULT_TOKEN_SETTINGS.tokenContextLimit,
+      triggerLazyLoading: true,
     });
 
     // Apply settings to UI
@@ -360,6 +363,7 @@ async function loadSettings() {
     includeMetadataCheckbox.checked = data.includeMetadata;
     metadataFormatTextarea.value = data.metadataFormat;
     debugModeCheckbox.checked = data.debugMode;
+    triggerLazyLoadingCheckbox.checked = data.triggerLazyLoading !== false;
     showTokenCountCheckbox.checked = tokenSettings.showTokenCount;
     tokenContextLimitSelect.value = tokenSettings.tokenContextLimit.toString();
 
@@ -386,6 +390,7 @@ async function saveSettings() {
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
+    const triggerLazyLoading = triggerLazyLoadingCheckbox.checked;
     const showTokenCount = showTokenCountCheckbox.checked;
     const tokenContextLimit = parseInt(tokenContextLimitSelect.value, 10);
 
@@ -398,6 +403,7 @@ async function saveSettings() {
       includeMetadata,
       metadataFormat,
       debugMode,
+      triggerLazyLoading,
       showTokenCount,
       tokenContextLimit,
     });
@@ -830,6 +836,7 @@ async function convertToMarkdown() {
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
+    const triggerLazyLoading = triggerLazyLoadingCheckbox.checked;
 
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
@@ -843,6 +850,7 @@ async function convertToMarkdown() {
         includeMetadata,
         metadataFormat,
         debugMode,
+        triggerLazyLoading,
       },
     });
 
@@ -914,6 +922,7 @@ async function downloadMarkdown() {
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
+    const triggerLazyLoading = triggerLazyLoadingCheckbox.checked;
 
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
@@ -927,6 +936,7 @@ async function downloadMarkdown() {
         includeMetadata,
         metadataFormat,
         debugMode,
+        triggerLazyLoading,
       },
     });
 
@@ -1019,6 +1029,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateDebugModeVisibility();
     saveSettings();
   });
+  triggerLazyLoadingCheckbox.addEventListener("change", saveSettings);
 
   // Metadata format settings
   includeMetadataCheckbox.addEventListener("change", () => {
