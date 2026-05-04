@@ -364,6 +364,104 @@ h3 {
   flex-shrink: 0;
 }
 
+/* Split button (Convert & Copy + dropdown) */
+.split-btn {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.split-btn .primary-btn {
+  width: auto;
+}
+
+.split-btn-main {
+  flex: 1 1 auto;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.split-btn-caret {
+  flex: 0 0 auto;
+  padding: 12px 10px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.split-btn-caret:hover {
+  transform: none;
+}
+
+.split-btn-main:hover {
+  transform: none;
+}
+
+.split-btn:hover .split-btn-main,
+.split-btn:hover .split-btn-caret {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.caret-icon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.split-btn-caret[aria-expanded="true"] .caret-icon {
+  transform: rotate(180deg);
+}
+
+.split-btn.no-menu .split-btn-caret,
+.split-btn.no-menu .split-btn-menu {
+  display: none;
+}
+
+.split-btn.no-menu .split-btn-main {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.split-btn-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  z-index: 10;
+}
+
+.split-btn-menu-item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.split-btn-menu-item:hover,
+.split-btn-menu-item:focus-visible {
+  background-color: var(--setting-hover);
+}
+
+.menu-item-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
 .status {
   margin-top: 12px;
   font-size: 14px;
