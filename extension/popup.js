@@ -88,6 +88,11 @@ const browserAPI = (function () {
 
 // DOM elements - Main view
 const convertBtn = document.getElementById("convertBtn");
+const convertSplit = document.getElementById("convertSplit");
+const convertMenuBtn = document.getElementById("convertMenuBtn");
+const convertMenu = document.getElementById("convertMenu");
+const convertOverrideBtn = document.getElementById("convertOverrideBtn");
+const convertOverrideLabel = convertOverrideBtn ? convertOverrideBtn.querySelector(".override-label") : null;
 const downloadBtn = document.getElementById("downloadBtn");
 const downloadBtnShortcut = document.getElementById("downloadBtnShortcut");
 const statusIndicator = document.getElementById("statusIndicator");
@@ -807,7 +812,7 @@ async function downloadZipArchive() {
 }
 
 // Convert current page to Markdown
-async function convertToMarkdown() {
+async function convertToMarkdown(scopeOverride) {
   statusIndicator.textContent = "Converting...";
   statusIndicator.className = "status processing";
 
@@ -821,8 +826,8 @@ async function convertToMarkdown() {
       throw new Error("No active tab found");
     }
 
-    // Get current settings
-    const contentScope = document.querySelector('input[name="contentScope"]:checked').value;
+    // Get current settings (scopeOverride bypasses the saved contentScope for one conversion)
+    const contentScope = scopeOverride || document.querySelector('input[name="contentScope"]:checked').value;
     const preserveTables = preserveTablesCheckbox.checked;
     const includeImages = includeImagesCheckbox.checked;
     const includeTitle = includeTitleCheckbox.checked;
@@ -975,6 +980,47 @@ async function downloadMarkdown() {
   }
 }
 
+// Convert split-button menu helpers
+function updateConvertSplitVisibility() {
+  const checked = document.querySelector('input[name="contentScope"]:checked');
+  const scope = checked ? checked.value : "mainContent";
+
+  // Caret offers the opposite of the saved scope. Selection scope has no useful inverse.
+  if (scope === "mainContent") {
+    convertSplit.classList.remove("no-menu");
+    convertOverrideLabel.textContent = "Copy full page";
+    convertOverrideBtn.title = "Override the Main-content-only setting and copy the full page this once";
+    convertOverrideBtn.dataset.scope = "fullPage";
+  } else if (scope === "fullPage") {
+    convertSplit.classList.remove("no-menu");
+    convertOverrideLabel.textContent = "Copy main content only";
+    convertOverrideBtn.title = "Override the Full-page setting and copy main content only this once";
+    convertOverrideBtn.dataset.scope = "mainContent";
+  } else {
+    convertSplit.classList.add("no-menu");
+    closeConvertMenu();
+  }
+}
+
+function openConvertMenu() {
+  convertMenu.classList.remove("hidden");
+  convertMenuBtn.setAttribute("aria-expanded", "true");
+  convertOverrideBtn.focus();
+}
+
+function closeConvertMenu() {
+  convertMenu.classList.add("hidden");
+  convertMenuBtn.setAttribute("aria-expanded", "false");
+}
+
+function toggleConvertMenu() {
+  if (convertMenu.classList.contains("hidden")) {
+    openConvertMenu();
+  } else {
+    closeConvertMenu();
+  }
+}
+
 // Event Listeners
 document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
@@ -990,8 +1036,41 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Single-tab button clicks
-  convertBtn.addEventListener("click", convertToMarkdown);
+  convertBtn.addEventListener("click", () => {
+    closeConvertMenu();
+    convertToMarkdown();
+  });
   downloadBtn.addEventListener("click", downloadMarkdown);
+
+  // Convert split-button menu (override contentScope for one-shot full-page copy)
+  updateConvertSplitVisibility();
+  contentScopeRadios.forEach((radio) => {
+    radio.addEventListener("change", updateConvertSplitVisibility);
+  });
+
+  convertMenuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleConvertMenu();
+  });
+
+  convertOverrideBtn.addEventListener("click", () => {
+    const override = convertOverrideBtn.dataset.scope || "fullPage";
+    closeConvertMenu();
+    convertToMarkdown(override);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!convertMenu.classList.contains("hidden") && !convertSplit.contains(e.target)) {
+      closeConvertMenu();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !convertMenu.classList.contains("hidden")) {
+      closeConvertMenu();
+      convertMenuBtn.focus();
+    }
+  });
 
   // Multi-tab button clicks
   copyAllBtn.addEventListener("click", copyAllTabs);
