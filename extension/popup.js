@@ -1072,6 +1072,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // Close the menu when focus leaves the split-button container (e.g. user tabs away)
+  convertSplit.addEventListener("focusout", (e) => {
+    if (!convertSplit.contains(e.relatedTarget)) {
+      closeConvertMenu();
+    }
+  });
+
   // Multi-tab button clicks
   copyAllBtn.addEventListener("click", copyAllTabs);
   downloadMergedBtn.addEventListener("click", downloadMergedFile);
