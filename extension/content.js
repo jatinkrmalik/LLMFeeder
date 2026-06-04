@@ -1021,20 +1021,35 @@
 
     turndownService.addRule('fencedCodeBlock', {
       filter: function(node) {
-        return (
-          node.nodeName === 'PRE' &&
-          node.firstChild &&
-          node.firstChild.nodeName === 'CODE'
-        );
+        return node.nodeName === 'PRE';
       },
       replacement: function(content, node) {
-        const language = node.firstChild.getAttribute('class') || '';
-        const languageMatch = language.match(/language-(\S+)/);
+        const codeElement = node.querySelector('code');
+        const languageClasses = [
+          codeElement?.getAttribute('class') || '',
+          node.getAttribute('class') || ''
+        ].join(' ');
+        const languageMatch = languageClasses.match(/(?:language|lang)-(\S+)/);
         const languageIdentifier = languageMatch ? languageMatch[1] : '';
+        const codeContainer = (codeElement || node).cloneNode(true);
+
+        // Syntax highlighters often emit <pre><span>...<br>...</span></pre>.
+        // textContent preserves the highlighted text, but <br> needs explicit handling.
+        const lineBreaks = codeContainer.querySelectorAll('br');
+        lineBreaks.forEach(lineBreak => lineBreak.replaceWith('\n'));
+
+        const code = codeContainer.textContent.replace(/\n$/, '');
+        const fenceMatches = code.match(/^`{3,}/gm) || [];
+        const fenceSize = fenceMatches.reduce(
+          (size, fence) => Math.max(size, fence.length + 1),
+          3
+        );
+        const fence = '`'.repeat(fenceSize);
+
         return (
-          '\n\n```' + languageIdentifier + '\n' +
-          node.firstChild.textContent.replace(/\n$/, '') +
-          '\n```\n\n'
+          '\n\n' + fence + languageIdentifier + '\n' +
+          code +
+          '\n' + fence + '\n\n'
         );
       }
     });

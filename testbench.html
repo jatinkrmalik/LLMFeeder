@@ -12,6 +12,7 @@
         .instructions { background: #fff3e0; padding: 15px; border-radius: 6px; border-left: 4px solid #ff9800; margin-bottom: 20px; }
         .expected { background: #e3f2fd; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 0.9em; }
         code { background: #263238; color: #aed581; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+        pre code, pre span { background: none; color: inherit; padding: 0; }
         .success { color: #2e7d32; font-weight: bold; }
         .warning { color: #f57c00; font-weight: bold; }
         table { border-collapse: collapse; width: 100%; margin: 15px 0; }
@@ -190,6 +191,28 @@
         </ul>
         <div class="expected"><span class="success">Expected (Include Links ON):</span> Links as <code>[text](url)</code></div>
         <div class="expected"><span class="warning">Expected (Include Links OFF):</span> Only text, no URLs</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 10: Preformatted Code Blocks</h2>
+        <p>Standard code block with a language class:</p>
+        <pre><code class="language-javascript">const greeting = "hello";
+console.log(greeting);</code></pre>
+        <p>Syntax-highlighted code block without a code element:</p>
+        <pre><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">admissionregistration.k8s.io/v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">ValidatingAdmissionPolicyBinding</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">replicalimit-binding-test.example.com</span></pre>
+        <p>Shiki-style code block with line spans:</p>
+        <!-- https://zod.dev/api example codeblocks -->
+        <figure class="not-prose group fd-codeblock shiki">
+            <button type="button" aria-label="Copy Text">Copy Text</button>
+            <div>
+                <pre><code><span class="line"><span>import</span><span> *</span><span> as</span><span> z </span><span>from</span><span> "zod"</span><span>;</span></span>
+<span class="line"> </span>
+<span class="line"><span>// primitive types</span></span>
+<span class="line"><span>z.</span><span>string</span><span>();</span></span>
+<span class="line"><span>z.</span><span>number</span><span>();</span></span></code></pre>
+            </div>
+        </figure>
+        <div class="expected"><span class="success">Expected:</span> All three examples should appear as fenced Markdown code blocks, with line breaks and indentation preserved</div>
     </div>
 
 </body>
