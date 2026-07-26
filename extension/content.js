@@ -21,8 +21,14 @@
   const MAX_IFRAME_BATCH_SIZE = 5; // Process up to 5 iframes in parallel
   const MAX_DEBUG_LOG_ENTRIES = 500; // Keep memory usage in check
   const SCROLL_LOAD_DELAY = 300; // ms to wait after scroll for content to load
-  const MAX_SCROLL_ATTEMPTS = 50; // Maximum scroll iterations to prevent infinite loops
-  const SCROLL_TIMEOUT_HEADROOM = MAX_SCROLL_ATTEMPTS * SCROLL_LOAD_DELAY; // ms of extra time we may need when scrolling
+  const MAX_SCROLL_ATTEMPTS = 50; // Maximum scroll iterations per container
+  // Wall-clock ceiling for the whole scroll pass, shared across every container
+  // we walk. MAX_SCROLL_ATTEMPTS alone cannot bound the pass: a page with N
+  // scrollable containers costs N times the per-container budget, which would
+  // outlive the conversion timeout and keep yanking the page around long after
+  // the user has been shown an error.
+  const SCROLL_PASS_BUDGET = 15000;
+  const SCROLL_TIMEOUT_HEADROOM = SCROLL_PASS_BUDGET; // ms of extra time we may need when scrolling
 
   // Message action constants for security validation
   const MESSAGE_ACTIONS = {
@@ -405,17 +411,38 @@
     const savedScrollX = window.scrollX;
     const savedScrollY = window.scrollY;
 
+    // Share one wall-clock budget across every container. Each container gets
+    // an even slice of whatever time is left, so a container that finishes
+    // early hands its unused time to the ones after it.
+    const passDeadline = Date.now() + SCROLL_PASS_BUDGET;
+
     let totalHeightDelta = 0;
     let contentChanged = false;
-    for (const container of scrollables) {
-      const result = await scrollContainerToLoadContent(container);
+    let containersScrolled = 0;
+    for (let i = 0; i < scrollables.length; i++) {
+      const timeLeft = passDeadline - Date.now();
+      if (timeLeft <= SCROLL_LOAD_DELAY) {
+        DebugLog.log('Scroll budget exhausted, skipping remaining containers', {
+          skipped: scrollables.length - i
+        });
+        break;
+      }
+
+      const containerDeadline = Date.now() + timeLeft / (scrollables.length - i);
+      const result = await scrollContainerToLoadContent(scrollables[i], containerDeadline);
       totalHeightDelta += result.heightDelta;
       contentChanged = contentChanged || result.contentChanged;
+      containersScrolled++;
     }
 
     window.scrollTo(savedScrollX, savedScrollY);
 
-    DebugLog.log('Scroll loading complete', { totalHeightDelta, contentChanged });
+    // Virtualised lists re-render from their scroll handler, which fires
+    // asynchronously. Without this settle delay we clone the DOM mid-render
+    // and capture fewer rows than were on screen before the pass started.
+    await sleep(SCROLL_LOAD_DELAY);
+
+    DebugLog.log('Scroll loading complete', { totalHeightDelta, contentChanged, containersScrolled });
     return { scrolled: true, heightDelta: totalHeightDelta, contentChanged };
   }
 
@@ -447,7 +474,7 @@
    * Stall detection looks at `scrollHeight` and a bounded text signature
    * because virtualised lists can recycle DOM nodes without growing height.
    */
-  async function scrollContainerToLoadContent(containerInfo) {
+  async function scrollContainerToLoadContent(containerInfo, deadline) {
     const { element, isWindow } = containerInfo;
     const getScrollHeight = () => isWindow ? document.documentElement.scrollHeight : element.scrollHeight;
     const getClientHeight = () => isWindow ? window.innerHeight : element.clientHeight;
@@ -474,13 +501,15 @@
 
     // First, scroll to top to ensure top content is loaded
     scrollTo(0);
-    await sleep(SCROLL_LOAD_DELAY);
+    if (Date.now() + SCROLL_LOAD_DELAY <= deadline) {
+      await sleep(SCROLL_LOAD_DELAY);
+    }
 
     const clientHeight = getClientHeight();
     const scrollStep = clientHeight * 0.8;
     let currentPos = 0;
 
-    while (attempts < MAX_SCROLL_ATTEMPTS) {
+    while (attempts < MAX_SCROLL_ATTEMPTS && Date.now() + SCROLL_LOAD_DELAY <= deadline) {
       attempts++;
 
       currentPos += scrollStep;
@@ -515,6 +544,9 @@
         // Nudge past the bottom to trigger any remaining lazy loaders.
         currentPos = maxScroll + 100;
         scrollTo(currentPos);
+        if (Date.now() + SCROLL_LOAD_DELAY > deadline) {
+          break;
+        }
         await sleep(SCROLL_LOAD_DELAY);
       }
     }
