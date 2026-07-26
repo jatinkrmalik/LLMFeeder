@@ -565,3 +565,17 @@ lsof -ti:8080 | xargs kill   # Kill server on port 8080
 | browser-polyfill.js | - | Cross-browser API compatibility |
 
 These are located in `extension/libs/` and should not be modified without careful consideration.
+
+---
+
+## Cursor Cloud specific instructions
+
+Durable notes for agents working in the Cursor Cloud VM. Standard commands live in the sections above; this section only captures non-obvious caveats.
+
+- No package manager / no install step: there is no `package.json`, lockfile, or `node_modules`. Third-party libs are vendored in `extension/libs/`. The startup update script has nothing to install; it only ensures `scripts/build.sh` is executable.
+- Toolchain is preinstalled in the VM: `jq`, `zip`, `python3`, `make`, and Chrome (`/usr/local/bin/google-chrome`).
+- There is no unit-test suite. The "lint/test" equivalent is the build + manifest-JSON validation done in CI (`.github/workflows/pr-validation.yml`): `bash scripts/build.sh all` then `jq empty` on the generated Chrome/Firefox manifests. Run those to validate changes.
+- Build/run: `bash scripts/build.sh chrome` (or `firefox`/`source`/`all`). Output zips go to `dist/` (gitignored).
+- End-to-end test flow: extract the Chrome zip (e.g. `unzip -o dist/LLMFeeder-Chrome-v*.zip -d /tmp/llmfeeder-chrome`), load it unpacked at `chrome://extensions/` (Developer mode → Load unpacked), start `python3 -m http.server 8080` from repo root, open `http://localhost:8080/testbench.html`, then use the popup's "Convert & Copy" button.
+- Prefer loading the built Chrome package (from `dist/`) rather than the raw `extension/` folder: the source `manifest.json` is MV3 with `browser_specific_settings`/`menus` that Chrome ignores/warns on; `build.sh` strips those for a clean Chrome load. Firefox needs the built package because `build.sh` rewrites the background section.
+- Token counting fetches encodings from `https://tiktoken.pages.dev/*` but has an offline heuristic fallback and caches results, so core convert/copy/download works without network access.
