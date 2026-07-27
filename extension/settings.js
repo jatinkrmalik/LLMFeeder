@@ -15,7 +15,11 @@ const SettingsUtils = (function() {
       includeLinks: true,
       includeMetadata: true,
       metadataFormat: DEFAULT_METADATA_FORMAT,
-      debugMode: false
+      debugMode: false,
+      // Off by default. Triggers a scroll-pass on lazy-loading surfaces (chat
+      // UIs, virtualised feeds) before extraction. Has visible side effects
+      // (page movement, optional footer warning) so users opt in explicitly.
+      triggerLazyLoading: false
     });
   }
 
