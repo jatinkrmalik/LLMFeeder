@@ -1,0 +1,22 @@
+Welcome to LLMFeeder — the fastest way to turn any webpage into clean, LLM-ready Markdown.
+
+Whether you're prompting ChatGPT, Claude, or any other AI assistant, LLMFeeder gives you perfectly formatted context in one click.
+
+Here's how it works. Open any article or documentation page.
+Then click the LLMFeeder icon in your toolbar.
+
+Want the main article only? Choose Main Content.
+Need everything on the page? Switch to Full Page.
+Or convert just what you've selected.
+
+Hit Convert and Copy — and your Markdown is instantly on the clipboard, ready to paste into your favorite LLM.
+
+Prefer a file? Download Markdown instead, or grab a ZIP when you're working across multiple tabs.
+
+Need fine-tuned control? Open Settings to toggle images, tables, links, titles, and custom metadata templates.
+There's even a live token counter so you know if your content fits your model's context window.
+
+Privacy first: everything runs locally in your browser. No servers. No tracking. Your content never leaves your device.
+
+LLMFeeder — feed your LLM the clean Markdown it deserves.
+Free and open source for Chrome and Firefox.

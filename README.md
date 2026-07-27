@@ -40,8 +40,10 @@ A browser extension that converts web page content to clean Markdown format and 
 
 
 ## Demo
-![llm](https://github.com/user-attachments/assets/42aab518-97e8-4939-baf5-f43d394eaae5)
 
+**[▶ Watch the demo video](./demo/LLMFeeder-Demo.mp4)** (~90s, with narration) · [Smaller web version](./demo/LLMFeeder-Demo-web.mp4) · [Credits](./demo/CREDITS.md)
+
+![llm](https://github.com/user-attachments/assets/42aab518-97e8-4939-baf5-f43d394eaae5)
 
 ## Privacy & Security
 
