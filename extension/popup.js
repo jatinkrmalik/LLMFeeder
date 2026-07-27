@@ -719,8 +719,11 @@ function getCurrentSettings() {
     preserveTables: preserveTablesCheckbox.checked,
     includeImages: includeImagesCheckbox.checked,
     includeTitle: includeTitleCheckbox.checked,
+    includeLinks: includeLinksCheckbox.checked,
     includeMetadata: includeMetadataCheckbox.checked,
     metadataFormat: metadataFormatTextarea.value,
+    debugMode: debugModeCheckbox.checked,
+    triggerLazyLoading: triggerLazyLoadingCheckbox.checked,
   };
 }
 
