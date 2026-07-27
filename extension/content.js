@@ -336,6 +336,7 @@
    */
   const KNOWN_LAZY_HOSTS = [
     'gemini.google.com',
+    'aistudio.google.com',
     'chat.openai.com',
     'chatgpt.com',
     'claude.ai',
@@ -449,19 +450,35 @@
   /**
    * Find all scrollable containers on the page using the same
    * `isMeaningfullyScrollable` heuristic as the detector.
+   *
+   * Semantic lazy-load containers (role=log/feed, data-conversation, etc.)
+   * take priority. Burning budget on the window / generic main wrappers as
+   * well would leave less time for the surface that actually loads content —
+   * the multi-scroller timeout #101 fixed. Only fall back to those generic
+   * containers when no semantic match is scrollable.
    */
   function findScrollableContainers() {
     const containers = [];
+    const seen = new Set();
+
+    document.querySelectorAll(LAZY_CONTAINER_SELECTORS.join(', ')).forEach(el => {
+      if (isMeaningfullyScrollable(el) && !seen.has(el)) {
+        seen.add(el);
+        containers.push({ element: el, isWindow: false });
+      }
+    });
+
+    if (containers.length > 0) {
+      return containers;
+    }
 
     if (document.documentElement.scrollHeight > window.innerHeight * 1.5) {
       containers.push({ element: document.documentElement, isWindow: true });
     }
 
-    const candidates = document.querySelectorAll(LAZY_CONTAINER_SELECTORS.join(', ') +
-      ', main, article, .main-content, #content');
-
-    candidates.forEach(el => {
-      if (isMeaningfullyScrollable(el)) {
+    document.querySelectorAll('main, article, .main-content, #content').forEach(el => {
+      if (isMeaningfullyScrollable(el) && !seen.has(el)) {
+        seen.add(el);
         containers.push({ element: el, isWindow: false });
       }
     });
@@ -574,7 +591,8 @@
       preserveTables: settings.preserveTables,
       includeImages: settings.includeImages,
       includeTitle: settings.includeTitle,
-      includeLinks: settings.includeLinks
+      includeLinks: settings.includeLinks,
+      triggerLazyLoading: settings.triggerLazyLoading === true
     });
 
     // Detect and handle lazy-loaded content before extraction.
