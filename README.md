@@ -14,7 +14,16 @@
 
 A browser extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs). Available for both [Chrome](https://chromewebstore.google.com/detail/llmfeeder-webpage-to-mark/cjjfhhapabcpcokkfldbiiojiphbifdk) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/).
 
-## ✨ What's New in v2.1.0
+## ✨ What's New in v2.2.0
+
+- 📜 **Lazy-Loading Auto-Scroll** - Opt-in setting to scroll chat/AI pages (Gemini, ChatGPT, Claude, etc.) before extraction so long conversations aren't truncated (#91)
+- 📋 **Alternative Copy Mode** - Split copy button with a one-click override for Full Page vs Main Content without changing your default setting
+- 💻 **Better Code Blocks** - Generic `<pre>` elements convert to fenced Markdown code blocks with language detection (#66)
+- 🏷️ **Store SEO Refresh** - Renamed to *Web to Markdown for AI*; short description targets ChatGPT/Claude/Gemini searches (within Chrome’s 132-char limit)
+- 🧪 **Unit Tests & CI** - Jest test suite and GitHub Actions workflow for PRs
+- 🔧 **Firefox Icon Fix** - Correct 16×16 icon dimensions for Add-ons compatibility
+
+### Previous Release (v2.1.0)
 
 - 🗂️ **Multi-Tab Support** - Convert multiple tabs at once! Select multiple tabs with Ctrl/Cmd+Shift and use Copy All, Download Merged, or Download as ZIP
 - 🖱️ **Right-Click Context Menus** - Quick access to conversion options directly from the right-click menu on any webpage
@@ -25,18 +34,6 @@ A browser extension that converts web page content to clean Markdown format and 
 - 📋 **Better Table Conversion** - Fixed table-to-markdown conversion for various HTML table formats
 - ⭐ **Review Prompt** - Gentle reminder to rate the extension after 20 successful conversions
 - 🔧 **Bug Fixes** - Fixed race condition in context menu initialization, CSS syntax errors, and removed dead code
-
-### Previous Release (v2.0.0)
-
-- 🎨 **Complete UI Redesign** - Modern, cleaner interface with dedicated Settings view and improved layout
-- 📝 **Customizable Metadata Format** - Template-based system with 6 variables ({title}, {url}, {date}, {author}, {siteName}, {excerpt}) for flexible citation styles
-- ⌨️ **Keyboard Shortcut Badges** - Visual shortcut indicators on action buttons for better discoverability
-- 💡 **Action Button Tooltips** - Hover tooltips on all action buttons for improved accessibility
-- 🔧 **Dedicated Settings Panel** - Separate settings view with organized sections for appearance, content, and formatting
-- 📚 **Updated Libraries** - Latest versions of Readability.js, Turndown.js, and browser-polyfill.js
-- 🐛 **Bug Fixes** - Fixed ReferenceError and improved error message display in popup
-- 🚀 **GitHub Actions Integration** - Automated release artifact uploads
-- ❓ **Help & FAQ Link** - Quick access to community discussions and support
 
 
 ## Demo
@@ -60,6 +57,8 @@ This architecture ensures that your content remains exclusively on your device t
 ## Features
 
 - **Multi-Tab Support**: Convert multiple selected tabs at once - merge into single file or download as ZIP
+- **Lazy-Loading Auto-Scroll**: Opt-in scroll pass for chat/AI UIs so long conversations aren't truncated
+- **Alternative Copy Mode**: One-click Full Page / Main Content override from the copy button
 - **Right-Click Context Menus**: Quick conversion access from anywhere on a page
 - **Token Counter**: Real-time token estimation with configurable LLM context limits
 - **Include Links Toggle**: Option to include or strip URLs from links in output (great for reducing token usage)

@@ -1,7 +1,7 @@
 {
   "name": "llmfeeder",
-  "version": "2.1.0",
-  "description": "Web to Markdown converter for ChatGPT, Claude & AI. Extract clean content, copy to clipboard.",
+  "version": "2.2.0",
+  "description": "Convert any webpage to clean Markdown for ChatGPT, Claude & Gemini. Multi-tab copy, token counter. 100% private.",
   "private": true,
   "scripts": {
     "test": "jest"

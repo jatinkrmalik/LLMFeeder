@@ -388,7 +388,7 @@ The project uses two build methods:
 ./scripts/build.sh source
 
 # Build with custom version
-./scripts/build.sh --version 2.1.0 all
+./scripts/build.sh --version 2.2.0 all
 ```
 
 ### Output Files
@@ -403,12 +403,12 @@ Built packages are created in `dist/`:
 
 1. Edit `extension/manifest.json`:
    ```json
-   "version": "2.1.0"
+   "version": "2.2.0"
    ```
 
 2. Build with version:
    ```bash
-   ./scripts/build.sh --version 2.1.0 all
+   ./scripts/build.sh --version 2.2.0 all
    ```
 
 ---
@@ -441,8 +441,8 @@ Actions:
 
 ```bash
 # Tag and push
-git tag v2.1.0
-git push origin v2.1.0
+git tag v2.2.0
+git push origin v2.2.0
 
 # Then create release on GitHub
 # CI will automatically build and upload packages
@@ -479,6 +479,7 @@ git push origin v2.1.0
 | `includeMetadata` | boolean | true | Append metadata block |
 | `metadataFormat` | string | "---\nSource: [{title}]({url})" | Metadata template |
 | `debugMode` | boolean | false | Enable debug logging |
+| `triggerLazyLoading` | boolean | false | Auto-scroll chat/AI surfaces before extraction |
 
 ### Metadata Template Variables
 
