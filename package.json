@@ -1,7 +1,7 @@
 {
   "name": "llmfeeder",
   "version": "2.2.0",
-  "description": "Feed web content to ChatGPT, Claude, Gemini & LLMs. Convert pages to clean Markdown, extract context for AI assistants.",
+  "description": "Convert any webpage to clean Markdown for ChatGPT, Claude & Gemini. Multi-tab copy, token counter. 100% private.",
   "private": true,
   "scripts": {
     "test": "jest"

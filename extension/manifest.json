@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "LLMFeeder - AI Context & Markdown Clipper",
+  "name": "LLMFeeder - Web to Markdown for AI",
   "version": "2.2.0",
-  "description": "Feed web content to ChatGPT, Claude, Gemini & LLMs. Convert pages to clean Markdown, extract context for AI assistants, multi-tab support. Privacy-focused.",
+  "description": "Convert any webpage to clean Markdown for ChatGPT, Claude & Gemini. Multi-tab copy, token counter. 100% private.",
   "author": "@jatinkrmalik",
   "icons": {
     "16": "icons/icon16.png",
@@ -53,28 +53,28 @@
         "default": "Alt+Shift+L",
         "mac": "Alt+Shift+L"
       },
-      "description": "Open LLMFeeder - AI Context Clipper"
+      "description": "Open LLMFeeder"
     },
     "convert_to_markdown": {
       "suggested_key": {
         "default": "Alt+Shift+M",
         "mac": "Alt+Shift+M"
       },
-      "description": "Copy page as Markdown for ChatGPT, Claude & AI"
+      "description": "Copy page as Markdown for ChatGPT & Claude"
     },
     "download_markdown": {
       "suggested_key": {
         "default": "Alt+Shift+D",
         "mac": "Alt+Shift+D"
       },
-      "description": "Download page as Markdown for LLM context"
+      "description": "Download page as Markdown"
     },
     "download_zip": {
       "suggested_key": {
         "default": "Alt+Shift+Z",
         "mac": "Alt+Shift+Z"
       },
-      "description": "Download multiple tabs as ZIP for AI context"
+      "description": "Download multiple tabs as ZIP"
     }
   },
   "background": {

@@ -19,7 +19,7 @@ A browser extension that converts web page content to clean Markdown format and 
 - 📜 **Lazy-Loading Auto-Scroll** - Opt-in setting to scroll chat/AI pages (Gemini, ChatGPT, Claude, etc.) before extraction so long conversations aren't truncated (#91)
 - 📋 **Alternative Copy Mode** - Split copy button with a one-click override for Full Page vs Main Content without changing your default setting
 - 💻 **Better Code Blocks** - Generic `<pre>` elements convert to fenced Markdown code blocks with language detection (#66)
-- 🏷️ **AI Context Positioning** - Renamed and re-described for store discoverability: *AI Context & Markdown Clipper*
+- 🏷️ **Store SEO Refresh** - Renamed to *Web to Markdown for AI*; short description targets ChatGPT/Claude/Gemini searches (within Chrome’s 132-char limit)
 - 🧪 **Unit Tests & CI** - Jest test suite and GitHub Actions workflow for PRs
 - 🔧 **Firefox Icon Fix** - Correct 16×16 icon dimensions for Add-ons compatibility
 
