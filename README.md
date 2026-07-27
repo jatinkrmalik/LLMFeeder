@@ -357,7 +357,33 @@ make help          # Show help message
 
 ## Testing
 
-A test bench page (`testbench.html`) is included to verify extension functionality:
+### Unit Tests
+
+The project uses [Jest](https://jestjs.io/) for unit testing. Tests live in the `tests/` directory, with Chrome extension APIs mocked in `tests/setup.js`.
+
+1. Install dependencies (requires Node.js 20+):
+   ```bash
+   npm install
+   ```
+
+2. Run the test suite:
+   ```bash
+   npm test
+   ```
+
+Jest prints a pass/fail summary per test file; a non-zero exit code means at least one test failed. The suite also runs automatically in CI (GitHub Actions) on every push to `main` and on every pull request — see `.github/workflows/test.yml`.
+
+To add tests for a new module, export it for Node at the bottom of the source file (see `extension/token-counter.js` for the pattern):
+
+```javascript
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = MyModule;
+}
+```
+
+Then create `tests/my-module.test.js` following the structure of `tests/token-counter.test.js`.
+
+A test bench page (`testbench.html`) is included to verify extension functionality manually:
 
 ### Running the Test Bench
 

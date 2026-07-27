@@ -1,0 +1,13 @@
+{
+  "name": "llmfeeder",
+  "version": "2.1.0",
+  "description": "Web to Markdown converter for ChatGPT, Claude & AI. Extract clean content, copy to clipboard.",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}
