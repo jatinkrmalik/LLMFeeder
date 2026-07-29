@@ -868,6 +868,11 @@ h2 {
   text-wrap: wrap;
 }
 
+.hero-punch {
+  display: block;
+  margin-top: 0.35em;
+}
+
 /* HTML markup styling for "div soup"  -  tags in muted mono, soup struck through. */
 .markup-phrase {
   display: inline-block;
