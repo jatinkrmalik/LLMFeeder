@@ -1064,14 +1064,23 @@ h2 {
   display: none;
 }
 
-/* The hero variant opens downward from the proof line. Declared after every
-   .method-popover rule (including its media queries) so its position wins. */
+/* The hero variant sits in the empty right gutter beside the proof line,
+   so it never covers the CTA row below. Declared after every .method-popover
+   rule (including media queries) so its position wins. */
 .method-popover.proof-popover {
-  left: 0;
+  left: calc(100% + 1rem);
   right: auto;
-  top: calc(100% + 0.55rem);
+  top: 0;
   bottom: auto;
-  width: min(34rem, calc(100vw - 2.5rem));
+  width: min(28rem, 36vw);
+}
+
+@media (max-width: 959px) {
+  .method-popover.proof-popover {
+    left: 0;
+    top: calc(100% + 0.55rem);
+    width: min(34rem, calc(100vw - 2.5rem));
+  }
 }
 
 .method-popover p {
