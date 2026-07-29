@@ -23,12 +23,39 @@ Paste **clean structure**, not site clutter.
   const header = document.querySelector(".site-header");
   const navToggle = document.querySelector(".nav-toggle");
   const mobileNav = document.getElementById("mobileNav");
+  const themeToggle = document.getElementById("themeToggle");
 
   let mode = "html";
   let paintTimer;
   let conversionTimer;
   let autoPlayTimer;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  }
+
+  function applyTheme(theme) {
+    const next = theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem("llmfeeder-theme", next);
+    } catch (_) {}
+    if (themeToggle) {
+      themeToggle.setAttribute(
+        "aria-label",
+        next === "light" ? "Switch to dark theme" : "Switch to light theme"
+      );
+    }
+  }
+
+  if (themeToggle) {
+    // Sync label with whatever the FOUC script already set
+    applyTheme(currentTheme());
+    themeToggle.addEventListener("click", () => {
+      applyTheme(currentTheme() === "light" ? "dark" : "light");
+    });
+  }
 
   function escapeHtml(str) {
     return str

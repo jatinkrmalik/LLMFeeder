@@ -17,7 +17,8 @@
   src: url("./assets/fonts/ibm-plex-sans-latin.woff2") format("woff2");
 }
 
-:root {
+:root,
+[data-theme="dark"] {
   --ink: #0b0c0b;
   --ink-2: #141615;
   --ink-3: #1c1e1c;
@@ -27,12 +28,45 @@
   --ochre: #e2a83b;
   --ochre-deep: #c48c22;
   --ok: #8fbf7a;
+  --tag: #7aa2c4;
+  --attr: #c9a06a;
+  --dot-1: #6b4e3d;
+  --dot-2: #6b5d2f;
+  --dot-3: #3f5a3a;
+  --dot-idle: #3a3d3a;
+  --header-bg: rgba(11, 12, 11, 0.96);
+  --panel-action-bg: rgba(11, 12, 11, 0.9);
+  --video-bg: #050505;
   --display: "Syne", "Avenir Next", "Segoe UI", sans-serif;
   --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --shell: min(1120px, calc(100% - 2.5rem));
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --radius: 14px;
+  color-scheme: dark;
+}
+
+/* Paper Margin light theme — warm cream paper, deep ink type, same ochre accent */
+[data-theme="light"] {
+  --ink: #f4f0e6;
+  --ink-2: #ebe5d7;
+  --ink-3: #e2dccb;
+  --line: #cfc6b4;
+  --cream: #1a1c19;
+  --cream-dim: #5a5c56;
+  --ochre: #b8860b;
+  --ochre-deep: #946c08;
+  --ok: #3f6f3a;
+  --tag: #2f5f8a;
+  --attr: #8a5a20;
+  --dot-1: #b87a63;
+  --dot-2: #b89a4a;
+  --dot-3: #6f9468;
+  --dot-idle: #b7b0a0;
+  --header-bg: rgba(244, 240, 230, 0.96);
+  --panel-action-bg: rgba(244, 240, 230, 0.92);
+  --video-bg: #e8e2d4;
+  color-scheme: light;
 }
 
 *,
@@ -43,9 +77,8 @@
 
 html {
   scroll-behavior: smooth;
-  color-scheme: dark;
-  background-color: #0b0c0b;
-  color: #e8e4d9;
+  background-color: var(--ink);
+  color: var(--cream);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -64,13 +97,14 @@ html {
 
 body {
   margin: 0;
-  background-color: #0b0c0b;
+  background-color: var(--ink);
   color: var(--cream);
   font-family: var(--body);
   font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  transition: background-color 0.25s var(--ease), color 0.25s var(--ease);
 }
 
 img,
@@ -120,9 +154,55 @@ a {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(11, 12, 11, 0.96);
+  background: var(--header-bg);
   border-bottom: 1px solid transparent;
-  transition: border-color 0.3s var(--ease);
+  transition: border-color 0.3s var(--ease), background-color 0.25s var(--ease);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cream);
+  cursor: pointer;
+  padding: 0;
+}
+
+.theme-toggle:hover {
+  border-color: var(--ochre);
+  color: var(--ochre);
+}
+
+.theme-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.theme-toggle .icon-sun {
+  display: none;
+}
+
+[data-theme="light"] .theme-toggle .icon-sun {
+  display: block;
+}
+
+[data-theme="light"] .theme-toggle .icon-moon {
+  display: none;
+}
+
+[data-theme="dark"] .theme-toggle .icon-moon {
+  display: block;
 }
 
 .site-header.is-scrolled {
@@ -383,17 +463,17 @@ a {
   width: 0.55rem;
   height: 0.55rem;
   border-radius: 50%;
-  background: #3a3d3a;
+  background: var(--dot-idle);
 }
 
 .dot:nth-child(1) {
-  background: #6b4e3d;
+  background: var(--dot-1);
 }
 .dot:nth-child(2) {
-  background: #6b5d2f;
+  background: var(--dot-2);
 }
 .dot:nth-child(3) {
-  background: #3f5a3a;
+  background: var(--dot-3);
 }
 
 .mode-toggle {
@@ -437,11 +517,11 @@ a {
 }
 
 .panel-body .tag {
-  color: #7aa2c4;
+  color: var(--tag);
 }
 
 .panel-body .attr {
-  color: #c9a06a;
+  color: var(--attr);
 }
 
 .panel-body .md-h {
@@ -458,7 +538,7 @@ a {
   right: 0.9rem;
   bottom: 0.9rem;
   border: 1px solid var(--line);
-  background: rgba(11, 12, 11, 0.9);
+  background: var(--panel-action-bg);
   color: var(--cream);
   border-radius: 999px;
   padding: 0.45rem 0.85rem;
@@ -539,7 +619,7 @@ a {
   aspect-ratio: 830 / 936;
   max-height: 70vh;
   object-fit: contain;
-  background: #050505;
+  background: var(--video-bg);
 }
 
 .demo-frame figcaption {
