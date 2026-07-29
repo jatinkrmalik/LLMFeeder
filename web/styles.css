@@ -147,7 +147,7 @@ a {
 /* Hover colour is declared per component rather than globally: a blanket
    a:hover would repaint button labels sitting on filled surfaces. */
 .hero-proof a:hover,
-.stage-footnote a:hover,
+.method-popover a:hover,
 .install-lede a:hover {
   color: var(--accent-strong);
   text-decoration-thickness: 2px;
@@ -778,26 +778,79 @@ h2 {
 
 .stage-footnote {
   grid-column: 1 / -1;
+  position: relative;
   margin: 0;
-  padding-top: 0.85rem;
+  padding-top: 0.65rem;
   border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.method-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
   color: var(--ink-dim);
-  font-size: 0.9375rem;
+  font-family: var(--body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.method-trigger svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  opacity: 0.8;
+}
+
+.method-trigger:hover,
+.method-trigger:focus-visible,
+.method-trigger[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: var(--rule);
+  background: var(--paper-2);
+}
+
+.method-popover {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.55rem);
+  z-index: 20;
+  width: min(34rem, calc(100vw - 3rem));
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  color: var(--ink-dim);
+  font-size: 0.9rem;
   line-height: 1.55;
 }
 
-.stage-footnote p {
-  margin: 0;
-  max-width: none;
+.method-popover[hidden] {
+  display: none;
 }
 
-.stage-footnote code {
+.method-popover p {
+  margin: 0;
+}
+
+.method-popover code {
   font-size: 0.875em;
 }
 
-.stage-footnote strong {
+.method-popover strong {
   color: var(--ink);
   font-weight: 600;
+}
+
+.method-popover a {
+  color: var(--accent);
 }
 
 @media (min-width: 960px) {

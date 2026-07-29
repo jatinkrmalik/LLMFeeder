@@ -384,16 +384,31 @@ language model.
                 <p class="scroll-cue" aria-hidden="true">keep scrolling</p>
               </div>
 
-              <footer class="stage-footnote">
-                <p>
-                  Measured with this repository's own <code>readability.js</code> and
-                  <code>turndown.js</code> on
-                  <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN's <code>animation-timeline</code> page</a>
-                  (100,238 to 8,577 est. tokens). Across five pages: median
-                  <strong>10.4&times;</strong> reduction (4.5&times; to 15.1&times;). Estimates use the
-                  extension's own ~4 bytes/token heuristic, not a billed tokenizer.
-                </p>
-              </footer>
+              <div class="stage-footnote">
+                <button
+                  type="button"
+                  class="method-trigger"
+                  id="methodTrigger"
+                  aria-expanded="false"
+                  aria-controls="methodPopover"
+                >
+                  Research methodology
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path stroke-linecap="round" d="M12 11v5M12 8h.01"></path>
+                  </svg>
+                </button>
+                <div class="method-popover" id="methodPopover" role="note" hidden>
+                  <p>
+                    Measured with this repository's own <code>readability.js</code> and
+                    <code>turndown.js</code> on
+                    <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN's <code>animation-timeline</code> page</a>
+                    (100,238 to 8,577 est. tokens). Across five pages: median
+                    <strong>10.4&times;</strong> reduction (4.5&times; to 15.1&times;). Estimates use the
+                    extension's own ~4 bytes/token heuristic, not a billed tokenizer.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

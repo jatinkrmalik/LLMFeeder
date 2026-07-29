@@ -255,4 +255,81 @@
     if (trashBin) trashBin.classList.add("is-full");
     if (readout) readout.style.setProperty("--tok", String(TOKENS_MD));
   }
+
+  /* ---------- methodology popover ---------- */
+
+  const methodTrigger = document.getElementById("methodTrigger");
+  const methodPopover = document.getElementById("methodPopover");
+
+  if (methodTrigger && methodPopover) {
+    let hoverTimer = 0;
+
+    const open = () => {
+      methodPopover.hidden = false;
+      methodTrigger.setAttribute("aria-expanded", "true");
+    };
+
+    const close = () => {
+      methodPopover.hidden = true;
+      methodTrigger.setAttribute("aria-expanded", "false");
+    };
+
+    const isOpen = () => methodTrigger.getAttribute("aria-expanded") === "true";
+
+    methodTrigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (isOpen()) close();
+      else open();
+    });
+
+    methodTrigger.addEventListener("mouseenter", () => {
+      window.clearTimeout(hoverTimer);
+      open();
+    });
+
+    methodTrigger.addEventListener("mouseleave", () => {
+      hoverTimer = window.setTimeout(() => {
+        if (!methodPopover.matches(":hover")) close();
+      }, 120);
+    });
+
+    methodPopover.addEventListener("mouseenter", () => {
+      window.clearTimeout(hoverTimer);
+      open();
+    });
+
+    methodPopover.addEventListener("mouseleave", () => {
+      hoverTimer = window.setTimeout(close, 120);
+    });
+
+    methodTrigger.addEventListener("focus", open);
+    methodTrigger.addEventListener("blur", () => {
+      // Delay so focus can move into the popover link.
+      window.setTimeout(() => {
+        if (
+          document.activeElement !== methodTrigger &&
+          !methodPopover.contains(document.activeElement)
+        ) {
+          close();
+        }
+      }, 0);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && isOpen()) {
+        close();
+        methodTrigger.focus();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!isOpen()) return;
+      if (
+        !methodTrigger.contains(event.target) &&
+        !methodPopover.contains(event.target)
+      ) {
+        close();
+      }
+    });
+  }
 })();
