@@ -92,6 +92,54 @@
     });
   }
 
+  /* ---------- hero → scene advance ----------
+     One nudge from the hero commits to the scene, so the first scroll lands on
+     a composed panel instead of an awkward half-and-half view. Deliberately
+     narrow: wheel only, once per visit to the top, never on touch (which has
+     its own momentum), never when reduced motion is requested. */
+
+  const heroSection = document.querySelector(".hero");
+  const sceneTrack = document.querySelector("[data-strip]");
+
+  if (heroSection && sceneTrack && !reduceMotion) {
+    let advancing = false;
+    let consumed = false;
+
+    const canAdvance = () => {
+      if (advancing || consumed) return false;
+      if (window.matchMedia("(pointer: coarse)").matches) return false;
+      if (window.innerWidth < 700 || window.innerHeight < 620) return false;
+      const hero = heroSection.getBoundingClientRect();
+      // Still essentially looking at the hero.
+      return hero.bottom > window.innerHeight * 0.6;
+    };
+
+    window.addEventListener(
+      "wheel",
+      (event) => {
+        if (event.deltaY <= 4 || event.ctrlKey) return;
+        if (!canAdvance()) return;
+        event.preventDefault();
+        advancing = true;
+        consumed = true;
+        sceneTrack.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.setTimeout(() => {
+          advancing = false;
+        }, 700);
+      },
+      { passive: false }
+    );
+
+    // Returning to the very top re-arms the gesture.
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (window.scrollY < 8) consumed = false;
+      },
+      { passive: true }
+    );
+  }
+
   /* ---------- the strip scene ---------- */
 
   const track = document.querySelector("[data-strip]");

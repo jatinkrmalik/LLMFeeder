@@ -29,16 +29,21 @@
   --rule: #d5d1c6;
   --ink: #17191c;
   --ink-dim: #575c64;
-  --accent: #1550c4;
-  --accent-strong: #0f3f9e;
-  --accent-fill: #1550c4;
+  /* Google's own blue ramp, split by job: Blue 700 for text (5.1:1 on paper —
+     Blue 600 only reaches 4.31:1) and Blue 600 for fills, where white type
+     sits at 4.8:1. */
+  --accent: #1967d2;
+  --accent-strong: #185abc;
+  --accent-fill: #1a73e8;
   --accent-on-fill: #ffffff;
-  --accent-soft: rgba(21, 80, 196, 0.1);
+  --accent-soft: rgba(26, 115, 232, 0.1);
+  --firefox: #e05e12;
+  --firefox-soft: rgba(255, 113, 57, 0.12);
   --good: #1f6f3f;
   --warn: #9a4a1a;
-  --md-marker: #1550c4;
+  --md-marker: #1967d2;
   --md-bold: #1f6f3f;
-  --header-bg: rgba(251, 250, 247, 0.94);
+  --header-bg: #fbfaf7;
   --shadow: 0 18px 40px rgba(23, 25, 28, 0.1);
   color-scheme: light;
 }
@@ -55,11 +60,13 @@
   --accent-fill: #8ab4f8;
   --accent-on-fill: #0f1115;
   --accent-soft: rgba(138, 180, 248, 0.14);
+  --firefox: #ff9500;
+  --firefox-soft: rgba(255, 113, 57, 0.16);
   --good: #7bc47f;
   --warn: #e0a458;
   --md-marker: #8ab4f8;
   --md-bold: #7bc47f;
-  --header-bg: rgba(15, 17, 21, 0.94);
+  --header-bg: #0f1115;
   --shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
@@ -81,6 +88,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* Keep the sticky header from covering snap targets and anchor jumps. */
+  scroll-padding-top: 4rem;
   background-color: var(--paper);
   color: var(--ink);
 }
@@ -117,8 +126,7 @@ a {
    a:hover would repaint button labels sitting on filled surfaces. */
 .hero-stat-label a:hover,
 .measure-note a:hover,
-.install-lede a:hover,
-.scene-intro a:hover {
+.install-lede a:hover {
   color: var(--accent-strong);
   text-decoration-thickness: 2px;
 }
@@ -355,9 +363,21 @@ h2 {
 }
 
 .btn-ico {
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 1.15rem;
+  height: 1.15rem;
   flex: 0 0 auto;
+}
+
+/* Firefox keeps its own brand edge; orange on white can't carry label text at
+   AA, so the colour lives in the border, icon and hover wash. */
+.btn-firefox {
+  border-color: color-mix(in srgb, var(--firefox) 45%, var(--rule));
+}
+
+.btn-firefox:hover {
+  border-color: var(--firefox);
+  background: var(--firefox-soft);
+  color: var(--ink);
 }
 
 .btn-primary {
@@ -394,9 +414,74 @@ h2 {
 
 /* ---------- hero ---------- */
 
+/* ---------- scroll rhythm ---------- */
+
+/* Proximity, never mandatory: the strip scene is a long scrub and mandatory
+   snapping would fight the user mid-scene. */
+@media (min-height: 620px) and (min-width: 700px) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+
+  /* Only the scene is a snap point. Making the hero one too meant a small
+     nudge got pulled backwards instead of advancing. */
+  /* No scroll-margin here: html's scroll-padding-top already reserves the
+     header, and setting both stacked into a 64px gap under it. */
+  .scene-track {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+}
+
 .hero {
-  padding: 4rem 0 3.5rem;
+  padding: 2.5rem 0 2rem;
   max-width: 62rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Only claim the full viewport where there's actually room for it. */
+@media (min-height: 620px) {
+  .hero {
+    min-height: calc(100svh - 4rem);
+  }
+}
+
+.hero-hint {
+  margin-top: auto;
+  padding-top: 2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hero-hint:hover {
+  color: var(--accent);
+}
+
+.hero-hint svg {
+  width: 1rem;
+  height: 1rem;
+  animation: nudge 2.4s var(--ease) infinite;
+}
+
+@keyframes nudge {
+  0%,
+  55%,
+  100% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(0.28rem);
+  }
 }
 
 .hero-stat {
@@ -489,12 +574,17 @@ h2 {
 
 /* ---------- scene: shared ---------- */
 
-.scene-intro {
-  max-width: 40rem;
-  padding: 2rem 0 1rem;
+.stage-heading {
+  margin: 0 0 1.1rem;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.09em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--ink-dim);
 }
 
-.scene-intro h2,
 .section-head h2,
 .privacy h2,
 .install h2,
@@ -504,7 +594,6 @@ h2 {
   line-height: 1.12;
 }
 
-.scene-intro p,
 .section-head p,
 .privacy p,
 .install-lede,
@@ -1717,6 +1806,14 @@ kbd {
   .rail-fill,
   .bar-fill {
     transform: scaleX(1) !important;
+  }
+
+  html {
+    scroll-snap-type: none !important;
+  }
+
+  .hero-hint svg {
+    animation: none !important;
   }
 
   .readout-num {

@@ -183,16 +183,16 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 7.07 4.25H12a3.75 3.75 0 0 0-3.24 1.87L5.53 6.4A8 8 0 0 1 12 4Zm-8 8a8 8 0 0 1 .5-2.76l3.44 3.44A3.75 3.75 0 0 0 12 15.75h7.07A8 8 0 0 1 4 12Zm12.75 0A4.75 4.75 0 1 1 12 7.25 4.75 4.75 0 0 1 16.75 12Z"></path></svg>
+            <img class="btn-ico" src="./assets/chrome.svg" width="20" height="20" alt="" aria-hidden="true">
             Add to Chrome
           </a>
           <a
-            class="btn btn-secondary"
+            class="btn btn-secondary btn-firefox"
             href="https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.4 2.4-.4 4.2-1.5 5.6 2.1-.6 4.2.2 5.6 1.6C19.5 6.4 17 3.2 12 2Zm-1.2 7.1C8.5 9.4 6.4 11 5.5 13.6c2.2-1.1 4.5-.7 6.1.6-.2-2-.4-3.6-1.8-5.1Zm8.4 1.2c-1.5-.7-3-.6-4.3.1 1.7 1.2 2.7 3 2.8 5.1 1.4-1.3 2-3.2 1.5-5.2ZM7.2 16.2c-.8 1.6-.7 3.2-.2 4.6 2.1-.4 3.7-1.5 4.7-3.2-1.7.1-3.2-.3-4.5-1.4Zm5.8 1.1c-.6 1.5-1.8 2.8-3.4 3.6 3.6.7 6.7-.4 8.4-2.7-1.7.2-3.4-.1-5-1Z"></path></svg>
+            <img class="btn-ico" src="./assets/firefox.svg" width="20" height="20" alt="" aria-hidden="true">
             Get for Firefox
           </a>
           <a
@@ -206,23 +206,25 @@
           </a>
         </div>
         <p class="cta-note">Free · MIT · v2.2.0 · No account, no telemetry</p>
+
+        <a class="hero-hint" href="#convert">
+          <span>Scroll to strip a page</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M6 13l6 6 6-6"></path>
+          </svg>
+        </a>
       </section>
 
       <!-- ================= SCENE A: THE STRIP ================= -->
       <section class="scene" id="convert" aria-labelledby="convert-heading">
-        <div class="scene-intro shell">
-          <h2 id="convert-heading">Scroll to strip the page.</h2>
-          <p>
-            This is a real article page with the usual freight attached. Keep scrolling and
-            watch what LLMFeeder actually removes before anything reaches your model.
-          </p>
-        </div>
-
         <div class="scene-track" data-strip>
           <div class="scene-stage">
             <div class="stage-grid shell">
               <!-- Live readout -->
               <div class="stage-readout">
+                <h2 id="convert-heading" class="stage-heading">
+                  Watch a page become Markdown
+                </h2>
                 <p class="readout">
                   <span class="readout-num" aria-hidden="true"></span>
                   <span class="readout-label" aria-hidden="true">estimated tokens</span>
@@ -501,19 +503,28 @@ language model.
             href="https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk"
             target="_blank"
             rel="noopener noreferrer"
-          >Add to Chrome</a>
+          >
+            <img class="btn-ico" src="./assets/chrome.svg" width="20" height="20" alt="" aria-hidden="true">
+            Add to Chrome
+          </a>
           <a
-            class="btn btn-secondary"
+            class="btn btn-secondary btn-firefox"
             href="https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
             target="_blank"
             rel="noopener noreferrer"
-          >Get for Firefox</a>
+          >
+            <img class="btn-ico" src="./assets/firefox.svg" width="20" height="20" alt="" aria-hidden="true">
+            Get for Firefox
+          </a>
           <a
             class="btn btn-ghost"
             href="https://github.com/jatinkrmalik/LLMFeeder"
             target="_blank"
             rel="noopener noreferrer"
-          >Star on GitHub</a>
+          >
+            <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5A11.5 11.5 0 0 0 8.3 22.9c.6.1.8-.2.8-.5v-2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.7 1.7 2.7 1.2.1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6a4.6 4.6 0 0 1 1.2-3.2c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.9 4.4 19 4.7 19 4.7c.6 1.6.2 2.8.1 3.1a4.6 4.6 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .5Z"></path></svg>
+            Star on GitHub
+          </a>
         </div>
       </section>
     </main>
