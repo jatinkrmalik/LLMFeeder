@@ -1,211 +1,204 @@
+/* LLMFeeder landing — interactivity
+   Deliberately small. The scroll scene runs on CSS scroll-driven animations
+   (off the main thread) wherever they're supported; JS only covers the theme
+   toggle, the step highlights, the no-support fallback, and lazy video. */
+
 (() => {
-  const HTML_SAMPLE = `<article class="post">
-  <h1>Why context quality wins</h1>
-  <p>Paste <b>clean structure</b>, not site clutter.</p>
-  <ul>
-    <li>Main content only</li>
-    <li>Tables preserved</li>
-  </ul>
-</article>`;
+  "use strict";
 
-  const MD_SAMPLE = `# Why context quality wins
+  const doc = document.documentElement;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const supportsScrollTimeline =
+    CSS.supports && CSS.supports("animation-timeline", "view()");
 
-Paste **clean structure**, not site clutter.
+  /* ---------- theme ---------- */
 
-- Main content only
-- Tables preserved`;
-
-  const out = document.getElementById("transformOut");
-  const panel = document.querySelector("[data-transform]");
-  const playBtn = document.querySelector("[data-play]");
-  const modeButtons = document.querySelectorAll(".mode-toggle [data-mode]");
-  const video = document.getElementById("demoVideo");
-  const header = document.querySelector(".site-header");
-  const navToggle = document.querySelector(".nav-toggle");
-  const mobileNav = document.getElementById("mobileNav");
   const themeToggle = document.getElementById("themeToggle");
 
-  let mode = "html";
-  let paintTimer;
-  let conversionTimer;
-  let autoPlayTimer;
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  function currentTheme() {
-    return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-  }
+  const currentTheme = () =>
+    doc.getAttribute("data-theme") === "dark" ? "dark" : "light";
 
   function applyTheme(theme) {
-    const next = theme === "light" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", next);
+    const next = theme === "dark" ? "dark" : "light";
+    doc.setAttribute("data-theme", next);
     try {
       localStorage.setItem("llmfeeder-theme", next);
-    } catch (_) {}
+    } catch (_) {
+      /* private mode: in-memory only */
+    }
     if (themeToggle) {
       themeToggle.setAttribute(
         "aria-label",
-        next === "light" ? "Switch to dark theme" : "Switch to light theme"
+        next === "dark" ? "Switch to light theme" : "Switch to dark theme"
       );
     }
   }
 
   if (themeToggle) {
-    // Sync label with whatever the FOUC script already set
     applyTheme(currentTheme());
     themeToggle.addEventListener("click", () => {
-      applyTheme(currentTheme() === "light" ? "dark" : "light");
+      applyTheme(currentTheme() === "dark" ? "light" : "dark");
     });
   }
 
-  function escapeHtml(str) {
-    return str
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;");
-  }
+  /* ---------- sticky header rule ---------- */
 
-  function colorHtml(src) {
-    return escapeHtml(src)
-      .replaceAll(/&lt;(\/?[a-z0-9]+)([^&]*?)&gt;/gi, (_m, tag, rest) => {
-        const attrs = rest.replaceAll(
-          /([a-z:-]+)(=)(&quot;.*?&quot;|&#39;.*?&#39;|\S+)/gi,
-          '<span class="attr">$1</span>$2$3'
-        );
-        return `&lt;<span class="tag">${tag}</span>${attrs}&gt;`;
+  const header = document.querySelector(".site-header");
+  if (header) {
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        header.classList.toggle("is-scrolled", window.scrollY > 8);
+        ticking = false;
       });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
   }
 
-  function colorMd(src) {
-    return escapeHtml(src)
-      .replaceAll(/^(# .+)$/gm, '<span class="md-h">$1</span>')
-      .replaceAll(/\*\*(.+?)\*\*/g, '<span class="md-b">**$1**</span>');
-  }
+  /* ---------- mobile nav ---------- */
 
-  function render(nextMode, { animate = false } = {}) {
-    window.clearTimeout(paintTimer);
-    mode = nextMode;
-    modeButtons.forEach((btn) => {
-      btn.setAttribute("aria-pressed", String(btn.dataset.mode === mode));
-    });
+  const navToggle = document.querySelector(".nav-toggle");
+  const mobileNav = document.getElementById("mobileNav");
 
-    const raw = mode === "html" ? HTML_SAMPLE : MD_SAMPLE;
-    const painted = mode === "html" ? colorHtml(raw) : colorMd(raw);
-
-    if (!animate || reduceMotion || !out) {
-      if (out) out.innerHTML = painted;
-      return;
-    }
-
-    out.style.opacity = "0";
-    out.style.transform = "translateY(6px)";
-    paintTimer = window.setTimeout(() => {
-      out.innerHTML = painted;
-      out.style.opacity = "1";
-      out.style.transform = "translateY(0)";
-    }, 160);
-  }
-
-  function playConversion() {
-    window.clearTimeout(conversionTimer);
-    render("html");
-    conversionTimer = window.setTimeout(
-      () => render("md", { animate: true }),
-      reduceMotion ? 0 : 450
-    );
-  }
-
-  modeButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      window.clearTimeout(autoPlayTimer);
-      window.clearTimeout(conversionTimer);
-      render(btn.dataset.mode, { animate: true });
-    });
-  });
-
-  if (playBtn) {
-    playBtn.addEventListener("click", playConversion);
-  }
-
-  // Entrance + default content
-  render("html");
-  if (panel) {
-    const reveal = () => panel.classList.add("is-in");
-    if (reduceMotion) {
-      reveal();
-    } else if ("IntersectionObserver" in window) {
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              reveal();
-              autoPlayTimer = window.setTimeout(playConversion, 700);
-              io.disconnect();
-            }
-          });
-        },
-        { threshold: 0.35 }
-      );
-      io.observe(panel);
-    } else {
-      reveal();
-      autoPlayTimer = window.setTimeout(playConversion, 500);
-    }
-  }
-
-  // Sticky header border — rAF-batched so scroll never forces sync reflows
-  let scrollTicking = false;
-  const onScroll = () => {
-    if (scrollTicking) return;
-    scrollTicking = true;
-    window.requestAnimationFrame(() => {
-      if (header) header.classList.toggle("is-scrolled", window.scrollY > 8);
-      scrollTicking = false;
-    });
-  };
-  onScroll();
-  window.addEventListener("scroll", onScroll, { passive: true });
-
-  // Mobile nav
   if (navToggle && mobileNav) {
+    const closeNav = () => {
+      mobileNav.setAttribute("hidden", "");
+      navToggle.setAttribute("aria-expanded", "false");
+      navToggle.setAttribute("aria-label", "Open menu");
+    };
+
     navToggle.addEventListener("click", () => {
-      const open = mobileNav.hasAttribute("hidden");
-      if (open) mobileNav.removeAttribute("hidden");
-      else mobileNav.setAttribute("hidden", "");
-      navToggle.setAttribute("aria-expanded", String(open));
-      navToggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+      const opening = mobileNav.hasAttribute("hidden");
+      if (opening) {
+        mobileNav.removeAttribute("hidden");
+        navToggle.setAttribute("aria-expanded", "true");
+        navToggle.setAttribute("aria-label", "Close menu");
+      } else {
+        closeNav();
+      }
     });
 
     mobileNav.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => {
-        mobileNav.setAttribute("hidden", "");
-        navToggle.setAttribute("aria-expanded", "false");
-        navToggle.setAttribute("aria-label", "Open menu");
-      });
+      link.addEventListener("click", closeNav);
     });
 
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || mobileNav.hasAttribute("hidden")) return;
-      mobileNav.setAttribute("hidden", "");
-      navToggle.setAttribute("aria-expanded", "false");
-      navToggle.setAttribute("aria-label", "Open menu");
+      closeNav();
       navToggle.focus();
     });
   }
 
-  // Lazy video play near viewport
+  /* ---------- the strip scene ---------- */
+
+  const track = document.querySelector("[data-strip]");
+  const steps = Array.from(document.querySelectorAll(".stage-steps li"));
+  const readout = document.querySelector(".readout-num");
+
+  const TOKENS_RAW = 100238;
+  const TOKENS_MD = 8577;
+
+  // Progress thresholds that mirror the CSS animation-range values.
+  const STEP_AT = [0, 0.16, 0.42, 0.58, 0.82];
+
+  function markSteps(progress) {
+    let active = 0;
+    for (let i = 0; i < STEP_AT.length; i += 1) {
+      if (progress >= STEP_AT[i]) active = i;
+    }
+    steps.forEach((step, i) => {
+      step.classList.toggle("is-active", i === active);
+      step.classList.toggle("is-done", i < active);
+    });
+    return active;
+  }
+
+  function setFallbackTokens(progress) {
+    if (!readout) return;
+    // Ease the count so it tracks the visual drain rather than raw scroll.
+    const t = Math.min(1, Math.max(0, (progress - 0.04) / 0.78));
+    const value = Math.round(TOKENS_RAW + (TOKENS_MD - TOKENS_RAW) * t);
+    readout.style.setProperty("--tok", String(value));
+  }
+
+  if (track && !reduceMotion) {
+    let ticking = false;
+    let visible = false;
+
+    const update = () => {
+      const rect = track.getBoundingClientRect();
+      const viewport = window.innerHeight;
+      const scrollable = rect.height - viewport;
+      // Tall sticky track: progress is how far we've scrolled through it.
+      // Short track (collapsed by reduced motion or a narrow override): fall
+      // back to view progress so the scene never freezes at zero.
+      const progress =
+        scrollable > 40
+          ? Math.min(1, Math.max(0, -rect.top / scrollable))
+          : Math.min(1, Math.max(0, (viewport - rect.top) / (viewport + rect.height)));
+
+      markSteps(progress);
+      // CSS drives the counter when scroll timelines exist.
+      if (!supportsScrollTimeline) {
+        setFallbackTokens(progress);
+        const stage = Math.min(4, markSteps(progress));
+        track.setAttribute("data-stage", String(stage));
+      }
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking || !visible) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    };
+
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            visible = entry.isIntersecting;
+            if (visible) onScroll();
+          });
+        },
+        { rootMargin: "20% 0px" }
+      );
+      io.observe(track);
+    } else {
+      visible = true;
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    update();
+  } else if (track && reduceMotion) {
+    // Reduced motion: state is final, so light every step and land the number.
+    steps.forEach((step) => step.classList.add("is-active"));
+    if (readout) readout.style.setProperty("--tok", String(TOKENS_MD));
+  }
+
+  /* ---------- demo video ---------- */
+
+  const video = document.getElementById("demoVideo");
+
   if (video && "IntersectionObserver" in window) {
     const vio = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            if (video.preload === "none") video.preload = "metadata";
-            if (reduceMotion) return;
-            const playPromise = video.play();
-            if (playPromise && typeof playPromise.catch === "function") {
-              playPromise.catch(() => {});
-            }
-          } else {
+          if (!entry.isIntersecting) {
             video.pause();
+            return;
+          }
+          if (video.preload === "none") video.preload = "metadata";
+          if (reduceMotion) return;
+          const playing = video.play();
+          if (playing && typeof playing.catch === "function") {
+            playing.catch(() => {
+              /* autoplay refused: poster + controls remain */
+            });
           }
         });
       },

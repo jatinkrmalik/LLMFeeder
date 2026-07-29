@@ -6,7 +6,7 @@
     <title>LLMFeeder — Webpage to Markdown for ChatGPT, Claude &amp; Gemini</title>
     <meta
       name="description"
-      content="Convert any webpage to clean, LLM-ready Markdown with one click. Multi-tab copy, token counter, 100% private. Free Chrome and Firefox extension."
+      content="Web pages are mostly markup. LLMFeeder strips a page to clean Markdown in one click — around 10x fewer tokens in measured tests. Free Chrome and Firefox extension, 100% local."
     >
     <link rel="canonical" href="https://jatinkrmalik.github.io/LLMFeeder/">
 
@@ -16,7 +16,7 @@
     <meta property="og:title" content="LLMFeeder — Webpage to Markdown for AI">
     <meta
       property="og:description"
-      content="One-click webpage to clean Markdown for ChatGPT, Claude, and Gemini. Private. Open source. Chrome &amp; Firefox."
+      content="Most of what you paste into an LLM is markup. LLMFeeder converts any page to clean Markdown locally, in one click."
     >
     <meta property="og:image" content="https://jatinkrmalik.github.io/LLMFeeder/assets/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -28,14 +28,14 @@
     <meta name="twitter:title" content="LLMFeeder — Webpage to Markdown for AI">
     <meta
       name="twitter:description"
-      content="One-click webpage to clean Markdown for ChatGPT, Claude, and Gemini. Private. Open source."
+      content="Most of what you paste into an LLM is markup. LLMFeeder converts any page to clean Markdown locally, in one click."
     >
     <meta name="twitter:image" content="https://jatinkrmalik.github.io/LLMFeeder/assets/og-image.png">
     <meta name="twitter:image:alt" content="LLMFeeder — Webpage to Markdown for AI">
 
-    <meta name="theme-color" content="#0B0C0B" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#F4F0E6" media="(prefers-color-scheme: light)">
-    <meta name="color-scheme" content="dark light">
+    <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
+    <meta name="color-scheme" content="light dark">
 
     <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon.png">
     <link rel="icon" type="image/png" sizes="48x48" href="./assets/icon-48.png">
@@ -43,6 +43,22 @@
     <link rel="preload" href="./assets/fonts/syne-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="./assets/fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="./styles.css">
+    <noscript>
+      <!-- No JS *and* no scroll-timeline support: collapse the scene and show
+           its conclusion rather than four viewports of a frozen mock. -->
+      <style>
+        @supports not (animation-timeline: view()) {
+          .scene-track { height: auto; }
+          .scene-stage { position: static; height: auto; padding: 1rem 0 2rem; }
+          .layer-interrupt, .layer-chrome, .layer-deco { display: none; }
+          .mock-article { clip-path: inset(100% 0 0 0); }
+          .mock-md { clip-path: inset(0 0 0 0); }
+          .rail-fill, .bar-fill { transform: scaleX(1); }
+          .stage-steps li { opacity: 1; color: var(--ink); }
+          .scroll-cue { display: none; }
+        }
+      </style>
+    </noscript>
     <script>
       (function () {
         try {
@@ -50,12 +66,12 @@
           var theme =
             stored === "light" || stored === "dark"
               ? stored
-              : window.matchMedia("(prefers-color-scheme: light)").matches
-                ? "light"
-                : "dark";
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
           document.documentElement.setAttribute("data-theme", theme);
         } catch (e) {
-          document.documentElement.setAttribute("data-theme", "dark");
+          document.documentElement.setAttribute("data-theme", "light");
         }
       })();
     </script>
@@ -105,46 +121,39 @@
 
     <header class="site-header">
       <div class="shell header-inner">
-        <a class="brand" href="#top" aria-label="LLMFeeder home">
-          <img src="./assets/logo.webp" width="36" height="36" alt="">
+        <a class="brand" href="#top">
+          <img src="./assets/logo.webp" width="32" height="32" alt="">
           <span>LLMFeeder</span>
         </a>
+
         <div class="header-actions">
           <nav class="nav" aria-label="Primary">
+            <a href="#convert">How it works</a>
             <a href="#features">Features</a>
             <a href="#privacy">Privacy</a>
-            <a href="#install">Install</a>
-            <a
-              class="nav-star"
-              href="https://github.com/jatinkrmalik/LLMFeeder"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Star
-              <span aria-hidden="true">↗</span>
-            </a>
           </nav>
-          <button
-            class="theme-toggle"
-            type="button"
-            id="themeToggle"
-            aria-label="Switch to light theme"
-            title="Toggle theme"
-          >
-            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 14.3A8.5 8.5 0 0 1 9.7 3 7 7 0 1 0 21 14.3Z" />
+          <a
+            class="btn btn-primary btn-sm"
+            href="https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Install</a>
+          <button class="icon-btn theme-toggle" type="button" id="themeToggle" aria-label="Switch to dark theme">
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 14.3A8.5 8.5 0 0 1 9.7 3 7 7 0 1 0 21 14.3Z"></path>
             </svg>
-            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-              <circle cx="12" cy="12" r="4" />
-              <path stroke-linecap="round" d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path stroke-linecap="round" d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
             </svg>
           </button>
-          <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="Open menu">
+          <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="Open menu">
             <span></span><span></span>
           </button>
         </div>
       </div>
       <div id="mobileNav" class="mobile-nav" hidden>
+        <a href="#convert">How it works</a>
         <a href="#features">Features</a>
         <a href="#privacy">Privacy</a>
         <a href="#install">Install</a>
@@ -153,69 +162,251 @@
     </header>
 
     <main id="main">
+      <!-- ================= HERO ================= -->
       <section class="hero shell" id="top">
-        <div class="hero-copy">
-          <h1>Feed your LLM clean Markdown from any page.</h1>
-          <p class="hero-lede">
-            LLMFeeder turns messy webpages into structured Markdown and copies it in one click.
-            Built for ChatGPT, Claude, Gemini, and anyone who needs context without menus, ads, or clutter.
-          </p>
-          <div class="cta-row" role="group" aria-label="Install and support">
-            <a
-              class="btn btn-primary"
-              href="https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 7.07 4.25H12a3.75 3.75 0 0 0-3.24 1.87L5.53 6.4A8 8 0 0 1 12 4Zm-8 8a8 8 0 0 1 .5-2.76l3.44 3.44A3.75 3.75 0 0 0 12 15.75h7.07A8 8 0 0 1 4 12Zm12.75 0A4.75 4.75 0 1 1 12 7.25 4.75 4.75 0 0 1 16.75 12Z"/></svg>
-              Add to Chrome
-            </a>
-            <a
-              class="btn btn-secondary"
-              href="https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.4 2.4-.4 4.2-1.5 5.6 2.1-.6 4.2.2 5.6 1.6C19.5 6.4 17 3.2 12 2Zm-1.2 7.1C8.5 9.4 6.4 11 5.5 13.6c2.2-1.1 4.5-.7 6.1.6-.2-2-.4-3.6-1.8-5.1Zm8.4 1.2c-1.5-.7-3-.6-4.3.1 1.7 1.2 2.7 3 2.8 5.1 1.4-1.3 2-3.2 1.5-5.2ZM7.2 16.2c-.8 1.6-.7 3.2-.2 4.6 2.1-.4 3.7-1.5 4.7-3.2-1.7.1-3.2-.3-4.5-1.4Zm5.8 1.1c-.6 1.5-1.8 2.8-3.4 3.6 3.6.7 6.7-.4 8.4-2.7-1.7.2-3.4-.1-5-1Z"/></svg>
-              Get for Firefox
-            </a>
-            <a
-              class="btn btn-ghost"
-              href="https://github.com/jatinkrmalik/LLMFeeder"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5A11.5 11.5 0 0 0 8.3 22.9c.6.1.8-.2.8-.5v-2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.7 1.7 2.7 1.2.1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6a4.6 4.6 0 0 1 1.2-3.2c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.9 4.4 19 4.7 19 4.7c.6 1.6.2 2.8.1 3.1a4.6 4.6 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .5Z"/></svg>
-              Star on GitHub
-            </a>
-          </div>
-          <p class="cta-note">v2.2.0 · MIT · Open source. If it saves you a paste, give the repo a star.</p>
+        <p class="hero-stat">
+          <span class="hero-stat-num">90%</span>
+          <span class="hero-stat-label">
+            of a page’s tokens are markup and furniture your model still pays to read
+            <a href="#convert">see the measurements</a>
+          </span>
+        </p>
+        <h1>Your model is reading <span class="strike">div soup</span>. Feed it Markdown.</h1>
+        <p class="hero-lede">
+          LLMFeeder rips the nav, ads, and script noise off any page and copies what’s left
+          as clean Markdown. One click, entirely in your browser.
+        </p>
+        <div class="cta-row">
+          <a
+            class="btn btn-primary"
+            href="https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 7.07 4.25H12a3.75 3.75 0 0 0-3.24 1.87L5.53 6.4A8 8 0 0 1 12 4Zm-8 8a8 8 0 0 1 .5-2.76l3.44 3.44A3.75 3.75 0 0 0 12 15.75h7.07A8 8 0 0 1 4 12Zm12.75 0A4.75 4.75 0 1 1 12 7.25 4.75 4.75 0 0 1 16.75 12Z"></path></svg>
+            Add to Chrome
+          </a>
+          <a
+            class="btn btn-secondary"
+            href="https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.4 2.4-.4 4.2-1.5 5.6 2.1-.6 4.2.2 5.6 1.6C19.5 6.4 17 3.2 12 2Zm-1.2 7.1C8.5 9.4 6.4 11 5.5 13.6c2.2-1.1 4.5-.7 6.1.6-.2-2-.4-3.6-1.8-5.1Zm8.4 1.2c-1.5-.7-3-.6-4.3.1 1.7 1.2 2.7 3 2.8 5.1 1.4-1.3 2-3.2 1.5-5.2ZM7.2 16.2c-.8 1.6-.7 3.2-.2 4.6 2.1-.4 3.7-1.5 4.7-3.2-1.7.1-3.2-.3-4.5-1.4Zm5.8 1.1c-.6 1.5-1.8 2.8-3.4 3.6 3.6.7 6.7-.4 8.4-2.7-1.7.2-3.4-.1-5-1Z"></path></svg>
+            Get for Firefox
+          </a>
+          <a
+            class="btn btn-ghost"
+            href="https://github.com/jatinkrmalik/LLMFeeder"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5A11.5 11.5 0 0 0 8.3 22.9c.6.1.8-.2.8-.5v-2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.7 1.7 2.7 1.2.1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6a4.6 4.6 0 0 1 1.2-3.2c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.9 4.4 19 4.7 19 4.7c.6 1.6.2 2.8.1 3.1a4.6 4.6 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .5Z"></path></svg>
+            Star on GitHub
+          </a>
         </div>
-
-        <div class="hero-stage">
-          <div class="transform-panel" data-transform>
-            <div class="panel-toolbar">
-              <span class="dot" aria-hidden="true"></span>
-              <span class="dot" aria-hidden="true"></span>
-              <span class="dot" aria-hidden="true"></span>
-              <div class="mode-toggle" role="group" aria-label="Preview mode">
-                <button type="button" aria-pressed="true" data-mode="html">Page</button>
-                <button type="button" aria-pressed="false" data-mode="md">Markdown</button>
-              </div>
-            </div>
-            <pre class="panel-body" id="transformOut" aria-live="polite"></pre>
-            <button type="button" class="transform-play" data-play>
-              Watch conversion
-            </button>
-          </div>
-          <p class="watermark" aria-hidden="true">#</p>
-        </div>
+        <p class="cta-note">Free · MIT · v2.2.0 · No account, no telemetry</p>
       </section>
 
+      <!-- ================= SCENE A: THE STRIP ================= -->
+      <section class="scene" id="convert" aria-labelledby="convert-heading">
+        <div class="scene-intro shell">
+          <h2 id="convert-heading">Scroll to strip the page.</h2>
+          <p>
+            This is a real article page with the usual freight attached. Keep scrolling and
+            watch what LLMFeeder actually removes before anything reaches your model.
+          </p>
+        </div>
+
+        <div class="scene-track" data-strip>
+          <div class="scene-stage">
+            <div class="stage-grid shell">
+              <!-- Live readout -->
+              <div class="stage-readout">
+                <p class="readout">
+                  <span class="readout-num" aria-hidden="true"></span>
+                  <span class="readout-label" aria-hidden="true">estimated tokens</span>
+                  <span class="sr-only">
+                    On the measured MDN page, estimated tokens fall from 100,238 for the raw
+                    page to 8,577 for the Markdown LLMFeeder produces.
+                  </span>
+                </p>
+                <div class="rail" aria-hidden="true"><span class="rail-fill"></span></div>
+                <ol class="stage-steps">
+                  <li data-step="1"><span>Dismiss the interruptions</span></li>
+                  <li data-step="2"><span>Find the article</span></li>
+                  <li data-step="3"><span>Drop the presentation layer</span></li>
+                  <li data-step="4"><span>Keep the structure as Markdown</span></li>
+                  <li data-step="5"><span>Copy. Ready to paste.</span></li>
+                </ol>
+              </div>
+
+              <!-- The page artifact -->
+              <div class="stage-artifact">
+                <div class="mock" data-mock>
+                  <!-- decorative page furniture -->
+                  <div class="mock-chrome" aria-hidden="true">
+                    <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
+                    <span class="mock-url">example.com/why-context-quality-wins</span>
+                  </div>
+
+                  <div class="mock-body">
+                    <div class="mock-nav layer-chrome" aria-hidden="true">
+                      <span class="mock-logo"></span>
+                      <span class="mock-link"></span><span class="mock-link"></span>
+                      <span class="mock-link"></span><span class="mock-link short"></span>
+                      <span class="mock-cta"></span>
+                    </div>
+
+                    <div class="mock-ad layer-chrome" aria-hidden="true">
+                      <span>ADVERTISEMENT</span>
+                    </div>
+
+                    <div class="mock-columns">
+                      <div class="mock-share layer-chrome" aria-hidden="true">
+                        <span class="mock-pill"></span><span class="mock-pill"></span>
+                        <span class="mock-pill"></span><span class="mock-pill"></span>
+                      </div>
+
+                      <!-- the real content -->
+                      <div class="mock-article layer-content">
+                        <p class="mock-kicker layer-deco" aria-hidden="true">Engineering · 8 min read</p>
+                        <p class="mock-title">Why context quality beats context length</p>
+                        <div class="mock-byline layer-deco" aria-hidden="true">
+                          <span class="mock-avatar"></span>
+                          <span class="mock-byline-text"></span>
+                        </div>
+                        <p class="mock-p">
+                          A bigger context window does not make a model read better. It only
+                          makes it <strong>cheaper to be sloppy</strong> about what you send.
+                        </p>
+                        <p class="mock-p">
+                          Raw page markup carries class names, tracking attributes and script
+                          tags that mean nothing to a language model.
+                        </p>
+                        <ul class="mock-list">
+                          <li>Markup is noise the model still has to read</li>
+                          <li>Structure is signal worth preserving</li>
+                        </ul>
+                        <table class="mock-table">
+                          <thead>
+                            <tr><th>Format</th><th>Tokens</th></tr>
+                          </thead>
+                          <tbody>
+                            <tr><td>Raw HTML</td><td>100,238</td></tr>
+                            <tr><td>Markdown</td><td>8,577</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <aside class="mock-side layer-chrome" aria-hidden="true">
+                        <span class="mock-side-title"></span>
+                        <span class="mock-side-row"></span><span class="mock-side-row"></span>
+                        <span class="mock-side-row"></span>
+                        <div class="mock-ad small"><span>AD</span></div>
+                      </aside>
+                    </div>
+
+                    <div class="mock-related layer-chrome" aria-hidden="true">
+                      <span class="mock-card"></span><span class="mock-card"></span><span class="mock-card"></span>
+                    </div>
+
+                    <div class="mock-footer layer-chrome" aria-hidden="true">
+                      <span class="mock-frow"></span><span class="mock-frow"></span>
+                      <span class="mock-frow"></span><span class="mock-frow"></span>
+                    </div>
+                  </div>
+
+                  <!-- overlays that peel first -->
+                  <div class="mock-cookie layer-interrupt" aria-hidden="true">
+                    <span class="mock-cookie-text"></span>
+                    <span class="mock-cookie-btn"></span>
+                  </div>
+                  <div class="mock-newsletter layer-interrupt" aria-hidden="true">
+                    <span class="mock-nl-title"></span>
+                    <span class="mock-nl-row"></span>
+                    <span class="mock-nl-btn"></span>
+                  </div>
+
+                  <!-- the markdown result -->
+                  <pre class="mock-md layer-md" aria-hidden="true"><span class="md-h"># Why context quality beats context length</span>
+
+A bigger context window does not make a model read
+better. It only makes it <span class="md-b">**cheaper to be sloppy**</span>
+about what you send.
+
+Raw page markup carries class names, tracking
+attributes and script tags that mean nothing to a
+language model.
+
+<span class="md-m">-</span> Markup is noise the model still has to read
+<span class="md-m">-</span> Structure is signal worth preserving
+
+<span class="md-m">| Format    | Tokens  |</span>
+<span class="md-m">| --------- | ------- |</span>
+<span class="md-m">| Raw HTML  | 100,238 |</span>
+<span class="md-m">| Markdown  | 8,577   |</span>
+</pre>
+                </div>
+                <p class="scroll-cue" aria-hidden="true">keep scrolling</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="measure-note shell">
+          Measured by running this repository’s own <code>readability.js</code> and
+          <code>turndown.js</code> against
+          <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN’s <code>animation-timeline</code> page</a>.
+          Token counts are estimates from the same heuristic the extension ships
+          (about 4 bytes per token), not a billed tokenizer.
+        </p>
+      </section>
+
+      <!-- ================= SCENE B: THE PASTE ================= -->
+      <section class="paste shell" id="paste" aria-labelledby="paste-heading">
+        <div class="paste-copy">
+          <h2 id="paste-heading">Same page. 7% of the window instead of 78%.</h2>
+          <p>
+            Tokens you don’t spend on markup are tokens left for the actual question.
+            Against a 128K context window, that measured page fits with room to spare.
+          </p>
+          <ul class="bars">
+            <li>
+              <span class="bar-label">Raw HTML <span class="bar-num">100,238 tok</span></span>
+              <span class="bar" data-bar="78"><span class="bar-fill bar-raw"></span></span>
+              <span class="bar-foot">78% of a 128K window</span>
+            </li>
+            <li>
+              <span class="bar-label">LLMFeeder Markdown <span class="bar-num">8,577 tok</span></span>
+              <span class="bar" data-bar="7"><span class="bar-fill bar-md"></span></span>
+              <span class="bar-foot">7% of a 128K window</span>
+            </li>
+          </ul>
+          <p class="paste-foot">
+            Across five measured pages: median <strong>10.4&times;</strong> reduction,
+            from 4.5&times; on already-lean docs to 15.1&times; on a heavy wiki page.
+          </p>
+        </div>
+
+        <figure class="composer" aria-hidden="true">
+          <figcaption class="composer-head">New chat</figcaption>
+          <div class="composer-body">
+            <p class="composer-you">Summarise this page and list the caveats.</p>
+            <div class="composer-attach">
+              <span class="composer-file">why-context-quality-wins.md</span>
+              <span class="composer-size">8,577 tok</span>
+            </div>
+            <p class="composer-hint">Context used: 7%</p>
+          </div>
+        </figure>
+      </section>
+
+      <!-- ================= DEMO ================= -->
       <section class="demo shell" id="demo" aria-labelledby="demo-heading">
         <div class="section-head">
-          <h2 id="demo-heading">From page to prompt in one motion.</h2>
-          <p>Open any page. Convert. Paste into your model. No hand-cleaning HTML.</p>
+          <h2 id="demo-heading">The real thing, in one click.</h2>
+          <p>Open a page, hit convert, paste. No tab hopping, no hand-cleaning HTML.</p>
         </div>
         <figure class="demo-frame">
           <video
@@ -232,28 +423,29 @@
             <source src="./assets/demo.mp4" type="video/mp4">
           </video>
           <figcaption>
-            Demo of LLMFeeder converting a webpage to Markdown and copying it to the clipboard.
+            LLMFeeder converting a webpage to Markdown and copying it to the clipboard.
           </figcaption>
         </figure>
       </section>
 
+      <!-- ================= FEATURES ================= -->
       <section class="features shell" id="features" aria-labelledby="features-heading">
         <div class="section-head wide">
           <h2 id="features-heading">Built for the paste that matters.</h2>
-          <p>Capture the right content, keep its structure, and know whether it fits before you paste.</p>
+          <p>Capture the right content, keep its structure, and know whether it fits before you send it.</p>
         </div>
         <ul class="spec-strip">
           <li>
             <strong>Smart extraction</strong>
-            <span>Mozilla Readability pulls the article, not the nav chrome.</span>
+            <span>Mozilla Readability pulls the article, not the furniture around it.</span>
           </li>
           <li>
             <strong>Multi-tab batch</strong>
-            <span>Convert several tabs at once. Merge, or download a ZIP.</span>
+            <span>Convert several tabs at once. Merge them, or download a ZIP.</span>
           </li>
           <li>
             <strong>Token awareness</strong>
-            <span>Live GPT-4 / Claude-style estimates with configurable limits.</span>
+            <span>Live estimates with configurable context limits, before you paste.</span>
           </li>
           <li>
             <strong>Tables that survive</strong>
@@ -261,86 +453,68 @@
           </li>
           <li>
             <strong>Lazy chat scroll</strong>
-            <span>Optional auto-scroll for Gemini, ChatGPT, Claude threads.</span>
+            <span>Optional auto-scroll so long Gemini, ChatGPT and Claude threads aren’t truncated.</span>
           </li>
           <li>
             <strong>Keyboard first</strong>
-            <span>Alt+Shift+M copy · Alt+Shift+D download · Alt+Shift+Z ZIP.</span>
+            <span><kbd>Alt</kbd><kbd>Shift</kbd><kbd>M</kbd> copy · <kbd>Alt</kbd><kbd>Shift</kbd><kbd>D</kbd> download · <kbd>Alt</kbd><kbd>Shift</kbd><kbd>Z</kbd> ZIP</span>
           </li>
           <li>
             <strong>Links on demand</strong>
-            <span>Strip URLs when you need fewer tokens, keep them when you don’t.</span>
+            <span>Strip URLs when you want fewer tokens, keep them when you need sources.</span>
           </li>
           <li>
             <strong>Metadata you control</strong>
-            <span>Template citations with title, URL, author, date, and more.</span>
+            <span>Template your citation block with title, URL, author, date and more.</span>
           </li>
         </ul>
       </section>
 
+      <!-- ================= PRIVACY ================= -->
       <section class="privacy shell" id="privacy" aria-labelledby="privacy-heading">
         <div class="privacy-grid">
           <div>
-            <h2 id="privacy-heading">Your page never leaves your browser.</h2>
+            <h2 id="privacy-heading">The page never leaves your browser.</h2>
             <p>
-              Extraction, Markdown conversion, and clipboard writes all run locally.
-              No backend, telemetry, account, or content upload.
+              Extraction, Markdown conversion and clipboard writes all run locally.
+              No backend, no account, no content upload.
             </p>
           </div>
           <ul class="privacy-points">
-            <li>Zero remote data transmission for conversion</li>
-            <li>Minimal permissions, only what the job needs</li>
-            <li>Fully open source, auditable line by line</li>
+            <li>Zero remote transmission during conversion</li>
+            <li>Only the permissions the job needs</li>
+            <li>MIT licensed and auditable line by line</li>
           </ul>
         </div>
       </section>
 
+      <!-- ================= INSTALL ================= -->
       <section class="install shell" id="install" aria-labelledby="install-heading">
-        <h2 id="install-heading">Ready for your next prompt.</h2>
+        <h2 id="install-heading">Stop paying for markup.</h2>
         <p class="install-lede">
-          Use LLMFeeder free in Chrome or Firefox. If it becomes part of your workflow,
-          a GitHub star helps other people find it.
+          Install it for your browser, then star the repo so the next person
+          drowning in <code>&lt;div&gt;</code> soup finds it too.
         </p>
-        <div class="cta-row" role="group" aria-label="Install options">
+        <div class="cta-row">
           <a
             class="btn btn-primary"
             href="https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk"
             target="_blank"
             rel="noopener noreferrer"
-          >
-            Add to Chrome
-          </a>
+          >Add to Chrome</a>
           <a
             class="btn btn-secondary"
             href="https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
             target="_blank"
             rel="noopener noreferrer"
-          >
-            Get for Firefox
-          </a>
+          >Get for Firefox</a>
           <a
             class="btn btn-ghost"
             href="https://github.com/jatinkrmalik/LLMFeeder"
             target="_blank"
             rel="noopener noreferrer"
-          >
-            Star on GitHub
-          </a>
+          >Star on GitHub</a>
         </div>
-        <dl class="shortcuts">
-          <div>
-            <dt>Convert &amp; copy</dt>
-            <dd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>M</kbd></dd>
-          </div>
-          <div>
-            <dt>Download .md</dt>
-            <dd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>D</kbd></dd>
-          </div>
-          <div>
-            <dt>Multi-tab ZIP</dt>
-            <dd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>Z</kbd></dd>
-          </div>
-        </dl>
       </section>
     </main>
 
