@@ -14,6 +14,8 @@
 
 A browser extension that converts web page content to clean Markdown format and copies it to clipboard with a single click, perfect for feeding content to Large Language Models (LLMs). Available for both [Chrome](https://chromewebstore.google.com/detail/llmfeeder-webpage-to-mark/cjjfhhapabcpcokkfldbiiojiphbifdk) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/).
 
+**Website:** [jatinkrmalik.github.io/LLMFeeder](https://jatinkrmalik.github.io/LLMFeeder/)
+
 ## ✨ What's New in v2.2.0
 
 - 📜 **Lazy-Loading Auto-Scroll** - Opt-in setting to scroll chat/AI pages (Gemini, ChatGPT, Claude, etc.) before extraction so long conversations aren't truncated (#91)

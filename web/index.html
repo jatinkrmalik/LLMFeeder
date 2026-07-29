@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LLMFeeder — Webpage to Markdown for ChatGPT, Claude &amp; Gemini</title>
+    <meta
+      name="description"
+      content="Convert any webpage to clean, LLM-ready Markdown with one click. Multi-tab copy, token counter, 100% private. Free Chrome and Firefox extension."
+    />
+    <link rel="canonical" href="https://jatinkrmalik.github.io/LLMFeeder/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jatinkrmalik.github.io/LLMFeeder/" />
+    <meta property="og:title" content="LLMFeeder — Webpage to Markdown for AI" />
+    <meta
+      property="og:description"
+      content="One-click webpage to clean Markdown for ChatGPT, Claude, and Gemini. Private. Open source. Chrome &amp; Firefox."
+    />
+    <meta property="og:image" content="https://jatinkrmalik.github.io/LLMFeeder/assets/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@jatinkrmalik" />
+    <meta name="twitter:title" content="LLMFeeder — Webpage to Markdown for AI" />
+    <meta
+      name="twitter:description"
+      content="One-click webpage to clean Markdown for ChatGPT, Claude, and Gemini. Private. Open source."
+    />
+    <meta name="twitter:image" content="https://jatinkrmalik.github.io/LLMFeeder/assets/og-image.png" />
+
+    <meta name="theme-color" content="#0B0C0B" />
+    <meta name="color-scheme" content="dark" />
+
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="./assets/icon-48.png" />
+    <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "LLMFeeder",
+        "applicationCategory": "BrowserApplication",
+        "operatingSystem": "Chrome, Firefox, Chromium",
+        "description": "Convert any webpage to clean Markdown for ChatGPT, Claude, and Gemini. Multi-tab copy, token counter, 100% private.",
+        "url": "https://jatinkrmalik.github.io/LLMFeeder/",
+        "downloadUrl": "https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk",
+        "softwareVersion": "2.2.0",
+        "license": "https://opensource.org/licenses/MIT",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Jatin K Malik",
+          "url": "https://x.com/jatinkrmalik"
+        },
+        "sameAs": [
+          "https://github.com/jatinkrmalik/LLMFeeder",
+          "https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk",
+          "https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="brand" href="#top" aria-label="LLMFeeder home">
+          <img src="./assets/icon-48.png" width="36" height="36" alt="" />
+          <span>LLMFeeder</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="#features">Features</a>
+          <a href="#privacy">Privacy</a>
+          <a href="#install">Install</a>
+          <a
+            class="nav-star"
+            href="https://github.com/jatinkrmalik/LLMFeeder"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Star
+            <span id="starCount" class="star-count" hidden></span>
+          </a>
+        </nav>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobileNav" aria-label="Open menu">
+          <span></span><span></span>
+        </button>
+      </div>
+      <div id="mobileNav" class="mobile-nav" hidden>
+        <a href="#features">Features</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/jatinkrmalik/LLMFeeder" target="_blank" rel="noopener noreferrer">Star on GitHub</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero shell" id="top">
+        <div class="hero-copy">
+          <h1>Feed your LLM clean Markdown from any page.</h1>
+          <p class="hero-lede">
+            LLMFeeder turns messy webpages into structured Markdown and copies it in one click.
+            Built for ChatGPT, Claude, Gemini, and anyone who needs context without the chrome.
+          </p>
+          <div class="cta-row" role="group" aria-label="Install and support">
+            <a
+              class="btn btn-primary"
+              href="https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 7.07 4.25H12a3.75 3.75 0 0 0-3.24 1.87L5.53 6.4A8 8 0 0 1 12 4Zm-8 8a8 8 0 0 1 .5-2.76l3.44 3.44A3.75 3.75 0 0 0 12 15.75h7.07A8 8 0 0 1 4 12Zm12.75 0A4.75 4.75 0 1 1 12 7.25 4.75 4.75 0 0 1 16.75 12Z"/></svg>
+              Add to Chrome
+            </a>
+            <a
+              class="btn btn-secondary"
+              href="https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.4 2.4-.4 4.2-1.5 5.6 2.1-.6 4.2.2 5.6 1.6C19.5 6.4 17 3.2 12 2Zm-1.2 7.1C8.5 9.4 6.4 11 5.5 13.6c2.2-1.1 4.5-.7 6.1.6-.2-2-.4-3.6-1.8-5.1Zm8.4 1.2c-1.5-.7-3-.6-4.3.1 1.7 1.2 2.7 3 2.8 5.1 1.4-1.3 2-3.2 1.5-5.2ZM7.2 16.2c-.8 1.6-.7 3.2-.2 4.6 2.1-.4 3.7-1.5 4.7-3.2-1.7.1-3.2-.3-4.5-1.4Zm5.8 1.1c-.6 1.5-1.8 2.8-3.4 3.6 3.6.7 6.7-.4 8.4-2.7-1.7.2-3.4-.1-5-1Z"/></svg>
+              Get for Firefox
+            </a>
+            <a
+              class="btn btn-ghost"
+              href="https://github.com/jatinkrmalik/LLMFeeder"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5A11.5 11.5 0 0 0 8.3 22.9c.6.1.8-.2.8-.5v-2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.7 1.7 2.7 1.2.1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6a4.6 4.6 0 0 1 1.2-3.2c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.9 4.4 19 4.7 19 4.7c.6 1.6.2 2.8.1 3.1a4.6 4.6 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .5Z"/></svg>
+              Star on GitHub
+            </a>
+          </div>
+          <p class="cta-note">v2.2.0 · MIT · Open source. If it saves you a paste, give the repo a star.</p>
+        </div>
+
+        <div class="hero-stage" aria-label="Live Markdown conversion preview">
+          <div class="transform-panel" data-transform>
+            <div class="panel-toolbar">
+              <span class="dot" aria-hidden="true"></span>
+              <span class="dot" aria-hidden="true"></span>
+              <span class="dot" aria-hidden="true"></span>
+              <div class="mode-toggle" role="tablist" aria-label="Preview mode">
+                <button type="button" role="tab" aria-selected="true" data-mode="html">Page</button>
+                <button type="button" role="tab" aria-selected="false" data-mode="md">Markdown</button>
+              </div>
+            </div>
+            <pre class="panel-body" id="transformOut" aria-live="polite"></pre>
+            <button type="button" class="transform-play" data-play>
+              Watch conversion
+            </button>
+          </div>
+          <p class="watermark" aria-hidden="true">#</p>
+        </div>
+      </section>
+
+      <section class="demo shell" id="demo" aria-labelledby="demo-heading">
+        <div class="section-head">
+          <h2 id="demo-heading">From page to prompt in one motion.</h2>
+          <p>Select the page, convert, paste into your model. No tab hopping. No hand-cleaning HTML.</p>
+        </div>
+        <figure class="demo-frame">
+          <video
+            id="demoVideo"
+            class="demo-video"
+            poster="./assets/demo-poster.webp"
+            playsinline
+            muted
+            loop
+            preload="none"
+            controls
+          >
+            <source src="./assets/demo.webm" type="video/webm" />
+            <source src="./assets/demo.mp4" type="video/mp4" />
+          </video>
+          <figcaption>
+            Demo of LLMFeeder converting a webpage to Markdown and copying it to the clipboard.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="features shell" id="features" aria-labelledby="features-heading">
+        <div class="section-head wide">
+          <h2 id="features-heading">Built for the paste that matters.</h2>
+          <p>Everything that changes how you feed context to an LLM, nothing that doesn’t.</p>
+        </div>
+        <ul class="spec-strip">
+          <li>
+            <strong>Smart extraction</strong>
+            <span>Mozilla Readability pulls the article, not the nav chrome.</span>
+          </li>
+          <li>
+            <strong>Multi-tab batch</strong>
+            <span>Convert several tabs at once. Merge, or download a ZIP.</span>
+          </li>
+          <li>
+            <strong>Token awareness</strong>
+            <span>Live GPT-4 / Claude-style estimates with configurable limits.</span>
+          </li>
+          <li>
+            <strong>Tables that survive</strong>
+            <span>HTML tables become real Markdown pipes, empty cells included.</span>
+          </li>
+          <li>
+            <strong>Lazy chat scroll</strong>
+            <span>Optional auto-scroll for Gemini, ChatGPT, Claude threads.</span>
+          </li>
+          <li>
+            <strong>Keyboard first</strong>
+            <span>Alt+Shift+M copy · Alt+Shift+D download · Alt+Shift+Z ZIP.</span>
+          </li>
+          <li>
+            <strong>Links on demand</strong>
+            <span>Strip URLs when you need fewer tokens, keep them when you don’t.</span>
+          </li>
+          <li>
+            <strong>Metadata you control</strong>
+            <span>Template citations with title, URL, author, date, and more.</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="privacy shell" id="privacy" aria-labelledby="privacy-heading">
+        <div class="privacy-grid">
+          <div>
+            <h2 id="privacy-heading">Your page never leaves your browser.</h2>
+            <p>
+              Extraction, Markdown conversion, and clipboard writes all run locally.
+              No backend. No telemetry. No “anonymous usage” loopholes.
+            </p>
+          </div>
+          <ul class="privacy-points">
+            <li>Zero remote data transmission for conversion</li>
+            <li>Minimal permissions, only what the job needs</li>
+            <li>Fully open source, auditable line by line</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="install shell" id="install" aria-labelledby="install-heading">
+        <h2 id="install-heading">Install it. Then star it.</h2>
+        <p class="install-lede">
+          Grab the extension for your browser, then support the project on GitHub so more people find a private way to feed their models.
+        </p>
+        <div class="cta-row" role="group" aria-label="Install options">
+          <a
+            class="btn btn-primary"
+            href="https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Add to Chrome
+          </a>
+          <a
+            class="btn btn-secondary"
+            href="https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Get for Firefox
+          </a>
+          <a
+            class="btn btn-ghost"
+            href="https://github.com/jatinkrmalik/LLMFeeder"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Star on GitHub
+          </a>
+        </div>
+        <dl class="shortcuts">
+          <div>
+            <dt>Convert &amp; copy</dt>
+            <dd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>M</kbd></dd>
+          </div>
+          <div>
+            <dt>Download .md</dt>
+            <dd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>D</kbd></dd>
+          </div>
+          <div>
+            <dt>Multi-tab ZIP</dt>
+            <dd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>Z</kbd></dd>
+          </div>
+        </dl>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p>
+          <strong>LLMFeeder</strong>
+          ·
+          <a href="https://github.com/jatinkrmalik/LLMFeeder/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a>
+          ·
+          <a href="https://github.com/jatinkrmalik/LLMFeeder" target="_blank" rel="noopener noreferrer">Source</a>
+        </p>
+        <p>
+          Created by
+          <a href="https://x.com/jatinkrmalik" target="_blank" rel="noopener noreferrer">@jatinkrmalik</a>
+        </p>
+      </div>
+    </footer>
+
+    <script src="./main.js" defer></script>
+  </body>
+</html>
