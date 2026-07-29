@@ -1330,15 +1330,15 @@ h2 {
 .markup-phrase {
   display: inline-block;
   font-family: var(--mono);
-  font-size: max(0.9em, 1.05rem);
+  font-size: max(0.95em, 1.15rem);
   font-weight: 500;
   letter-spacing: -0.02em;
   white-space: nowrap;
   background: transparent;
   padding: 0;
   border: 0;
-  vertical-align: 0.04em;
-  line-height: 1.15;
+  vertical-align: 0.02em;
+  line-height: 1.2;
 }
 
 .markup-phrase .markup {
@@ -1354,7 +1354,7 @@ h2 {
 
 @media (min-width: 620px) {
   .markup-phrase {
-    font-size: max(0.92em, 1.2rem);
+    font-size: max(0.98em, 1.45rem);
   }
 }
 
