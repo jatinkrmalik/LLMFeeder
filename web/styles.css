@@ -532,9 +532,10 @@ h2 {
    thirds of the viewport empty beside a narrow column. */
 .hero h1 {
   font-weight: 700;
-  font-size: clamp(2.1rem, 6.4vw, 5.25rem);
-  line-height: 1.02;
-  max-width: 30ch;
+  /* Long headline: stay punchy without eating the whole fold. */
+  font-size: clamp(1.9rem, 5.2vw, 3.75rem);
+  line-height: 1.08;
+  max-width: 28ch;
   overflow-wrap: break-word;
 }
 
