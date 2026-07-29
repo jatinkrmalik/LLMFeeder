@@ -567,6 +567,12 @@ h2 {
   filter: saturate(0.9);
 }
 
+.hero-aside:has(.proof-popover:not([hidden])) .hero-peek:hover,
+.hero-aside:has(.proof-popover:not([hidden])) .hero-peek:focus-visible {
+  opacity: 0.96;
+  filter: saturate(1);
+}
+
 @media (min-width: 768px) and (min-height: 700px) {
   .hero-aside {
     display: block;
@@ -2805,6 +2811,17 @@ kbd {
 
   .hero-hint svg {
     animation: none !important;
+  }
+
+  .hero-aside .hero-peek,
+  .peek-soup,
+  .peek-md {
+    transition: none !important;
+  }
+
+  .hero-aside .hero-peek:hover .peek-soup,
+  .hero-aside .hero-peek:focus-visible .peek-soup {
+    filter: none;
   }
 
   .readout-num {
