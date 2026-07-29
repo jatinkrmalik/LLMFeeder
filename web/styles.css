@@ -446,28 +446,6 @@ h2 {
   color: var(--accent);
 }
 
-/* Live star count fetched from GitHub; hidden until it resolves. */
-.gh-count {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.1rem 0.5rem;
-  margin-left: 0.1rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--paper-2);
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink-dim);
-}
-
-.gh-count::before {
-  content: "\2605";
-  margin-right: 0.25rem;
-  font-size: 0.7rem;
-  color: var(--warn);
-}
-
 /* CTA rows keep a slightly larger target without shine or chromatic glow. */
 .cta-row .btn {
   min-height: 3.15rem;

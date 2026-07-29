@@ -338,27 +338,4 @@
     document.getElementById("proofTrigger"),
     document.getElementById("proofPopover")
   );
-
-  /* ---------- live GitHub star count ---------- */
-
-  const starSlots = document.querySelectorAll("[data-gh-count]");
-  if (starSlots.length && "fetch" in window) {
-    fetch("https://api.github.com/repos/jatinkrmalik/LLMFeeder", {
-      headers: { Accept: "application/vnd.github+json" },
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!data || typeof data.stargazers_count !== "number") return;
-        const n = data.stargazers_count;
-        const label =
-          n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k` : String(n);
-        starSlots.forEach((slot) => {
-          slot.textContent = label;
-          slot.hidden = false;
-        });
-      })
-      .catch(() => {
-        /* Offline or rate-limited: the button reads fine without a count. */
-      });
-  }
 })();
