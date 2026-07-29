@@ -1174,7 +1174,7 @@ h2 {
   }
 }
 
-/* Scroll invitation: bottom-center on tall screens, arrow nudge only. */
+/* Scroll invitation: bottom-center on tall screens, arrow nudge + soft shimmer. */
 .hero-hint {
   z-index: 2;
   margin-top: 2.5rem;
@@ -1204,6 +1204,38 @@ h2 {
 
 .hero-hint:hover {
   color: var(--accent);
+}
+
+.hint-text {
+  /* color:transparent would zero out currentColor inside the gradient, so the
+     base tone is spelled out via a custom property instead. */
+  --hint-ink: var(--ink-dim);
+  background: linear-gradient(
+    90deg,
+    var(--hint-ink) 0%,
+    var(--hint-ink) 38%,
+    var(--accent) 50%,
+    var(--hint-ink) 62%,
+    var(--hint-ink) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: hint-shimmer 3.2s linear infinite;
+}
+
+.hero-hint:hover .hint-text {
+  --hint-ink: var(--accent);
+}
+
+@keyframes hint-shimmer {
+  from {
+    background-position: 125% 0;
+  }
+  to {
+    background-position: -125% 0;
+  }
 }
 
 .hero-hint svg {
@@ -1273,7 +1305,7 @@ h2 {
   font-weight: 700;
   font-size: clamp(1.9rem, 5.2vw, 3.75rem);
   line-height: 1.08;
-  max-width: 22ch;
+  max-width: 24ch;
   overflow-wrap: break-word;
   text-wrap: wrap;
 }
@@ -1298,14 +1330,15 @@ h2 {
 .markup-phrase {
   display: inline-block;
   font-family: var(--mono);
-  font-size: max(0.7em, 0.75rem);
+  font-size: max(0.9em, 1.05rem);
   font-weight: 500;
   letter-spacing: -0.02em;
   white-space: nowrap;
   background: transparent;
   padding: 0;
   border: 0;
-  vertical-align: 0.08em;
+  vertical-align: 0.04em;
+  line-height: 1.15;
 }
 
 .markup-phrase .markup {
@@ -1321,7 +1354,7 @@ h2 {
 
 @media (min-width: 620px) {
   .markup-phrase {
-    font-size: max(0.72em, 0.8125rem);
+    font-size: max(0.92em, 1.2rem);
   }
 }
 
@@ -1471,23 +1504,6 @@ h2 {
   line-height: 1.55;
 }
 
-@media (min-width: 960px) {
-  .method-popover {
-    /* Sit under the browser mock, not over the step list. */
-    left: calc(0.55 / 1.75 * 100%);
-    width: min(32rem, 52%);
-  }
-}
-
-@media (max-width: 700px) {
-  .method-popover {
-    left: 0;
-    right: 0;
-    width: auto;
-    bottom: calc(100% + 0.4rem);
-  }
-}
-
 .method-popover[hidden] {
   display: none;
 }
@@ -1507,6 +1523,32 @@ h2 {
   z-index: 4;
   /* Match the peek frame's corners so the pair reads as one artifact. */
   border-radius: var(--radius);
+}
+
+/* Strip-scene methodology: dock under the browser mock, same pattern as hero. */
+.mock-dock {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.method-popover.mock-method-popover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  bottom: auto;
+  width: 100%;
+  margin-top: 0.55rem;
+  max-height: min(36vh, 14rem);
+  z-index: 6;
+  border-radius: var(--radius);
+  pointer-events: auto;
+}
+
+.scene-stage:has(.mock-method-popover:not([hidden])) > .scroll-cue {
+  opacity: 0;
 }
 
 .method-popover p {
@@ -1541,10 +1583,6 @@ h2 {
 
   .stage-footnote {
     align-self: end;
-  }
-
-  .scroll-cue {
-    margin-top: 0.45rem;
   }
 }
 
@@ -2197,6 +2235,17 @@ h2 {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-dim);
+  pointer-events: none;
+}
+
+/* Bottom-center of the sticky strip panel, matching the hero scroll cue. */
+.scene-stage > .scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(0.45rem, 1.8vh, 1.1rem);
+  z-index: 5;
+  margin: 0;
+  transform: translateX(-50%);
 }
 
 /* ---------- scroll-driven animation (progressive enhancement) ---------- */
