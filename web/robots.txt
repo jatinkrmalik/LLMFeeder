@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://jatinkrmalik.github.io/LLMFeeder/sitemap.xml
+Sitemap: https://llmfeeder.fyi/sitemap.xml
