@@ -832,6 +832,14 @@ h2 {
   line-height: 1.55;
 }
 
+@media (min-width: 960px) {
+  .method-popover {
+    /* Sit under the browser mock, not over the step list. */
+    left: calc(0.55 / 1.75 * 100%);
+    width: min(32rem, 52%);
+  }
+}
+
 .method-popover[hidden] {
   display: none;
 }
