@@ -433,9 +433,10 @@ h2 {
   }
 }
 
+/* No max-width here: it re-centred the hero on a narrower box and broke the
+   left rail every other section shares. Inner blocks cap their own measure. */
 .hero {
   padding: 2.5rem 0 2rem;
-  max-width: 62rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -448,9 +449,10 @@ h2 {
   }
 }
 
+/* Sits just below the CTAs rather than pinned to the bottom edge: pushing it
+   down left a dead band in the middle of the hero. */
 .hero-hint {
-  margin-top: auto;
-  padding-top: 2rem;
+  padding-top: 3.25rem;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -588,7 +590,8 @@ h2 {
 .section-head h2,
 .privacy h2,
 .install h2,
-.paste-copy h2 {
+.paste-copy h2,
+.demo-copy h2 {
   font-weight: 700;
   font-size: clamp(1.85rem, 3.6vw, 2.75rem);
   line-height: 1.12;
@@ -597,7 +600,8 @@ h2 {
 .section-head p,
 .privacy p,
 .install-lede,
-.paste-copy > p {
+.paste-copy > p,
+.demo-copy > p {
   margin: 0.9rem 0 0;
   color: var(--ink-dim);
   max-width: 46ch;
@@ -764,7 +768,22 @@ h2 {
   position: relative;
 }
 
+/* The artifact depicts somebody else's web page, so it keeps a light surface in
+   both themes. Following the site theme turned it into low-contrast mush in
+   dark mode and lost the "this is a real page" read. */
 .mock {
+  --paper: #ffffff;
+  --paper-2: #f4f2ee;
+  --paper-3: #e6e3dc;
+  --rule: #d8d4cb;
+  --ink: #17191c;
+  --ink-dim: #5a6068;
+  --accent: #1967d2;
+  --accent-fill: #1a73e8;
+  /* 5.5:1 on the ad tint; the lighter orange only reached 4.35:1 at 9.6px. */
+  --warn: #9e4413;
+  --md-marker: #1967d2;
+  --md-bold: #1f6f3f;
   position: relative;
   border: 1px solid var(--rule);
   border-radius: var(--radius);
@@ -772,6 +791,12 @@ h2 {
   box-shadow: var(--shadow);
   overflow: hidden;
   height: min(62vh, 30rem);
+  color: var(--ink);
+}
+
+/* In dark mode the bright artifact needs a rim so it doesn't float. */
+[data-theme="dark"] .mock {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
 }
 
 @media (max-width: 959px) {
@@ -880,6 +905,24 @@ h2 {
   display: grid;
   grid-template-columns: 1.1rem minmax(0, 1fr);
   gap: 0.7rem;
+}
+
+/* As the nav and ad fade they leave their boxes behind, which read as a gap.
+   Sliding the content column up closes it with a transform instead of
+   animating layout. */
+@supports (animation-timeline: view()) {
+  .scene-track .mock-columns {
+    animation: rise linear both;
+    animation-timeline: --strip;
+    animation-range: contain 20% contain 44%;
+    animation-duration: auto;
+  }
+}
+
+@keyframes rise {
+  to {
+    transform: translateY(-3.6rem);
+  }
 }
 
 @media (min-width: 700px) {
@@ -1142,13 +1185,20 @@ h2 {
   color: var(--ink-dim);
 }
 
+/* Keeps .shell's centred box so it lines up with every other block, while the
+   measure caps at 68ch inside it. Overriding margin here previously cancelled
+   margin-inline:auto and pinned the note to the viewport edge. */
 .measure-note {
-  margin: 2rem auto 0;
-  max-width: 68ch;
+  margin-top: 2.5rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--rule);
   color: var(--ink-dim);
   font-size: 0.9375rem;
+}
+
+.measure-note p {
+  margin: 0;
+  max-width: 68ch;
 }
 
 .measure-note code {
@@ -1583,6 +1633,54 @@ h2 {
 
 .demo {
   padding: 1rem 0 4.5rem;
+  display: grid;
+  gap: 2.25rem;
+  align-items: center;
+}
+
+/* The capture is portrait (830x936). Giving it its own column at natural
+   aspect avoids the letterbox bands a full-width frame produced. */
+@media (min-width: 900px) {
+  .demo {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
+    gap: 3.5rem;
+  }
+}
+
+.demo-copy {
+  min-width: 0;
+}
+
+.demo-steps {
+  list-style: none;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+  counter-reset: dstep;
+}
+
+.demo-steps li {
+  position: relative;
+  padding-left: 2rem;
+  color: var(--ink-dim);
+}
+
+.demo-steps li::before {
+  counter-increment: dstep;
+  content: counter(dstep);
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.75rem;
 }
 
 .section-head {
@@ -1596,18 +1694,19 @@ h2 {
 
 .demo-frame {
   margin: 0;
+  max-width: 26rem;
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--paper-2);
+  box-shadow: var(--shadow);
 }
 
 .demo-video {
   width: 100%;
+  height: auto;
   aspect-ratio: 830 / 936;
-  max-height: 68vh;
-  object-fit: contain;
-  background: var(--paper-3);
+  display: block;
 }
 
 .demo-frame figcaption {
@@ -1639,7 +1738,7 @@ h2 {
 
 @media (min-width: 760px) {
   .spec-strip li {
-    grid-template-columns: minmax(11rem, 16rem) minmax(0, 1fr);
+    grid-template-columns: minmax(14rem, 19rem) minmax(0, 1fr);
     align-items: baseline;
   }
 }

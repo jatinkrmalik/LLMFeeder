@@ -6,7 +6,7 @@
     <title>LLMFeeder — Webpage to Markdown for ChatGPT, Claude &amp; Gemini</title>
     <meta
       name="description"
-      content="Web pages are mostly markup. LLMFeeder strips a page to clean Markdown in one click — around 10x fewer tokens in measured tests. Free Chrome and Firefox extension, 100% local."
+      content="Web pages are mostly markup. LLMFeeder strips a page to clean Markdown in one click, around 10x fewer tokens in measured tests. Free Chrome and Firefox extension, 100% local."
     >
     <link rel="canonical" href="https://jatinkrmalik.github.io/LLMFeeder/">
 
@@ -356,13 +356,15 @@ language model.
           </div>
         </div>
 
-        <p class="measure-note shell">
-          Measured by running this repository’s own <code>readability.js</code> and
-          <code>turndown.js</code> against
-          <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN’s <code>animation-timeline</code> page</a>.
-          Token counts are estimates from the same heuristic the extension ships
-          (about 4 bytes per token), not a billed tokenizer.
-        </p>
+        <div class="measure-note shell">
+          <p>
+            Measured by running this repository’s own <code>readability.js</code> and
+            <code>turndown.js</code> against
+            <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN’s <code>animation-timeline</code> page</a>.
+            Token counts are estimates from the same heuristic the extension ships
+            (about 4 bytes per token), not a billed tokenizer.
+          </p>
+        </div>
       </section>
 
       <!-- ================= SCENE B: THE PASTE ================= -->
@@ -406,9 +408,14 @@ language model.
 
       <!-- ================= DEMO ================= -->
       <section class="demo shell" id="demo" aria-labelledby="demo-heading">
-        <div class="section-head">
+        <div class="demo-copy">
           <h2 id="demo-heading">The real thing, in one click.</h2>
           <p>Open a page, hit convert, paste. No tab hopping, no hand-cleaning HTML.</p>
+          <ul class="demo-steps">
+            <li>Click the toolbar icon, or press <kbd>Alt</kbd><kbd>Shift</kbd><kbd>M</kbd></li>
+            <li>Markdown lands on your clipboard</li>
+            <li>Paste it wherever your model lives</li>
+          </ul>
         </div>
         <figure class="demo-frame">
           <video
@@ -459,7 +466,10 @@ language model.
           </li>
           <li>
             <strong>Keyboard first</strong>
-            <span><kbd>Alt</kbd><kbd>Shift</kbd><kbd>M</kbd> copy · <kbd>Alt</kbd><kbd>Shift</kbd><kbd>D</kbd> download · <kbd>Alt</kbd><kbd>Shift</kbd><kbd>Z</kbd> ZIP</span>
+            <span>
+              Copy, download or zip without opening the popup:
+              <kbd>Alt</kbd><kbd>Shift</kbd><kbd>M</kbd> / <kbd>D</kbd> / <kbd>Z</kbd>
+            </span>
           </li>
           <li>
             <strong>Links on demand</strong>
