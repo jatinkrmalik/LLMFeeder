@@ -530,6 +530,14 @@ h2 {
   }
 }
 
+/* When the peek is visible, keep the text column out of its bounding box
+   so the decorative window doesn't occlude the headline. */
+@media (min-width: 960px) and (min-height: 700px) {
+  .hero {
+    padding-right: clamp(15rem, 42vw, 32rem);
+  }
+}
+
 /* Peek of the strip scene: same browser chrome and URL as the scene below,
    kept quiet so it doesn't fight the headline, then sinks into the scene on
    scroll. */
@@ -542,7 +550,7 @@ h2 {
   width: min(44vw, 34rem);
   height: min(64%, 30rem);
   z-index: 0;
-  opacity: 0.32;
+  opacity: 0.38;
   transform: translate(6%, 6%) rotate(-1.5deg) scale(0.94);
   transform-origin: 80% 60%;
   filter: saturate(0.7);
@@ -728,17 +736,17 @@ h2 {
 
 @keyframes peek-merge {
   0% {
-    opacity: 0.32;
+    opacity: 0.38;
     transform: translate(6%, 6%) rotate(-1.5deg) scale(0.94);
     filter: saturate(0.7);
   }
   45% {
-    opacity: 0.55;
+    opacity: 0.6;
     transform: translate(2%, 36%) rotate(-0.4deg) scale(0.97);
     filter: saturate(0.85);
   }
   85% {
-    opacity: 0.45;
+    opacity: 0.5;
     transform: translate(0%, 80%) rotate(0deg) scale(1);
     filter: saturate(1);
   }
