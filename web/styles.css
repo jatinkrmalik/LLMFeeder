@@ -1,6 +1,22 @@
 /* LLMFeeder landing — Hash & Feed
    Dark ink, cream type, single ochre accent. No Inter. No purple gradients. */
 
+@font-face {
+  font-family: "Syne";
+  font-style: normal;
+  font-weight: 600 800;
+  font-display: swap;
+  src: url("./assets/fonts/syne-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("./assets/fonts/ibm-plex-sans-latin.woff2") format("woff2");
+}
+
 :root {
   --ink: #0b0c0b;
   --ink-2: #141615;
@@ -28,6 +44,8 @@
 html {
   scroll-behavior: smooth;
   color-scheme: dark;
+  background-color: #0b0c0b;
+  color: #e8e4d9;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -46,13 +64,10 @@ html {
 
 body {
   margin: 0;
-  background:
-    radial-gradient(1200px 500px at 85% -10%, rgba(226, 168, 59, 0.08), transparent 55%),
-    radial-gradient(900px 420px at -10% 20%, rgba(232, 228, 217, 0.04), transparent 50%),
-    var(--ink);
+  background-color: #0b0c0b;
   color: var(--cream);
   font-family: var(--body);
-  font-size: 1.0625rem;
+  font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -70,9 +85,8 @@ a {
   text-underline-offset: 0.18em;
 }
 
-a:hover {
-  color: var(--cream);
-}
+/* Hover colors are scoped per component so the generic cream link hover
+   can never paint text over the ochre primary button surface. */
 
 :focus-visible {
   outline: 2px solid var(--ochre);
@@ -106,8 +120,7 @@ a:hover {
   position: sticky;
   top: 0;
   z-index: 40;
-  backdrop-filter: blur(10px);
-  background: color-mix(in srgb, var(--ink) 82%, transparent);
+  background: rgba(11, 12, 11, 0.96);
   border-bottom: 1px solid transparent;
   transition: border-color 0.3s var(--ease);
 }
@@ -133,7 +146,7 @@ a:hover {
   font-family: var(--display);
   font-weight: 700;
   letter-spacing: -0.02em;
-  font-size: 1.125rem;
+  font-size: 1.25rem;
 }
 
 .brand img {
@@ -149,7 +162,7 @@ a:hover {
 .nav a {
   color: var(--cream-dim);
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -169,12 +182,6 @@ a:hover {
 
 .nav-star:hover {
   border-color: var(--ochre);
-}
-
-.star-count {
-  color: var(--ochre);
-  font-variant-numeric: tabular-nums;
-  font-size: 0.85rem;
 }
 
 .nav-toggle {
@@ -260,7 +267,8 @@ a:hover {
 .hero-lede {
   margin: 1.35rem 0 0;
   color: var(--cream-dim);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
+  line-height: 1.6;
   max-width: 38rem;
 }
 
@@ -282,7 +290,7 @@ a:hover {
   border: 1px solid transparent;
   font-family: var(--body);
   font-weight: 600;
-  font-size: 0.98rem;
+  font-size: 1rem;
   text-decoration: none;
   cursor: pointer;
   transition: transform 0.25s var(--ease), background-color 0.25s var(--ease), border-color 0.25s var(--ease), color 0.25s var(--ease);
@@ -291,6 +299,9 @@ a:hover {
 .btn:hover {
   transform: translateY(-1px);
 }
+
+/* Keep the generic cream pill hover from clobbering the ochre primary's
+   ink text; the secondary/ghost pills are cream-on-dark, which is safe. */
 
 .btn-ico {
   width: 1.1rem;
@@ -333,7 +344,7 @@ a:hover {
 .cta-note {
   margin: 1rem 0 0;
   color: var(--cream-dim);
-  font-size: 0.92rem;
+  font-size: 1rem;
 }
 
 /* Transform panel */
@@ -349,7 +360,6 @@ a:hover {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
   opacity: 0;
   transform: translateY(18px);
   transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
@@ -399,12 +409,15 @@ a:hover {
   border: 0;
   background: transparent;
   color: var(--cream-dim);
-  font: 500 0.8rem var(--body);
+  font-family: var(--body);
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.4;
   padding: 0.35rem 0.75rem;
   cursor: pointer;
 }
 
-.mode-toggle button[aria-selected="true"] {
+.mode-toggle button[aria-pressed="true"] {
   background: var(--ochre);
   color: var(--ink);
 }
@@ -416,7 +429,7 @@ a:hover {
   overflow: auto;
   padding: 1.1rem 1.15rem 1.4rem;
   font-family: var(--mono);
-  font-size: 0.84rem;
+  font-size: 1rem;
   line-height: 1.55;
   white-space: pre-wrap;
   color: var(--cream);
@@ -445,11 +458,14 @@ a:hover {
   right: 0.9rem;
   bottom: 0.9rem;
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--ink) 80%, transparent);
+  background: rgba(11, 12, 11, 0.9);
   color: var(--cream);
   border-radius: 999px;
   padding: 0.45rem 0.85rem;
-  font: 600 0.82rem var(--body);
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.4;
   cursor: pointer;
 }
 
@@ -467,7 +483,7 @@ a:hover {
   font-weight: 800;
   font-size: clamp(8rem, 22vw, 14rem);
   line-height: 0.8;
-  color: color-mix(in srgb, var(--cream) 6%, transparent);
+  color: rgba(232, 228, 217, 0.06);
   pointer-events: none;
   user-select: none;
   z-index: 0;
@@ -529,7 +545,8 @@ a:hover {
 .demo-frame figcaption {
   padding: 0.85rem 1rem 1rem;
   color: var(--cream-dim);
-  font-size: 0.92rem;
+  font-size: 1rem;
+  max-width: 65ch;
   border-top: 1px solid var(--line);
 }
 
@@ -562,7 +579,7 @@ a:hover {
 
 .spec-strip strong {
   font-family: var(--display);
-  font-size: 1.15rem;
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -584,19 +601,16 @@ a:hover {
 .privacy-grid {
   display: grid;
   gap: 2rem;
-  padding: 2rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background:
-    linear-gradient(135deg, rgba(226, 168, 59, 0.07), transparent 45%),
-    var(--ink-2);
+  padding: 2rem 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
 @media (min-width: 860px) {
   .privacy-grid {
     grid-template-columns: 1.2fr 0.8fr;
     align-items: center;
-    padding: 2.5rem 2.75rem;
+    padding: 2.5rem 0;
   }
 }
 
@@ -658,7 +672,7 @@ a:hover {
 .shortcuts dt {
   margin: 0;
   color: var(--cream-dim);
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .shortcuts dd {
@@ -675,7 +689,7 @@ kbd {
   border-radius: 6px;
   background: var(--ink-3);
   font-family: var(--mono);
-  font-size: 0.8rem;
+  font-size: 1rem;
   text-align: center;
 }
 
@@ -692,7 +706,7 @@ kbd {
   gap: 0.75rem 1.5rem;
   justify-content: space-between;
   color: var(--cream-dim);
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .footer-inner p {
@@ -701,7 +715,9 @@ kbd {
 
 .footer-inner a {
   color: var(--cream);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 0.18em;
 }
 
 .footer-inner a:hover {

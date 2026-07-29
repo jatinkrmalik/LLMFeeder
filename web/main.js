@@ -1,7 +1,7 @@
 (() => {
   const HTML_SAMPLE = `<article class="post">
   <h1>Why context quality wins</h1>
-  <p>Paste <b>clean structure</b>, not chrome.</p>
+  <p>Paste <b>clean structure</b>, not site clutter.</p>
   <ul>
     <li>Main content only</li>
     <li>Tables preserved</li>
@@ -10,7 +10,7 @@
 
   const MD_SAMPLE = `# Why context quality wins
 
-Paste **clean structure**, not chrome.
+Paste **clean structure**, not site clutter.
 
 - Main content only
 - Tables preserved`;
@@ -23,10 +23,11 @@ Paste **clean structure**, not chrome.
   const header = document.querySelector(".site-header");
   const navToggle = document.querySelector(".nav-toggle");
   const mobileNav = document.getElementById("mobileNav");
-  const starCount = document.getElementById("starCount");
 
   let mode = "html";
-  let animating = false;
+  let paintTimer;
+  let conversionTimer;
+  let autoPlayTimer;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function escapeHtml(str) {
@@ -49,14 +50,15 @@ Paste **clean structure**, not chrome.
 
   function colorMd(src) {
     return escapeHtml(src)
-      .replaceAll(/^(# .+)$/m, '<span class="md-h">$1</span>')
+      .replaceAll(/^(# .+)$/gm, '<span class="md-h">$1</span>')
       .replaceAll(/\*\*(.+?)\*\*/g, '<span class="md-b">**$1**</span>');
   }
 
   function render(nextMode, { animate = false } = {}) {
+    window.clearTimeout(paintTimer);
     mode = nextMode;
     modeButtons.forEach((btn) => {
-      btn.setAttribute("aria-selected", String(btn.dataset.mode === mode));
+      btn.setAttribute("aria-pressed", String(btn.dataset.mode === mode));
     });
 
     const raw = mode === "html" ? HTML_SAMPLE : MD_SAMPLE;
@@ -67,25 +69,28 @@ Paste **clean structure**, not chrome.
       return;
     }
 
-    animating = true;
     out.style.opacity = "0";
     out.style.transform = "translateY(6px)";
-    window.setTimeout(() => {
+    paintTimer = window.setTimeout(() => {
       out.innerHTML = painted;
       out.style.opacity = "1";
       out.style.transform = "translateY(0)";
-      animating = false;
     }, 160);
   }
 
   function playConversion() {
-    if (animating) return;
+    window.clearTimeout(conversionTimer);
     render("html");
-    window.setTimeout(() => render("md", { animate: true }), reduceMotion ? 0 : 450);
+    conversionTimer = window.setTimeout(
+      () => render("md", { animate: true }),
+      reduceMotion ? 0 : 450
+    );
   }
 
   modeButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
+      window.clearTimeout(autoPlayTimer);
+      window.clearTimeout(conversionTimer);
       render(btn.dataset.mode, { animate: true });
     });
   });
@@ -106,7 +111,7 @@ Paste **clean structure**, not chrome.
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               reveal();
-              window.setTimeout(playConversion, 700);
+              autoPlayTimer = window.setTimeout(playConversion, 700);
               io.disconnect();
             }
           });
@@ -116,14 +121,19 @@ Paste **clean structure**, not chrome.
       io.observe(panel);
     } else {
       reveal();
-      window.setTimeout(playConversion, 500);
+      autoPlayTimer = window.setTimeout(playConversion, 500);
     }
   }
 
-  // Sticky header border
+  // Sticky header border — rAF-batched so scroll never forces sync reflows
+  let scrollTicking = false;
   const onScroll = () => {
-    if (!header) return;
-    header.classList.toggle("is-scrolled", window.scrollY > 8);
+    if (scrollTicking) return;
+    scrollTicking = true;
+    window.requestAnimationFrame(() => {
+      if (header) header.classList.toggle("is-scrolled", window.scrollY > 8);
+      scrollTicking = false;
+    });
   };
   onScroll();
   window.addEventListener("scroll", onScroll, { passive: true });
@@ -145,6 +155,14 @@ Paste **clean structure**, not chrome.
         navToggle.setAttribute("aria-label", "Open menu");
       });
     });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || mobileNav.hasAttribute("hidden")) return;
+      mobileNav.setAttribute("hidden", "");
+      navToggle.setAttribute("aria-expanded", "false");
+      navToggle.setAttribute("aria-label", "Open menu");
+      navToggle.focus();
+    });
   }
 
   // Lazy video play near viewport
@@ -154,6 +172,7 @@ Paste **clean structure**, not chrome.
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             if (video.preload === "none") video.preload = "metadata";
+            if (reduceMotion) return;
             const playPromise = video.play();
             if (playPromise && typeof playPromise.catch === "function") {
               playPromise.catch(() => {});
@@ -166,17 +185,5 @@ Paste **clean structure**, not chrome.
       { threshold: 0.4 }
     );
     vio.observe(video);
-  }
-
-  // Optional live star count (silent fallback)
-  if (starCount) {
-    fetch("https://api.github.com/repos/jatinkrmalik/LLMFeeder")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!data || typeof data.stargazers_count !== "number") return;
-        starCount.textContent = data.stargazers_count.toLocaleString();
-        starCount.hidden = false;
-      })
-      .catch(() => {});
   }
 })();
