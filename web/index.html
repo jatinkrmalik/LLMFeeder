@@ -40,8 +40,8 @@
     <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon.png">
     <link rel="icon" type="image/png" sizes="48x48" href="./assets/icon-48.png">
     <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
-    <link rel="preload" href="./assets/fonts/syne-latin.woff2" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="./assets/fonts/ibm-plex-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./assets/fonts/literata-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./assets/fonts/source-sans-3-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="./styles.css">
     <noscript>
       <!-- No JS *and* no scroll-timeline support: collapse the scene and show
@@ -63,12 +63,8 @@
       (function () {
         try {
           var stored = localStorage.getItem("llmfeeder-theme");
-          var theme =
-            stored === "light" || stored === "dark"
-              ? stored
-              : window.matchMedia("(prefers-color-scheme: dark)").matches
-                ? "dark"
-                : "light";
+          // Light is the default. Only a saved preference overrides it.
+          var theme = stored === "dark" || stored === "light" ? stored : "light";
           document.documentElement.setAttribute("data-theme", theme);
         } catch (e) {
           document.documentElement.setAttribute("data-theme", "light");
@@ -90,7 +86,6 @@
         "license": "https://opensource.org/licenses/MIT",
         "isAccessibleForFree": true,
         "image": "https://jatinkrmalik.github.io/LLMFeeder/assets/og-image.png",
-        "screenshot": "https://jatinkrmalik.github.io/LLMFeeder/assets/demo-poster.webp",
         "featureList": [
           "One-click webpage to Markdown conversion",
           "Multi-tab batch conversion",
@@ -164,17 +159,18 @@
     <main id="main">
       <!-- ================= HERO ================= -->
       <section class="hero shell" id="top">
-        <p class="hero-stat">
-          <span class="hero-stat-num">90%</span>
-          <span class="hero-stat-label">
-            of a page’s tokens are markup and furniture your model still pays to read
-            <a href="#convert">see the measurements</a>
-          </span>
-        </p>
-        <h1>Your model is reading <span class="strike">div soup</span>. Feed it Markdown.</h1>
+        <h1>
+          Your model is reading
+          <code class="markup-phrase" aria-hidden="true"><span class="markup">&lt;div&gt;</span><span class="markup-core">soup</span><span class="markup">&lt;/div&gt;</span></code><span class="sr-only">div soup</span>.
+          Feed it Markdown.
+        </h1>
         <p class="hero-lede">
-          LLMFeeder rips the nav, ads, and script noise off any page and copies what’s left
-          as clean Markdown. One click, entirely in your browser.
+          LLMFeeder strips the nav, ads and script noise off any page and copies what’s
+          left as clean Markdown. One click, entirely in your browser.
+        </p>
+        <p class="hero-proof">
+          <strong>10.4&times;</strong> fewer tokens, median across five measured pages.
+          <a href="#convert">See the measurements</a>
         </p>
         <div class="cta-row">
           <a
@@ -243,95 +239,92 @@
                 </ol>
               </div>
 
-              <!-- The page artifact -->
+              <!-- The page artifact + trash -->
               <div class="stage-artifact">
-                <div class="mock" data-mock>
-                  <!-- decorative page furniture -->
-                  <div class="mock-chrome" aria-hidden="true">
-                    <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
-                    <span class="mock-url">example.com/why-context-quality-wins</span>
-                  </div>
-
-                  <div class="mock-body">
-                    <div class="mock-nav layer-chrome" aria-hidden="true">
-                      <span class="mock-logo"></span>
-                      <span class="mock-link"></span><span class="mock-link"></span>
-                      <span class="mock-link"></span><span class="mock-link short"></span>
-                      <span class="mock-cta"></span>
+                <div class="artifact-row">
+                  <div class="mock" data-mock>
+                    <div class="mock-chrome" aria-hidden="true">
+                      <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
+                      <span class="mock-url">example.com/why-context-quality-wins</span>
                     </div>
 
-                    <div class="mock-ad layer-chrome" aria-hidden="true">
-                      <span>ADVERTISEMENT</span>
-                    </div>
-
-                    <div class="mock-columns">
-                      <div class="mock-share layer-chrome" aria-hidden="true">
-                        <span class="mock-pill"></span><span class="mock-pill"></span>
-                        <span class="mock-pill"></span><span class="mock-pill"></span>
+                    <div class="mock-body">
+                      <div class="mock-nav layer-chrome" data-discard="Nav chrome" aria-hidden="true">
+                        <span class="mock-logo"></span>
+                        <span class="mock-link"></span><span class="mock-link"></span>
+                        <span class="mock-link"></span><span class="mock-link short"></span>
+                        <span class="mock-cta"></span>
                       </div>
 
-                      <!-- the real content -->
-                      <div class="mock-article layer-content">
-                        <p class="mock-kicker layer-deco" aria-hidden="true">Engineering · 8 min read</p>
-                        <p class="mock-title">Why context quality beats context length</p>
-                        <div class="mock-byline layer-deco" aria-hidden="true">
-                          <span class="mock-avatar"></span>
-                          <span class="mock-byline-text"></span>
+                      <div class="mock-ad layer-chrome" data-discard="Ads" aria-hidden="true">
+                        <span>ADVERTISEMENT</span>
+                      </div>
+
+                      <div class="mock-columns">
+                        <div class="mock-share layer-chrome" data-discard="Share rail" aria-hidden="true">
+                          <span class="mock-pill"></span><span class="mock-pill"></span>
+                          <span class="mock-pill"></span><span class="mock-pill"></span>
                         </div>
-                        <p class="mock-p">
-                          A bigger context window does not make a model read better. It only
-                          makes it <strong>cheaper to be sloppy</strong> about what you send.
-                        </p>
-                        <p class="mock-p">
-                          Raw page markup carries class names, tracking attributes and script
-                          tags that mean nothing to a language model.
-                        </p>
-                        <ul class="mock-list">
-                          <li>Markup is noise the model still has to read</li>
-                          <li>Structure is signal worth preserving</li>
-                        </ul>
-                        <table class="mock-table">
-                          <thead>
-                            <tr><th>Format</th><th>Tokens</th></tr>
-                          </thead>
-                          <tbody>
-                            <tr><td>Raw HTML</td><td>100,238</td></tr>
-                            <tr><td>Markdown</td><td>8,577</td></tr>
-                          </tbody>
-                        </table>
+
+                        <div class="mock-article layer-content">
+                          <p class="mock-kicker layer-deco" aria-hidden="true">Engineering · 8 min read</p>
+                          <p class="mock-title">Why context quality beats context length</p>
+                          <div class="mock-byline layer-deco" aria-hidden="true">
+                            <span class="mock-avatar"></span>
+                            <span class="mock-byline-text"></span>
+                          </div>
+                          <p class="mock-p">
+                            A bigger context window does not make a model read better. It only
+                            makes it <strong>cheaper to be sloppy</strong> about what you send.
+                          </p>
+                          <p class="mock-p">
+                            Raw page markup carries class names, tracking attributes and script
+                            tags that mean nothing to a language model.
+                          </p>
+                          <ul class="mock-list">
+                            <li>Markup is noise the model still has to read</li>
+                            <li>Structure is signal worth preserving</li>
+                          </ul>
+                          <table class="mock-table">
+                            <thead>
+                              <tr><th>Format</th><th>Tokens</th></tr>
+                            </thead>
+                            <tbody>
+                              <tr><td>Raw HTML</td><td>100,238</td></tr>
+                              <tr><td>Markdown</td><td>8,577</td></tr>
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div class="mock-side layer-chrome" data-discard="Sidebar" aria-hidden="true">
+                          <span class="mock-side-title"></span>
+                          <span class="mock-side-row"></span><span class="mock-side-row"></span>
+                          <span class="mock-side-row"></span>
+                          <div class="mock-ad small"><span>AD</span></div>
+                        </div>
                       </div>
 
-                      <aside class="mock-side layer-chrome" aria-hidden="true">
-                        <span class="mock-side-title"></span>
-                        <span class="mock-side-row"></span><span class="mock-side-row"></span>
-                        <span class="mock-side-row"></span>
-                        <div class="mock-ad small"><span>AD</span></div>
-                      </aside>
+                      <div class="mock-related layer-chrome" data-discard="Related posts" aria-hidden="true">
+                        <span class="mock-card"></span><span class="mock-card"></span><span class="mock-card"></span>
+                      </div>
+
+                      <div class="mock-footer layer-chrome" data-discard="Footer links" aria-hidden="true">
+                        <span class="mock-frow"></span><span class="mock-frow"></span>
+                        <span class="mock-frow"></span><span class="mock-frow"></span>
+                      </div>
                     </div>
 
-                    <div class="mock-related layer-chrome" aria-hidden="true">
-                      <span class="mock-card"></span><span class="mock-card"></span><span class="mock-card"></span>
+                    <div class="mock-cookie layer-interrupt" data-discard="Cookie banner" aria-hidden="true">
+                      <span class="mock-cookie-text"></span>
+                      <span class="mock-cookie-btn"></span>
+                    </div>
+                    <div class="mock-newsletter layer-interrupt" data-discard="Newsletter popup" aria-hidden="true">
+                      <span class="mock-nl-title"></span>
+                      <span class="mock-nl-row"></span>
+                      <span class="mock-nl-btn"></span>
                     </div>
 
-                    <div class="mock-footer layer-chrome" aria-hidden="true">
-                      <span class="mock-frow"></span><span class="mock-frow"></span>
-                      <span class="mock-frow"></span><span class="mock-frow"></span>
-                    </div>
-                  </div>
-
-                  <!-- overlays that peel first -->
-                  <div class="mock-cookie layer-interrupt" aria-hidden="true">
-                    <span class="mock-cookie-text"></span>
-                    <span class="mock-cookie-btn"></span>
-                  </div>
-                  <div class="mock-newsletter layer-interrupt" aria-hidden="true">
-                    <span class="mock-nl-title"></span>
-                    <span class="mock-nl-row"></span>
-                    <span class="mock-nl-btn"></span>
-                  </div>
-
-                  <!-- the markdown result -->
-                  <pre class="mock-md layer-md" aria-hidden="true"><span class="md-h"># Why context quality beats context length</span>
+                    <pre class="mock-md layer-md" aria-hidden="true"><span class="md-h"># Why context quality beats context length</span>
 
 A bigger context window does not make a model read
 better. It only makes it <span class="md-b">**cheaper to be sloppy**</span>
@@ -349,6 +342,27 @@ language model.
 <span class="md-m">| Raw HTML  | 100,238 |</span>
 <span class="md-m">| Markdown  | 8,577   |</span>
 </pre>
+                  </div>
+
+                  <div class="trash" aria-hidden="true">
+                    <div class="trash-bin" data-trash>
+                      <svg class="trash-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0v12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7M10 11v6M14 11v6"></path>
+                      </svg>
+                      <span class="trash-label">Discarded</span>
+                      <span class="trash-count"><span data-trash-count>0</span> pieces</span>
+                    </div>
+                    <ul class="trash-chips" data-trash-chips>
+                      <li data-chip="Cookie banner">Cookie banner</li>
+                      <li data-chip="Newsletter popup">Newsletter</li>
+                      <li data-chip="Nav chrome">Nav chrome</li>
+                      <li data-chip="Ads">Ads</li>
+                      <li data-chip="Share rail">Share rail</li>
+                      <li data-chip="Sidebar">Sidebar</li>
+                      <li data-chip="Related posts">Related</li>
+                      <li data-chip="Footer links">Footer</li>
+                    </ul>
+                  </div>
                 </div>
                 <p class="scroll-cue" aria-hidden="true">keep scrolling</p>
               </div>
@@ -403,37 +417,6 @@ language model.
             </div>
             <p class="composer-hint">Context used: 7%</p>
           </div>
-        </figure>
-      </section>
-
-      <!-- ================= DEMO ================= -->
-      <section class="demo shell" id="demo" aria-labelledby="demo-heading">
-        <div class="demo-copy">
-          <h2 id="demo-heading">The real thing, in one click.</h2>
-          <p>Open a page, hit convert, paste. No tab hopping, no hand-cleaning HTML.</p>
-          <ul class="demo-steps">
-            <li>Click the toolbar icon, or press <kbd>Alt</kbd><kbd>Shift</kbd><kbd>M</kbd></li>
-            <li>Markdown lands on your clipboard</li>
-            <li>Paste it wherever your model lives</li>
-          </ul>
-        </div>
-        <figure class="demo-frame">
-          <video
-            id="demoVideo"
-            class="demo-video"
-            poster="./assets/demo-poster.webp"
-            playsinline
-            muted
-            loop
-            preload="none"
-            controls
-          >
-            <source src="./assets/demo.webm" type="video/webm">
-            <source src="./assets/demo.mp4" type="video/mp4">
-          </video>
-          <figcaption>
-            LLMFeeder converting a webpage to Markdown and copying it to the clipboard.
-          </figcaption>
         </figure>
       </section>
 

@@ -1,7 +1,7 @@
 /* LLMFeeder landing — interactivity
    Deliberately small. The scroll scene runs on CSS scroll-driven animations
    (off the main thread) wherever they're supported; JS only covers the theme
-   toggle, the step highlights, the no-support fallback, and lazy video. */
+   toggle, the step highlights, trash chips, and the no-support fallback. */
 
 (() => {
   "use strict";
@@ -145,12 +145,27 @@
   const track = document.querySelector("[data-strip]");
   const steps = Array.from(document.querySelectorAll(".stage-steps li"));
   const readout = document.querySelector(".readout-num");
+  const trashBin = document.querySelector("[data-trash]");
+  const trashCount = document.querySelector("[data-trash-count]");
+  const trashChips = Array.from(document.querySelectorAll("[data-trash-chips] li"));
 
   const TOKENS_RAW = 100238;
   const TOKENS_MD = 8577;
 
   // Progress thresholds that mirror the CSS animation-range values.
   const STEP_AT = [0, 0.16, 0.42, 0.58, 0.82];
+
+  // When each discarded piece lands in the trash (matches animation-range ends).
+  const CHIP_AT = [
+    { name: "Newsletter popup", at: 0.1 },
+    { name: "Cookie banner", at: 0.13 },
+    { name: "Nav chrome", at: 0.28 },
+    { name: "Ads", at: 0.3 },
+    { name: "Share rail", at: 0.32 },
+    { name: "Sidebar", at: 0.34 },
+    { name: "Related posts", at: 0.36 },
+    { name: "Footer links", at: 0.38 },
+  ];
 
   function markSteps(progress) {
     let active = 0;
@@ -164,9 +179,24 @@
     return active;
   }
 
+  function markTrash(progress) {
+    let landed = 0;
+    trashChips.forEach((chip) => {
+      const name = chip.getAttribute("data-chip");
+      const rule = CHIP_AT.find((c) => c.name === name);
+      const inBin = rule ? progress >= rule.at : false;
+      chip.classList.toggle("is-in", inBin);
+      if (inBin) landed += 1;
+    });
+    if (trashCount) trashCount.textContent = String(landed);
+    if (trashBin) {
+      trashBin.classList.toggle("is-active", progress > 0.02 && progress < 0.5);
+      trashBin.classList.toggle("is-full", landed >= CHIP_AT.length);
+    }
+  }
+
   function setFallbackTokens(progress) {
     if (!readout) return;
-    // Ease the count so it tracks the visual drain rather than raw scroll.
     const t = Math.min(1, Math.max(0, (progress - 0.04) / 0.78));
     const value = Math.round(TOKENS_RAW + (TOKENS_MD - TOKENS_RAW) * t);
     readout.style.setProperty("--tok", String(value));
@@ -180,20 +210,16 @@
       const rect = track.getBoundingClientRect();
       const viewport = window.innerHeight;
       const scrollable = rect.height - viewport;
-      // Tall sticky track: progress is how far we've scrolled through it.
-      // Short track (collapsed by reduced motion or a narrow override): fall
-      // back to view progress so the scene never freezes at zero.
       const progress =
         scrollable > 40
           ? Math.min(1, Math.max(0, -rect.top / scrollable))
           : Math.min(1, Math.max(0, (viewport - rect.top) / (viewport + rect.height)));
 
       markSteps(progress);
-      // CSS drives the counter when scroll timelines exist.
+      markTrash(progress);
       if (!supportsScrollTimeline) {
         setFallbackTokens(progress);
-        const stage = Math.min(4, markSteps(progress));
-        track.setAttribute("data-stage", String(stage));
+        track.setAttribute("data-stage", String(Math.min(4, markSteps(progress))));
       }
       ticking = false;
     };
@@ -223,35 +249,10 @@
     window.addEventListener("resize", onScroll, { passive: true });
     update();
   } else if (track && reduceMotion) {
-    // Reduced motion: state is final, so light every step and land the number.
     steps.forEach((step) => step.classList.add("is-active"));
+    trashChips.forEach((chip) => chip.classList.add("is-in"));
+    if (trashCount) trashCount.textContent = String(CHIP_AT.length);
+    if (trashBin) trashBin.classList.add("is-full");
     if (readout) readout.style.setProperty("--tok", String(TOKENS_MD));
-  }
-
-  /* ---------- demo video ---------- */
-
-  const video = document.getElementById("demoVideo");
-
-  if (video && "IntersectionObserver" in window) {
-    const vio = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) {
-            video.pause();
-            return;
-          }
-          if (video.preload === "none") video.preload = "metadata";
-          if (reduceMotion) return;
-          const playing = video.play();
-          if (playing && typeof playing.catch === "function") {
-            playing.catch(() => {
-              /* autoplay refused: poster + controls remain */
-            });
-          }
-        });
-      },
-      { threshold: 0.4 }
-    );
-    vio.observe(video);
   }
 })();
