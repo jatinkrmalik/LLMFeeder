@@ -468,59 +468,23 @@ h2 {
   color: var(--warn);
 }
 
-/* Install CTAs get the strongest treatment on the page: bigger targets, a
-   grounded shadow under the primary, and an occasional shine sweep that
-   pulls the eye without looping constantly. */
+/* CTA rows keep a slightly larger target without shine or chromatic glow. */
 .cta-row .btn {
-  min-height: 3.25rem;
-  padding: 0.8rem 1.4rem;
-  font-size: 1.0625rem;
+  min-height: 3.15rem;
+  padding: 0.75rem 1.35rem;
 }
 
 .cta-row .btn-primary {
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--accent-fill) 65%, transparent);
+  box-shadow: 0 8px 20px -12px rgba(23, 25, 28, 0.35);
 }
 
 .cta-row .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 34px -12px color-mix(in srgb, var(--accent-fill) 80%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -12px rgba(23, 25, 28, 0.4);
 }
 
-.cta-row .btn-primary::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    105deg,
-    transparent 42%,
-    rgba(255, 255, 255, 0.32) 50%,
-    transparent 58%
-  );
-  transform: translateX(-130%);
-  animation: btn-shine 5.5s var(--ease) infinite;
-}
-
-[data-theme="dark"] .cta-row .btn-primary::after {
-  background: linear-gradient(
-    105deg,
-    transparent 42%,
-    rgba(255, 255, 255, 0.5) 50%,
-    transparent 58%
-  );
-}
-
-@keyframes btn-shine {
-  0%,
-  74% {
-    transform: translateX(-130%);
-  }
-  88%,
-  100% {
-    transform: translateX(130%);
-  }
+[data-theme="dark"] .cta-row .btn-primary {
+  box-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.55);
 }
 
 /* ---------- hero ---------- */
@@ -566,22 +530,22 @@ h2 {
   }
 }
 
-/* Peek of the strip scene in the empty right side of the hero. It previews
-   the exact browser window the strip scene uses (same URL, same furniture),
-   then sinks down and "hands off" to that window as you scroll. */
+/* Peek of the strip scene: same browser chrome and URL as the scene below,
+   kept quiet so it doesn't fight the headline, then sinks into the scene on
+   scroll. */
 .hero-peek {
   display: none;
   pointer-events: none;
   position: absolute;
-  top: 10%;
+  top: 14%;
   right: 0;
-  width: min(48vw, 38rem);
-  height: min(72%, 34rem);
+  width: min(44vw, 34rem);
+  height: min(64%, 30rem);
   z-index: 0;
-  opacity: 0.55;
-  transform: translate(4%, 4%) rotate(-1.5deg) scale(0.96);
+  opacity: 0.32;
+  transform: translate(6%, 6%) rotate(-1.5deg) scale(0.94);
   transform-origin: 80% 60%;
-  filter: saturate(0.8);
+  filter: saturate(0.7);
 }
 
 @media (min-width: 768px) and (min-height: 700px) {
@@ -592,10 +556,10 @@ h2 {
 
 @media (min-width: 768px) and (max-width: 1099px) {
   .hero-peek {
-    width: min(42vw, 22rem);
-    height: min(48%, 20rem);
-    opacity: 0.38;
-    top: 26%;
+    width: min(40vw, 20rem);
+    height: min(44%, 18rem);
+    opacity: 0.24;
+    top: 30%;
   }
 }
 
@@ -625,14 +589,14 @@ h2 {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.6rem 0.8rem;
+  padding: 0.55rem 0.75rem;
   background: var(--peek-paper-2);
   border-bottom: 1px solid var(--peek-rule);
 }
 
 .hero-peek-chrome span {
-  width: 0.5rem;
-  height: 0.5rem;
+  width: 0.45rem;
+  height: 0.45rem;
   border-radius: 50%;
   background: var(--peek-paper-3);
 }
@@ -640,9 +604,9 @@ h2 {
 .hero-peek-chrome span:last-child {
   width: auto;
   height: auto;
-  margin-left: 0.6rem;
+  margin-left: 0.55rem;
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--peek-dim);
   background: transparent;
   overflow: hidden;
@@ -651,7 +615,7 @@ h2 {
 }
 
 .hero-peek-body {
-  padding: 0.75rem;
+  padding: 0.7rem;
   overflow: hidden;
   background: var(--peek-paper);
 }
@@ -659,116 +623,72 @@ h2 {
 .peek-nav {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding-bottom: 0.6rem;
+  gap: 0.35rem;
+  padding-bottom: 0.55rem;
   border-bottom: 1px solid var(--peek-rule);
 }
 
 .peek-logo {
-  width: 1.5rem;
-  height: 0.55rem;
+  width: 1.4rem;
+  height: 0.5rem;
   border-radius: 3px;
   background: var(--peek-accent);
-  opacity: 0.7;
+  opacity: 0.65;
 }
 
 .peek-link {
-  width: 2.2rem;
-  height: 0.4rem;
+  width: 2rem;
+  height: 0.35rem;
   border-radius: 3px;
   background: var(--peek-paper-3);
 }
 
 .peek-link.short {
-  width: 1.4rem;
+  width: 1.2rem;
 }
 
 .peek-cta {
   margin-left: auto;
-  width: 3rem;
-  height: 1.1rem;
+  width: 2.6rem;
+  height: 0.95rem;
   border-radius: 5px;
   background: var(--peek-accent);
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .peek-ad {
-  margin: 0.6rem 0;
-  height: 2.4rem;
-  padding: 0.5rem 0.85rem;
-  display: grid;
-  place-items: center;
+  margin: 0.55rem 0;
+  height: 1.8rem;
   border: 1px dashed var(--peek-warn);
   border-radius: 6px;
   background: color-mix(in srgb, var(--peek-warn) 8%, transparent);
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--peek-warn);
-}
-
-.peek-ad.small {
-  height: 3.4rem;
-  margin: 0.5rem 0 0;
 }
 
 .peek-cols {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 5.5rem;
-  gap: 0.7rem;
+  grid-template-columns: minmax(0, 1fr) 4.5rem;
+  gap: 0.65rem;
 }
 
 .peek-article {
   min-width: 0;
 }
 
-.peek-kicker {
-  margin: 0 0 0.3rem;
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--peek-dim);
-}
-
 .peek-title {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.55rem;
   font-family: var(--display);
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--peek-ink);
 }
 
-.peek-byline {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.6rem;
-}
-
-.peek-avatar {
-  width: 1.1rem;
-  height: 1.1rem;
-  border-radius: 50%;
-  background: var(--peek-accent);
-  opacity: 0.5;
-}
-
-.peek-byline-text {
-  height: 0.35rem;
-  width: 5rem;
-  border-radius: 3px;
-  background: var(--peek-paper-3);
-}
-
 .peek-line {
-  height: 0.5rem;
+  height: 0.45rem;
   border-radius: 4px;
   background: var(--peek-paper-3);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.45rem;
 }
 
 .peek-line.mid {
@@ -798,37 +718,6 @@ h2 {
   opacity: 1;
 }
 
-.peek-related {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.4rem;
-  margin-top: 0.7rem;
-}
-
-.peek-card {
-  height: 2rem;
-  border-radius: 5px;
-  background: var(--peek-paper-3);
-}
-
-.peek-footer {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.4rem;
-  margin-top: 0.6rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--peek-rule);
-}
-
-.peek-frow {
-  height: 1.5rem;
-  border-radius: 4px;
-  background: var(--peek-paper-2);
-}
-
-/* As the hero scrolls away the peek straightens up, comes into full focus and
-   sinks toward the strip scene's browser window, so the two read as one
-   window travelling down the page. */
 @supports (animation-timeline: view()) {
   .hero-peek {
     animation: peek-merge linear both;
@@ -839,45 +728,43 @@ h2 {
 
 @keyframes peek-merge {
   0% {
-    opacity: 0.55;
-    transform: translate(4%, 4%) rotate(-1.5deg) scale(0.96);
-    filter: saturate(0.8);
+    opacity: 0.32;
+    transform: translate(6%, 6%) rotate(-1.5deg) scale(0.94);
+    filter: saturate(0.7);
   }
   45% {
-    opacity: 0.9;
-    transform: translate(2%, 34%) rotate(-0.5deg) scale(0.98);
-    filter: saturate(1);
+    opacity: 0.55;
+    transform: translate(2%, 36%) rotate(-0.4deg) scale(0.97);
+    filter: saturate(0.85);
   }
   85% {
-    opacity: 0.85;
-    transform: translate(0%, 78%) rotate(0deg) scale(1);
+    opacity: 0.45;
+    transform: translate(0%, 80%) rotate(0deg) scale(1);
     filter: saturate(1);
   }
   100% {
     opacity: 0;
-    transform: translate(0%, 96%) rotate(0deg) scale(1);
+    transform: translate(0%, 98%) rotate(0deg) scale(1);
     filter: saturate(1);
   }
 }
 
-/* The scroll invitation. On tall screens it sits centered at the bottom edge
-   of the hero, floating gently, with a shimmer running through the label. */
+/* Scroll invitation: bottom-center on tall screens, arrow nudge only. */
 .hero-hint {
   z-index: 2;
   margin-top: 2.5rem;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   align-self: center;
   padding: 0.5rem 0.75rem;
   color: var(--ink-dim);
   text-decoration: none;
   font-family: var(--mono);
   font-size: 0.8125rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  animation: hint-float 3.2s ease-in-out infinite;
 }
 
 @media (min-height: 620px) and (min-width: 700px) {
@@ -894,59 +781,10 @@ h2 {
   color: var(--accent);
 }
 
-.hint-text {
-  /* color:transparent would zero out currentColor inside the gradient, so the
-     base tone is spelled out via a custom property instead. */
-  --hint-ink: var(--ink-dim);
-  background: linear-gradient(
-    90deg,
-    var(--hint-ink) 0%,
-    var(--hint-ink) 38%,
-    var(--accent) 50%,
-    var(--hint-ink) 62%,
-    var(--hint-ink) 100%
-  );
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: hint-shimmer 3.2s linear infinite;
-}
-
-.hero-hint:hover .hint-text {
-  --hint-ink: var(--accent);
-}
-
-@keyframes hint-shimmer {
-  from {
-    background-position: 125% 0;
-  }
-  to {
-    background-position: -125% 0;
-  }
-}
-
-@keyframes hint-float {
-  0%,
-  100% {
-    transform: translate(var(--hint-x, 0), 0);
-  }
-  50% {
-    transform: translate(var(--hint-x, 0), 0.3rem);
-  }
-}
-
-@media (min-height: 620px) and (min-width: 700px) {
-  .hero .hero-hint {
-    --hint-x: -50%;
-    transform: translate(var(--hint-x), 0);
-  }
-}
-
 .hero-hint svg {
-  width: 1.05rem;
-  height: 1.05rem;
-  animation: nudge 3.2s var(--ease) infinite;
+  width: 1rem;
+  height: 1rem;
+  animation: nudge 2.8s var(--ease) infinite;
 }
 
 @keyframes nudge {
@@ -956,134 +794,58 @@ h2 {
     transform: translateY(0);
   }
   72% {
-    transform: translateY(0.3rem);
+    transform: translateY(0.28rem);
   }
 }
 
-/* Open-source badge above the headline: the first thing the fold says. */
-.hero-eyebrow {
-  margin: 0 0 1.4rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  align-self: flex-start;
-  padding: 0.4rem 0.9rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--rule));
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 0.875rem;
-  letter-spacing: 0.02em;
-}
-
-.hero-eyebrow svg {
-  width: 1rem;
-  height: 1rem;
-  flex: 0 0 auto;
-}
-
-/* The proof stat: the number that gets people to install. Large, accented,
-   with the methodology tucked behind a hover/press, like the strip scene's
-   footnote. */
+/* Proof stays in the typographic flow: a bigger accent number, not a card.
+   Methodology opens from the quiet text button beside it. */
 .hero-proof {
   position: relative;
-  margin: 1.75rem 0 0;
+  z-index: 3;
+  margin: 1.5rem 0 0;
   align-self: flex-start;
+  max-width: 42rem;
 }
 
-/* Outranks the `.hero > *` rule so the popover paints over the CTA row. */
 .hero > .hero-proof {
   z-index: 3;
 }
 
-.proof-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
+.hero-proof-line {
   margin: 0;
-  padding: 0.8rem 1.2rem;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  background: linear-gradient(135deg, var(--accent-soft) 0%, transparent 78%);
-  font-family: var(--body);
-  text-align: left;
-  color: var(--ink);
-  cursor: help;
-  transition: border-color 0.25s var(--ease), transform 0.25s var(--ease),
-    box-shadow 0.25s var(--ease);
+  color: var(--ink-dim);
+  font-size: 1.0625rem;
+  line-height: 1.55;
 }
 
-.proof-stat:hover,
-.proof-stat:focus-visible,
-.proof-stat[aria-expanded="true"] {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--rule));
-  transform: translateY(-1px);
-  box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--accent-fill) 55%, transparent);
-}
-
-.proof-num {
+.hero-proof-line strong {
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(2.1rem, 3.6vw, 2.9rem);
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
   color: var(--accent);
+  margin-right: 0.15rem;
 }
 
-.proof-label {
-  display: grid;
-  gap: 0.2rem;
+.proof-link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
 }
 
-.proof-label strong {
-  font-weight: 600;
-  font-size: 1.0625rem;
-  line-height: 1.3;
-  color: var(--ink);
-}
-
-.proof-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: var(--ink-dim);
-  font-size: 0.875rem;
-  line-height: 1.3;
-}
-
-.proof-hint svg {
-  width: 0.9rem;
-  height: 0.9rem;
-  flex: 0 0 auto;
-  opacity: 0.8;
-}
-
-/* "Works with" strip: puts the hero's spare room to work as social proof. */
-.hero-works {
-  margin: 1.5rem 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.works-label {
-  margin-right: 0.35rem;
-  color: var(--ink-dim);
-  font-size: 0.9375rem;
-}
-
-.works-chip {
-  padding: 0.28rem 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  background: var(--paper-2);
-  color: var(--ink-dim);
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
+.proof-link:hover,
+.proof-link:focus-visible,
+.proof-link[aria-expanded="true"] {
+  color: var(--accent-strong);
+  text-decoration-thickness: 2px;
 }
 
 /* The headline is the hero's visual: let it run wide rather than leaving two
@@ -1294,7 +1056,7 @@ h2 {
   display: none;
 }
 
-/* The hero variant opens downward from the stat card. Declared after every
+/* The hero variant opens downward from the proof line. Declared after every
    .method-popover rule (including its media queries) so its position wins. */
 .method-popover.proof-popover {
   left: 0;
@@ -2668,18 +2430,8 @@ kbd {
     scroll-snap-type: none !important;
   }
 
-  .hero-hint,
-  .hero-hint svg,
-  .hint-text,
-  .cta-row .btn-primary::after {
+  .hero-hint svg {
     animation: none !important;
-  }
-
-  .hint-text {
-    background: none;
-    color: inherit;
-    -webkit-background-clip: initial;
-    background-clip: initial;
   }
 
   .readout-num {
