@@ -146,14 +146,6 @@ a {
 
 /* Hover colour is declared per component rather than globally: a blanket
    a:hover would repaint button labels sitting on filled surfaces. */
-.hero-proof a {
-  display: inline-block;
-  padding: 0.35rem 0;
-  min-height: 2.75rem;
-  line-height: 2;
-}
-
-.hero-proof a:hover,
 .method-popover a:hover,
 .install-lede a:hover {
   color: var(--accent-strong);
@@ -454,6 +446,83 @@ h2 {
   color: var(--accent);
 }
 
+/* Live star count fetched from GitHub; hidden until it resolves. */
+.gh-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  margin-left: 0.1rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper-2);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-dim);
+}
+
+.gh-count::before {
+  content: "\2605";
+  margin-right: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--warn);
+}
+
+/* Install CTAs get the strongest treatment on the page: bigger targets, a
+   grounded shadow under the primary, and an occasional shine sweep that
+   pulls the eye without looping constantly. */
+.cta-row .btn {
+  min-height: 3.25rem;
+  padding: 0.8rem 1.4rem;
+  font-size: 1.0625rem;
+}
+
+.cta-row .btn-primary {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--accent-fill) 65%, transparent);
+}
+
+.cta-row .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px -12px color-mix(in srgb, var(--accent-fill) 80%, transparent);
+}
+
+.cta-row .btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.32) 50%,
+    transparent 58%
+  );
+  transform: translateX(-130%);
+  animation: btn-shine 5.5s var(--ease) infinite;
+}
+
+[data-theme="dark"] .cta-row .btn-primary::after {
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 58%
+  );
+}
+
+@keyframes btn-shine {
+  0%,
+  74% {
+    transform: translateX(-130%);
+  }
+  88%,
+  100% {
+    transform: translateX(130%);
+  }
+}
+
 /* ---------- hero ---------- */
 
 /* ---------- scroll rhythm ---------- */
@@ -497,21 +566,22 @@ h2 {
   }
 }
 
-/* Peek of the strip scene in the empty right side of the hero  -  soft and
-   waiting to be scrolled into focus. */
+/* Peek of the strip scene in the empty right side of the hero. It previews
+   the exact browser window the strip scene uses (same URL, same furniture),
+   then sinks down and "hands off" to that window as you scroll. */
 .hero-peek {
   display: none;
   pointer-events: none;
   position: absolute;
-  top: 12%;
+  top: 10%;
   right: 0;
   width: min(48vw, 38rem);
-  height: min(70%, 34rem);
+  height: min(72%, 34rem);
   z-index: 0;
-  opacity: 0.45;
-  transform: translate(4%, 6%) rotate(-1.5deg) scale(0.96);
+  opacity: 0.55;
+  transform: translate(4%, 4%) rotate(-1.5deg) scale(0.96);
   transform-origin: 80% 60%;
-  filter: saturate(0.75);
+  filter: saturate(0.8);
 }
 
 @media (min-width: 768px) and (min-height: 700px) {
@@ -524,17 +594,27 @@ h2 {
   .hero-peek {
     width: min(42vw, 22rem);
     height: min(48%, 20rem);
-    opacity: 0.32;
-    top: 28%;
+    opacity: 0.38;
+    top: 26%;
   }
 }
 
+/* The peek borrows the mock's fixed light palette so both windows read as
+   the same page regardless of site theme. */
 .hero-peek-frame {
+  --peek-paper: #ffffff;
+  --peek-paper-2: #f4f2ee;
+  --peek-paper-3: #e6e3dc;
+  --peek-rule: #d8d4cb;
+  --peek-ink: #17191c;
+  --peek-dim: #5a6068;
+  --peek-accent: #1a73e8;
+  --peek-warn: #9e4413;
   width: 100%;
   height: 100%;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--peek-rule);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--peek-paper);
   box-shadow: var(--shadow);
   overflow: hidden;
   display: grid;
@@ -544,108 +624,294 @@ h2 {
 .hero-peek-chrome {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.55rem 0.75rem;
-  background: #f4f2ee;
-  border-bottom: 1px solid #d8d4cb;
+  gap: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--peek-paper-2);
+  border-bottom: 1px solid var(--peek-rule);
 }
 
 .hero-peek-chrome span {
-  width: 0.45rem;
-  height: 0.45rem;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
-  background: #d8d4cb;
+  background: var(--peek-paper-3);
 }
 
 .hero-peek-chrome span:last-child {
   width: auto;
   height: auto;
-  margin-left: 0.5rem;
+  margin-left: 0.6rem;
   font-family: var(--mono);
-  font-size: 0.65rem;
-  color: #8a8f96;
+  font-size: 0.7rem;
+  color: var(--peek-dim);
   background: transparent;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .hero-peek-body {
-  padding: 1rem 1.1rem;
-  display: grid;
-  gap: 0.55rem;
-  align-content: start;
-  background: linear-gradient(180deg, #fff 0%, #f7f5f0 100%);
+  padding: 0.75rem;
+  overflow: hidden;
+  background: var(--peek-paper);
 }
 
-.hero-peek-line {
+.peek-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--peek-rule);
+}
+
+.peek-logo {
+  width: 1.5rem;
   height: 0.55rem;
-  border-radius: 4px;
-  background: #e6e3dc;
+  border-radius: 3px;
+  background: var(--peek-accent);
+  opacity: 0.7;
 }
 
-.hero-peek-line.wide {
-  width: 78%;
+.peek-link {
+  width: 2.2rem;
+  height: 0.4rem;
+  border-radius: 3px;
+  background: var(--peek-paper-3);
+}
+
+.peek-link.short {
+  width: 1.4rem;
+}
+
+.peek-cta {
+  margin-left: auto;
+  width: 3rem;
   height: 1.1rem;
-  background: #17191c;
-  opacity: 0.72;
+  border-radius: 5px;
+  background: var(--peek-accent);
+  opacity: 0.55;
 }
 
-.hero-peek-line.mid {
-  width: 92%;
-}
-
-.hero-peek-line.short {
-  width: 54%;
-}
-
-.hero-peek-ad {
-  margin-top: 0.35rem;
-  height: 2.2rem;
-  border: 1px dashed #c47a3a;
+.peek-ad {
+  margin: 0.6rem 0;
+  height: 2.4rem;
+  padding: 0.5rem 0.85rem;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--peek-warn);
   border-radius: 6px;
-  background: rgba(196, 122, 58, 0.08);
+  background: color-mix(in srgb, var(--peek-warn) 8%, transparent);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--peek-warn);
 }
 
+.peek-ad.small {
+  height: 3.4rem;
+  margin: 0.5rem 0 0;
+}
+
+.peek-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.5rem;
+  gap: 0.7rem;
+}
+
+.peek-article {
+  min-width: 0;
+}
+
+.peek-kicker {
+  margin: 0 0 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--peek-dim);
+}
+
+.peek-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--peek-ink);
+}
+
+.peek-byline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.peek-avatar {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--peek-accent);
+  opacity: 0.5;
+}
+
+.peek-byline-text {
+  height: 0.35rem;
+  width: 5rem;
+  border-radius: 3px;
+  background: var(--peek-paper-3);
+}
+
+.peek-line {
+  height: 0.5rem;
+  border-radius: 4px;
+  background: var(--peek-paper-3);
+  margin-bottom: 0.5rem;
+}
+
+.peek-line.mid {
+  width: 88%;
+}
+
+.peek-line.short {
+  width: 56%;
+}
+
+.peek-side {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.peek-srow {
+  height: 0.35rem;
+  border-radius: 3px;
+  background: var(--peek-paper-3);
+  opacity: 0.7;
+}
+
+.peek-srow.title {
+  height: 0.45rem;
+  width: 70%;
+  opacity: 1;
+}
+
+/* As the hero scrolls away the peek straightens up, comes into full focus and
+   sinks toward the strip scene's browser window, so the two read as one
+   window travelling down the page. */
 @supports (animation-timeline: view()) {
   .hero-peek {
-    animation: peek-in linear both;
+    animation: peek-merge linear both;
     animation-timeline: view();
-    animation-range: exit 0% exit 70%;
+    animation-range: exit 0% exit 100%;
   }
 }
 
-@keyframes peek-in {
-  to {
+@keyframes peek-merge {
+  0% {
+    opacity: 0.55;
+    transform: translate(4%, 4%) rotate(-1.5deg) scale(0.96);
+    filter: saturate(0.8);
+  }
+  45% {
+    opacity: 0.9;
+    transform: translate(2%, 34%) rotate(-0.5deg) scale(0.98);
+    filter: saturate(1);
+  }
+  85% {
+    opacity: 0.85;
+    transform: translate(0%, 78%) rotate(0deg) scale(1);
+    filter: saturate(1);
+  }
+  100% {
     opacity: 0;
-    transform: translate(10%, 18%) rotate(-3deg) scale(0.88);
-    filter: blur(3px) saturate(0.35);
+    transform: translate(0%, 96%) rotate(0deg) scale(1);
+    filter: saturate(1);
   }
 }
 
-/* Sits just below the CTAs rather than pinned to the bottom edge: pushing it
-   down left a dead band in the middle of the hero. */
+/* The scroll invitation. On tall screens it sits centered at the bottom edge
+   of the hero, floating gently, with a shimmer running through the label. */
 .hero-hint {
-  position: relative;
   z-index: 2;
-  padding-top: 3.25rem;
+  margin-top: 2.5rem;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  align-self: flex-start;
+  gap: 0.4rem;
+  align-self: center;
+  padding: 0.5rem 0.75rem;
   color: var(--ink-dim);
   text-decoration: none;
   font-family: var(--mono);
   font-size: 0.8125rem;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
+  animation: hint-float 3.2s ease-in-out infinite;
+}
+
+@media (min-height: 620px) and (min-width: 700px) {
+  .hero .hero-hint {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(0.75rem, 3vh, 2rem);
+    margin-top: 0;
+    transform: translateX(-50%);
+  }
 }
 
 .hero-hint:hover {
   color: var(--accent);
 }
 
+.hint-text {
+  background: linear-gradient(
+    90deg,
+    currentColor 0%,
+    currentColor 38%,
+    var(--accent) 50%,
+    currentColor 62%,
+    currentColor 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: hint-shimmer 3.2s linear infinite;
+}
+
+@keyframes hint-shimmer {
+  from {
+    background-position: 125% 0;
+  }
+  to {
+    background-position: -125% 0;
+  }
+}
+
+@keyframes hint-float {
+  0%,
+  100% {
+    transform: translate(var(--hint-x, 0), 0);
+  }
+  50% {
+    transform: translate(var(--hint-x, 0), 0.3rem);
+  }
+}
+
+@media (min-height: 620px) and (min-width: 700px) {
+  .hero .hero-hint {
+    --hint-x: -50%;
+    transform: translate(var(--hint-x), 0);
+  }
+}
+
 .hero-hint svg {
-  width: 1rem;
-  height: 1rem;
-  animation: nudge 2.4s var(--ease) infinite;
+  width: 1.05rem;
+  height: 1.05rem;
+  animation: nudge 3.2s var(--ease) infinite;
 }
 
 @keyframes nudge {
@@ -654,27 +920,139 @@ h2 {
   100% {
     transform: translateY(0);
   }
-  70% {
-    transform: translateY(0.28rem);
+  72% {
+    transform: translateY(0.3rem);
   }
 }
 
-/* One inline number instead of the slab of stat that used to sit above the
-   headline and delay the actual message. */
-.hero-proof {
-  margin: 1.5rem 0 0;
-  padding-top: 1.25rem;
-  border-top: 1px solid var(--rule);
-  color: var(--ink-dim);
-  max-width: 60rem;
+/* Open-source badge above the headline: the first thing the fold says. */
+.hero-eyebrow {
+  margin: 0 0 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--rule));
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
 }
 
-.hero-proof strong {
+.hero-eyebrow svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+/* The proof stat: the number that gets people to install. Large, accented,
+   with the methodology tucked behind a hover/press, like the strip scene's
+   footnote. */
+.hero-proof {
+  position: relative;
+  z-index: 3;
+  margin: 1.75rem 0 0;
+  align-self: flex-start;
+}
+
+.proof-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.8rem 1.2rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent-soft) 0%, transparent 78%);
+  font-family: var(--body);
+  text-align: left;
+  color: var(--ink);
+  cursor: help;
+  transition: border-color 0.25s var(--ease), transform 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+
+.proof-stat:hover,
+.proof-stat:focus-visible,
+.proof-stat[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--rule));
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--accent-fill) 55%, transparent);
+}
+
+.proof-num {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 1.375rem;
+  font-size: clamp(2.1rem, 3.6vw, 2.9rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
   color: var(--accent);
-  margin-right: 0.15rem;
+}
+
+.proof-label {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.proof-label strong {
+  font-weight: 600;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.proof-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--ink-dim);
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.proof-hint svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+  opacity: 0.8;
+}
+
+.proof-popover {
+  left: 0;
+  right: auto;
+  bottom: auto;
+  top: calc(100% + 0.55rem);
+  width: min(34rem, calc(100vw - 2.5rem));
+}
+
+/* "Works with" strip: puts the hero's spare room to work as social proof. */
+.hero-works {
+  margin: 1.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.works-label {
+  margin-right: 0.35rem;
+  color: var(--ink-dim);
+  font-size: 0.9375rem;
+}
+
+.works-chip {
+  padding: 0.28rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper-2);
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 /* The headline is the hero's visual: let it run wide rather than leaving two
@@ -2249,8 +2627,18 @@ kbd {
     scroll-snap-type: none !important;
   }
 
-  .hero-hint svg {
+  .hero-hint,
+  .hero-hint svg,
+  .hint-text,
+  .cta-row .btn-primary::after {
     animation: none !important;
+  }
+
+  .hint-text {
+    background: none;
+    color: inherit;
+    -webkit-background-clip: initial;
+    background-clip: initial;
   }
 
   .readout-num {

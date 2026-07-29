@@ -256,28 +256,27 @@
     if (readout) readout.style.setProperty("--tok", String(TOKENS_MD));
   }
 
-  /* ---------- methodology popover ---------- */
+  /* ---------- hover/press popovers (methodology + hero proof) ---------- */
 
-  const methodTrigger = document.getElementById("methodTrigger");
-  const methodPopover = document.getElementById("methodPopover");
+  function initPopover(trigger, popover) {
+    if (!trigger || !popover) return;
 
-  if (methodTrigger && methodPopover) {
     let hoverTimer = 0;
     let suppressDocClose = false;
 
     const open = () => {
-      methodPopover.hidden = false;
-      methodTrigger.setAttribute("aria-expanded", "true");
+      popover.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
     };
 
     const close = () => {
-      methodPopover.hidden = true;
-      methodTrigger.setAttribute("aria-expanded", "false");
+      popover.hidden = true;
+      trigger.setAttribute("aria-expanded", "false");
     };
 
-    const isOpen = () => methodTrigger.getAttribute("aria-expanded") === "true";
+    const isOpen = () => trigger.getAttribute("aria-expanded") === "true";
 
-    methodTrigger.addEventListener("click", (event) => {
+    trigger.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       suppressDocClose = true;
@@ -288,49 +287,78 @@
       open();
     });
 
-    methodTrigger.addEventListener("mouseenter", () => {
+    trigger.addEventListener("mouseenter", () => {
       if (!window.matchMedia("(hover: hover)").matches) return;
       window.clearTimeout(hoverTimer);
       open();
     });
 
-    methodTrigger.addEventListener("mouseleave", () => {
+    trigger.addEventListener("mouseleave", () => {
       if (!window.matchMedia("(hover: hover)").matches) return;
       hoverTimer = window.setTimeout(() => {
-        if (!methodPopover.matches(":hover") && document.activeElement !== methodTrigger) {
+        if (!popover.matches(":hover") && document.activeElement !== trigger) {
           close();
         }
       }, 180);
     });
 
-    methodPopover.addEventListener("mouseenter", () => {
+    popover.addEventListener("mouseenter", () => {
       if (!window.matchMedia("(hover: hover)").matches) return;
       window.clearTimeout(hoverTimer);
       open();
     });
 
-    methodPopover.addEventListener("mouseleave", () => {
+    popover.addEventListener("mouseleave", () => {
       if (!window.matchMedia("(hover: hover)").matches) return;
       hoverTimer = window.setTimeout(() => {
-        if (document.activeElement !== methodTrigger) close();
+        if (document.activeElement !== trigger) close();
       }, 180);
     });
 
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && isOpen()) {
         close();
-        methodTrigger.focus();
+        trigger.focus();
       }
     });
 
     document.addEventListener("click", (event) => {
       if (suppressDocClose || !isOpen()) return;
-      if (
-        !methodTrigger.contains(event.target) &&
-        !methodPopover.contains(event.target)
-      ) {
+      if (!trigger.contains(event.target) && !popover.contains(event.target)) {
         close();
       }
     });
+  }
+
+  initPopover(
+    document.getElementById("methodTrigger"),
+    document.getElementById("methodPopover")
+  );
+  initPopover(
+    document.getElementById("proofTrigger"),
+    document.getElementById("proofPopover")
+  );
+
+  /* ---------- live GitHub star count ---------- */
+
+  const starSlots = document.querySelectorAll("[data-gh-count]");
+  if (starSlots.length && "fetch" in window) {
+    fetch("https://api.github.com/repos/jatinkrmalik/LLMFeeder", {
+      headers: { Accept: "application/vnd.github+json" },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data || typeof data.stargazers_count !== "number") return;
+        const n = data.stargazers_count;
+        const label =
+          n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k` : String(n);
+        starSlots.forEach((slot) => {
+          slot.textContent = label;
+          slot.hidden = false;
+        });
+      })
+      .catch(() => {
+        /* Offline or rate-limited: the button reads fine without a count. */
+      });
   }
 })();

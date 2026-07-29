@@ -159,6 +159,10 @@
     <main id="main">
       <!-- ================= HERO ================= -->
       <section class="hero shell" id="top">
+        <p class="hero-eyebrow">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5A11.5 11.5 0 0 0 8.3 22.9c.6.1.8-.2.8-.5v-2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.7 1.7 2.7 1.2.1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6a4.6 4.6 0 0 1 1.2-3.2c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.9 4.4 19 4.7 19 4.7c.6 1.6.2 2.8.1 3.1a4.6 4.6 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .5Z"></path></svg>
+          100% open-source · MIT licensed
+        </p>
         <h1>
           Your model is reading
           <code class="markup-phrase" aria-hidden="true"><span class="markup">&lt;div&gt;</span><span class="markup-core">soup</span><span class="markup">&lt;/div&gt;</span></code><span class="sr-only">div soup</span>.
@@ -168,10 +172,40 @@
           LLMFeeder strips nav, ads, and script noise from any page, then copies
           the rest as clean Markdown. One click, all in your browser.
         </p>
-        <p class="hero-proof">
-          <strong>10.4&times;</strong> fewer tokens on the median page we measured.
-          <a href="#convert">See the measurements</a>
-        </p>
+        <div class="hero-proof">
+          <button
+            type="button"
+            class="proof-stat"
+            id="proofTrigger"
+            aria-expanded="false"
+            aria-controls="proofPopover"
+          >
+            <span class="proof-num" aria-hidden="true">10.4&times;</span>
+            <span class="proof-label">
+              <strong>fewer tokens on the median page</strong>
+              <span class="proof-hint">
+                Same content, as clean Markdown · How we measured
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path stroke-linecap="round" d="M12 11v5M12 8h.01"></path>
+                </svg>
+              </span>
+            </span>
+            <span class="sr-only">
+              10.4 times fewer tokens on the median page we measured. Activate for methodology.
+            </span>
+          </button>
+          <div class="method-popover proof-popover" id="proofPopover" role="note" hidden>
+            <p>
+              Measured with this repository's own <code>readability.js</code> and
+              <code>turndown.js</code> on
+              <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN's <code>animation-timeline</code> page</a>
+              (100,238 to 8,577 est. tokens). Across five pages: median
+              <strong>10.4&times;</strong> reduction (4.5&times; to 15.1&times;).
+              <a href="#convert">Watch a page get stripped</a>.
+            </p>
+          </div>
+        </div>
         <div class="cta-row">
           <a
             class="btn btn-primary"
@@ -199,12 +233,21 @@
           >
             <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5A11.5 11.5 0 0 0 8.3 22.9c.6.1.8-.2.8-.5v-2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.7 1.7 2.7 1.2.1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6a4.6 4.6 0 0 1 1.2-3.2c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.9 4.4 19 4.7 19 4.7c.6 1.6.2 2.8.1 3.1a4.6 4.6 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .5Z"></path></svg>
             Star on GitHub
+            <span class="gh-count" data-gh-count hidden></span>
           </a>
         </div>
-        <p class="cta-note">Free · MIT · v2.2.0 · No account, no telemetry</p>
+        <p class="cta-note">Free · Open-source (MIT) · v2.2.0 · No account, no telemetry</p>
+        <p class="hero-works">
+          <span class="works-label">Cleaner context for</span>
+          <span class="works-chip">ChatGPT</span>
+          <span class="works-chip">Claude</span>
+          <span class="works-chip">Gemini</span>
+          <span class="works-chip">Copilot</span>
+          <span class="works-chip">any LLM</span>
+        </p>
 
         <a class="hero-hint" href="#convert">
-          <span>Scroll to strip a page</span>
+          <span class="hint-text">Scroll to strip a page</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M6 13l6 6 6-6"></path>
           </svg>
@@ -217,13 +260,35 @@
               <span>example.com/why-context-quality-wins</span>
             </div>
             <div class="hero-peek-body">
-              <div class="hero-peek-line wide"></div>
-              <div class="hero-peek-line mid"></div>
-              <div class="hero-peek-line mid"></div>
-              <div class="hero-peek-line short"></div>
-              <div class="hero-peek-ad"></div>
-              <div class="hero-peek-line mid"></div>
-              <div class="hero-peek-line short"></div>
+              <div class="peek-nav">
+                <span class="peek-logo"></span>
+                <span class="peek-link"></span><span class="peek-link"></span>
+                <span class="peek-link"></span><span class="peek-link short"></span>
+                <span class="peek-cta"></span>
+              </div>
+              <div class="peek-ad"><span>ADVERTISEMENT</span></div>
+              <div class="peek-cols">
+                <div class="peek-article">
+                  <p class="peek-kicker">Engineering · 8 min read</p>
+                  <p class="peek-title">Why context quality beats context length</p>
+                  <div class="peek-byline">
+                    <span class="peek-avatar"></span>
+                    <span class="peek-byline-text"></span>
+                  </div>
+                  <div class="peek-line"></div>
+                  <div class="peek-line"></div>
+                  <div class="peek-line short"></div>
+                  <div class="peek-line"></div>
+                  <div class="peek-line mid"></div>
+                </div>
+                <div class="peek-side">
+                  <span class="peek-srow title"></span>
+                  <span class="peek-srow"></span>
+                  <span class="peek-srow"></span>
+                  <span class="peek-srow"></span>
+                  <div class="peek-ad small"><span>AD</span></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -546,6 +611,7 @@ language model.
           >
             <svg class="btn-ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5A11.5 11.5 0 0 0 8.3 22.9c.6.1.8-.2.8-.5v-2c-3.3.7-4-1.4-4-1.4-.5-1.3-1.2-1.6-1.2-1.6-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.7 1.7 2.7 1.2.1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6a4.6 4.6 0 0 1 1.2-3.2c-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.4 11.4 0 0 1 6 0C17.9 4.4 19 4.7 19 4.7c.6 1.6.2 2.8.1 3.1a4.6 4.6 0 0 1 1.2 3.2c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.2c0 .3.2.6.8.5A11.5 11.5 0 0 0 12 .5Z"></path></svg>
             Star on GitHub
+            <span class="gh-count" data-gh-count hidden></span>
           </a>
         </div>
       </section>
