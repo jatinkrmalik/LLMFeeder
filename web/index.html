@@ -3,35 +3,35 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LLMFeeder — Webpage to Markdown for ChatGPT, Claude &amp; Gemini</title>
+    <title>LLMFeeder: Webpage to Markdown for ChatGPT, Claude and Gemini</title>
     <meta
       name="description"
-      content="Web pages are mostly markup. LLMFeeder strips a page to clean Markdown in one click, around 10x fewer tokens in measured tests. Free Chrome and Firefox extension, 100% local."
+      content="Convert any webpage to clean Markdown for ChatGPT, Claude, and Gemini. Multi-tab copy, token counter, 100% private. Free for Chrome and Firefox."
     >
     <link rel="canonical" href="https://jatinkrmalik.github.io/LLMFeeder/">
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jatinkrmalik.github.io/LLMFeeder/">
     <meta property="og:site_name" content="LLMFeeder">
-    <meta property="og:title" content="LLMFeeder — Webpage to Markdown for AI">
+    <meta property="og:title" content="LLMFeeder: Webpage to Markdown for AI">
     <meta
       property="og:description"
-      content="Most of what you paste into an LLM is markup. LLMFeeder converts any page to clean Markdown locally, in one click."
+      content="Convert any webpage to clean Markdown for ChatGPT, Claude, and Gemini. Runs locally. Free for Chrome and Firefox."
     >
     <meta property="og:image" content="https://jatinkrmalik.github.io/LLMFeeder/assets/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="LLMFeeder — Webpage to Markdown for AI">
+    <meta property="og:image:alt" content="LLMFeeder: Webpage to Markdown for AI">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:creator" content="@jatinkrmalik">
-    <meta name="twitter:title" content="LLMFeeder — Webpage to Markdown for AI">
+    <meta name="twitter:title" content="LLMFeeder: Webpage to Markdown for AI">
     <meta
       name="twitter:description"
-      content="Most of what you paste into an LLM is markup. LLMFeeder converts any page to clean Markdown locally, in one click."
+      content="Convert any webpage to clean Markdown for ChatGPT, Claude, and Gemini. Runs locally. Free for Chrome and Firefox."
     >
     <meta name="twitter:image" content="https://jatinkrmalik.github.io/LLMFeeder/assets/og-image.png">
-    <meta name="twitter:image:alt" content="LLMFeeder — Webpage to Markdown for AI">
+    <meta name="twitter:image:alt" content="LLMFeeder: Webpage to Markdown for AI">
 
     <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
@@ -165,11 +165,11 @@
           Feed it Markdown.
         </h1>
         <p class="hero-lede">
-          LLMFeeder strips the nav, ads and script noise off any page and copies what’s
-          left as clean Markdown. One click, entirely in your browser.
+          LLMFeeder strips nav, ads, and script noise from any page, then copies
+          the rest as clean Markdown. One click, all in your browser.
         </p>
         <p class="hero-proof">
-          <strong>10.4&times;</strong> fewer tokens, median across five measured pages.
+          <strong>10.4&times;</strong> fewer tokens on the median page we measured.
           <a href="#convert">See the measurements</a>
         </p>
         <div class="cta-row">
@@ -237,7 +237,7 @@
               <!-- Live readout -->
               <div class="stage-readout">
                 <h2 id="convert-heading" class="stage-heading">
-                  Watch a page become Markdown
+                  Strip a page to Markdown
                 </h2>
                 <p class="readout">
                   <span class="readout-num" aria-hidden="true"></span>
@@ -249,11 +249,11 @@
                 </p>
                 <div class="rail" aria-hidden="true"><span class="rail-fill"></span></div>
                 <ol class="stage-steps">
-                  <li data-step="1"><span>Dismiss the interruptions</span></li>
-                  <li data-step="2"><span>Find the article</span></li>
-                  <li data-step="3"><span>Drop the presentation layer</span></li>
-                  <li data-step="4"><span>Keep the structure as Markdown</span></li>
-                  <li data-step="5"><span>Copy. Ready to paste.</span></li>
+                  <li data-step="1"><span>Clear popups and banners</span></li>
+                  <li data-step="2"><span>Keep the main article</span></li>
+                  <li data-step="3"><span>Drop styles and chrome</span></li>
+                  <li data-step="4"><span>Rewrite it as Markdown</span></li>
+                  <li data-step="5"><span>Copy it. Paste anywhere.</span></li>
                 </ol>
               </div>
 
@@ -292,8 +292,8 @@
                             <span class="mock-byline-text"></span>
                           </div>
                           <p class="mock-p">
-                            A bigger context window does not make a model read better. It only
-                            makes it <strong>cheaper to be sloppy</strong> about what you send.
+                            A bigger context window does not make a model read better.
+                            It just makes it easier to send junk.
                           </p>
                           <p class="mock-p">
                             Raw page markup carries class names, tracking attributes and script
@@ -345,8 +345,7 @@
                     <pre class="mock-md layer-md" aria-hidden="true"><span class="md-h"># Why context quality beats context length</span>
 
 A bigger context window does not make a model read
-better. It only makes it <span class="md-b">**cheaper to be sloppy**</span>
-about what you send.
+better. It just makes it easier to send junk.
 
 Raw page markup carries class names, tracking
 attributes and script tags that mean nothing to a
@@ -387,12 +386,12 @@ language model.
 
               <footer class="stage-footnote">
                 <p>
-                  Measured with this repository’s own <code>readability.js</code> and
+                  Measured with this repository's own <code>readability.js</code> and
                   <code>turndown.js</code> on
-                  <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN’s <code>animation-timeline</code> page</a>
-                  (100,238 → 8,577 est. tokens). Across five pages: median
-                  <strong>10.4&times;</strong> reduction (4.5&times;–15.1&times;). Estimates use the
-                  extension’s own ~4 bytes/token heuristic, not a billed tokenizer.
+                  <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN's <code>animation-timeline</code> page</a>
+                  (100,238 to 8,577 est. tokens). Across five pages: median
+                  <strong>10.4&times;</strong> reduction (4.5&times; to 15.1&times;). Estimates use the
+                  extension's own ~4 bytes/token heuristic, not a billed tokenizer.
                 </p>
               </footer>
             </div>
@@ -403,10 +402,10 @@ language model.
       <!-- ================= SCENE B: THE PASTE ================= -->
       <section class="paste shell" id="paste" aria-labelledby="paste-heading">
         <div class="paste-copy">
-          <h2 id="paste-heading">Same page. 7% of the window instead of 78%.</h2>
+          <h2 id="paste-heading">Same page. 7% of a 128K window, not 78%.</h2>
           <p>
-            Tokens you don’t spend on markup are tokens left for the actual question.
-            Against a 128K context window, that measured page fits with room to spare.
+            Tokens you skip on markup are free for the actual question.
+            On a 128K context window, that measured page still leaves most of the room.
           </p>
           <ul class="bars">
             <li>
@@ -438,29 +437,29 @@ language model.
       <!-- ================= FEATURES ================= -->
       <section class="features shell" id="features" aria-labelledby="features-heading">
         <div class="section-head wide">
-          <h2 id="features-heading">Built for the paste that matters.</h2>
-          <p>Capture the right content, keep its structure, and know whether it fits before you send it.</p>
+          <h2 id="features-heading">Built for cleaner pastes.</h2>
+          <p>Pull the right content, keep the structure, and check the size before you send it.</p>
         </div>
         <ul class="spec-strip">
           <li>
             <strong>Smart extraction</strong>
-            <span>Mozilla Readability pulls the article, not the furniture around it.</span>
+            <span>Mozilla Readability pulls the article, not the sidebar and ads around it.</span>
           </li>
           <li>
             <strong>Multi-tab batch</strong>
-            <span>Convert several tabs at once. Merge them, or download a ZIP.</span>
+            <span>Convert several tabs at once. Merge into one file, or download a ZIP.</span>
           </li>
           <li>
             <strong>Token awareness</strong>
-            <span>Live estimates with configurable context limits, before you paste.</span>
+            <span>Live token estimates with configurable limits, before you paste.</span>
           </li>
           <li>
-            <strong>Tables that survive</strong>
-            <span>HTML tables become real Markdown pipes, empty cells included.</span>
+            <strong>Tables stay intact</strong>
+            <span>HTML tables become Markdown tables, empty cells included.</span>
           </li>
           <li>
             <strong>Lazy chat scroll</strong>
-            <span>Optional auto-scroll so long Gemini, ChatGPT and Claude threads aren’t truncated.</span>
+            <span>Optional auto-scroll so long Gemini, ChatGPT, and Claude threads are not cut off.</span>
           </li>
           <li>
             <strong>Keyboard first</strong>
@@ -471,11 +470,11 @@ language model.
           </li>
           <li>
             <strong>Links on demand</strong>
-            <span>Strip URLs when you want fewer tokens, keep them when you need sources.</span>
+            <span>Strip URLs to save tokens, or keep them when you need sources.</span>
           </li>
           <li>
             <strong>Metadata you control</strong>
-            <span>Template your citation block with title, URL, author, date and more.</span>
+            <span>Template a citation block with title, URL, author, date, and more.</span>
           </li>
         </ul>
       </section>
@@ -486,24 +485,24 @@ language model.
           <div>
             <h2 id="privacy-heading">The page never leaves your browser.</h2>
             <p>
-              Extraction, Markdown conversion and clipboard writes all run locally.
-              No backend, no account, no content upload.
+              Extraction, Markdown conversion, and clipboard writes all run locally.
+              No backend, no account, no upload.
             </p>
           </div>
           <ul class="privacy-points">
-            <li>Zero remote transmission during conversion</li>
-            <li>Only the permissions the job needs</li>
-            <li>MIT licensed and auditable line by line</li>
+            <li>Nothing is sent over the network during conversion</li>
+            <li>Only the permissions it needs to work</li>
+            <li>MIT licensed, and you can read every line</li>
           </ul>
         </div>
       </section>
 
       <!-- ================= INSTALL ================= -->
       <section class="install shell" id="install" aria-labelledby="install-heading">
-        <h2 id="install-heading">Stop paying for markup.</h2>
+        <h2 id="install-heading">Stop pasting markup.</h2>
         <p class="install-lede">
-          Install it for your browser, then star the repo so the next person
-          drowning in <code>&lt;div&gt;</code> soup finds it too.
+          Install it for your browser, then star the repo so the next person stuck in
+          <code>&lt;div&gt;</code> soup can find it too.
         </p>
         <div class="cta-row">
           <a

@@ -1,4 +1,4 @@
-/* LLMFeeder landing — interactivity
+/* LLMFeeder landing  -  interactivity
    Deliberately small. The scroll scene runs on CSS scroll-driven animations
    (off the main thread) wherever they're supported; JS only covers the theme
    toggle, the step highlights, trash chips, and the no-support fallback. */

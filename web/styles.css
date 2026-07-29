@@ -1,4 +1,4 @@
-/* LLMFeeder landing — "Plain Text"
+/* LLMFeeder landing  -  "Plain Text"
    Ink-on-paper document world. Accent is the extension's own blue.
    Scroll-driven scenes animate transform/opacity/filter only, so they stay
    on the compositor. Firefox (no scroll-timeline yet) gets a staged fallback. */
@@ -49,7 +49,7 @@
   --rule: #d5d1c6;
   --ink: #17191c;
   --ink-dim: #575c64;
-  /* Google's own blue ramp, split by job: Blue 700 for text (5.1:1 on paper —
+  /* Google's own blue ramp, split by job: Blue 700 for text (5.1:1 on paper  - 
      Blue 600 only reaches 4.31:1) and Blue 600 for fills, where white type
      sits at 4.8:1. */
   --accent: #1967d2;
@@ -479,7 +479,7 @@ h2 {
   }
 }
 
-/* Peek of the strip scene in the empty right side of the hero — soft and
+/* Peek of the strip scene in the empty right side of the hero  -  soft and
    waiting to be scrolled into focus. */
 .hero-peek {
   display: none;
@@ -660,7 +660,7 @@ h2 {
   overflow-wrap: break-word;
 }
 
-/* HTML markup styling for "div soup" — tags in muted mono, soup struck through. */
+/* HTML markup styling for "div soup"  -  tags in muted mono, soup struck through. */
 .markup-phrase {
   display: inline-block;
   font-family: var(--mono);
