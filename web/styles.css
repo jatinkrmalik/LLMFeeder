@@ -589,7 +589,25 @@ h2 {
   height: min(72vh, 38rem);
   opacity: 0.48;
   filter: saturate(0.72);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  outline: none;
+  transition: opacity 0.35s var(--ease), filter 0.35s var(--ease),
+    transform 0.35s var(--ease);
+}
+
+.hero-aside .hero-peek:hover,
+.hero-aside .hero-peek:focus-visible {
+  opacity: 0.96;
+  filter: saturate(1);
+  transform: translateY(-0.2rem);
+}
+
+.hero-aside .hero-peek:focus-visible .hero-peek-frame {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 @media (min-width: 768px) and (max-width: 1099px) {
@@ -686,7 +704,7 @@ h2 {
   background: var(--peek-paper-3);
 }
 
-.hero-peek-chrome span:last-child {
+.hero-peek-chrome .peek-url {
   width: auto;
   height: auto;
   margin-left: 0.55rem;
@@ -697,6 +715,22 @@ h2 {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  border-radius: 0;
+}
+
+.hero-peek-chrome .peek-url-md {
+  display: none;
+}
+
+.hero-aside .hero-peek:hover .peek-url-html,
+.hero-aside .hero-peek:focus-visible .peek-url-html {
+  display: none;
+}
+
+.hero-aside .hero-peek:hover .peek-url-md,
+.hero-aside .hero-peek:focus-visible .peek-url-md {
+  display: inline;
+  color: var(--peek-accent);
 }
 
 .hero-peek-body {
@@ -704,6 +738,78 @@ h2 {
   padding: 0.7rem;
   overflow: hidden;
   background: var(--peek-paper);
+  transition: opacity 0.4s var(--ease), filter 0.4s var(--ease);
+}
+
+.hero-aside .hero-peek:hover .peek-soup,
+.hero-aside .hero-peek:focus-visible .peek-soup {
+  opacity: 0;
+  filter: blur(2px);
+}
+
+.peek-md {
+  position: absolute;
+  inset: 2.35rem 0 0;
+  margin: 0;
+  padding: 1rem 1.1rem 2.4rem;
+  background: var(--peek-paper);
+  font-family: var(--mono);
+  font-size: clamp(0.58rem, 1.05vw, 0.74rem);
+  line-height: 1.6;
+  color: var(--peek-ink);
+  overflow: hidden;
+  white-space: pre-wrap;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.45s var(--ease);
+}
+
+.hero-aside .hero-peek:hover .peek-md,
+.hero-aside .hero-peek:focus-visible .peek-md {
+  clip-path: inset(0 0 0 0);
+}
+
+.peek-md .md-h {
+  color: var(--peek-accent);
+  font-weight: 600;
+}
+
+.peek-md .md-m {
+  color: var(--peek-accent);
+}
+
+.peek-affordance {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.55rem;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--peek-paper) 88%, transparent);
+  border: 1px solid var(--peek-rule);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--peek-dim);
+  pointer-events: none;
+}
+
+.peek-affordance-hot {
+  display: none;
+}
+
+.hero-aside .hero-peek:hover .peek-affordance-rest,
+.hero-aside .hero-peek:focus-visible .peek-affordance-rest {
+  display: none;
+}
+
+.hero-aside .hero-peek:hover .peek-affordance-hot,
+.hero-aside .hero-peek:focus-visible .peek-affordance-hot {
+  display: inline;
+  color: var(--peek-accent);
 }
 
 .peek-nav {

@@ -220,13 +220,18 @@
         </a>
 
         <div class="hero-aside">
-          <div class="hero-peek" aria-hidden="true">
+          <a
+            class="hero-peek"
+            href="#convert"
+            aria-label="Preview a page stripped to Markdown, then scroll to try it"
+          >
             <div class="hero-peek-frame">
               <div class="hero-peek-chrome">
                 <span></span><span></span><span></span>
-                <span>example.com/why-context-quality-wins</span>
+                <span class="peek-url peek-url-html">example.com/why-context-quality-wins</span>
+                <span class="peek-url peek-url-md">why-context-quality-wins.md</span>
               </div>
-              <div class="hero-peek-body">
+              <div class="hero-peek-body peek-soup" aria-hidden="true">
                 <div class="peek-nav">
                   <span class="peek-logo"></span>
                   <span class="peek-link"></span><span class="peek-link"></span>
@@ -278,8 +283,29 @@
                   <span class="peek-nl-btn"></span>
                 </div>
               </div>
+              <pre class="peek-md" aria-hidden="true"><span class="md-h"># Why context quality beats context length</span>
+
+A bigger context window does not make a model read
+better. It just makes it easier to send junk.
+
+Raw page markup carries class names, tracking
+attributes and script tags that mean nothing to a
+language model.
+
+<span class="md-m">-</span> Markup is noise the model still has to read
+<span class="md-m">-</span> Structure is signal worth preserving
+
+<span class="md-m">| Format    | Tokens  |</span>
+<span class="md-m">| --------- | ------- |</span>
+<span class="md-m">| Raw HTML  | 100,238 |</span>
+<span class="md-m">| Markdown  | 8,577   |</span>
+</pre>
+              <span class="peek-affordance" aria-hidden="true">
+                <span class="peek-affordance-rest">Hover to strip</span>
+                <span class="peek-affordance-hot">Click to scroll</span>
+              </span>
             </div>
-          </div>
+          </a>
           <div class="method-popover proof-popover" id="proofPopover" role="note" hidden>
             <p>
               Measured with this repository's own <code>readability.js</code> and
