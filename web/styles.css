@@ -552,9 +552,19 @@ h2 {
   pointer-events: none;
 }
 
-/* Lift the aside above CTAs only while the note is open. */
+/* Lift + tip the aside while the note is open so the pair reads as one
+   tilted artifact above the CTA row. Freeze the scroll-merge animation so
+   the shared transform isn't overwritten by the exit keyframes' fill. */
 .hero-aside:has(.proof-popover:not([hidden])) {
   z-index: 4;
+  animation: none !important;
+  transform: translate(4%, 4%) rotate(-2.5deg) scale(0.96);
+}
+
+.hero-aside:has(.proof-popover:not([hidden])) .hero-peek {
+  animation: none !important;
+  opacity: 0.55;
+  filter: saturate(0.85);
 }
 
 @media (min-width: 768px) and (min-height: 700px) {
@@ -1157,10 +1167,12 @@ h2 {
   top: auto;
   bottom: auto;
   width: 100%;
-  margin-top: 0.85rem;
+  margin-top: 0.7rem;
   max-height: none;
   pointer-events: auto;
   z-index: 4;
+  /* Match the peek frame's corners so the pair reads as one artifact. */
+  border-radius: var(--radius);
 }
 
 .method-popover p {
