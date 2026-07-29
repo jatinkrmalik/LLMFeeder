@@ -518,7 +518,7 @@ h2 {
   isolation: isolate;
 }
 
-.hero > *:not(.hero-peek) {
+.hero > *:not(.hero-aside) {
   position: relative;
   z-index: 1;
 }
@@ -538,36 +538,100 @@ h2 {
   }
 }
 
-/* Peek of the strip scene: same browser chrome and URL as the scene below,
-   kept quiet so it doesn't fight the headline, then sinks into the scene on
-   scroll. */
-.hero-peek {
+/* Peek + methodology note share one tilted aside on the right. The peek
+   stays quiet; the popover docks under it at full opacity when opened. */
+.hero-aside {
   display: none;
-  pointer-events: none;
   position: absolute;
   top: 14%;
   right: 0;
   width: min(44vw, 34rem);
-  height: min(64%, 30rem);
   z-index: 0;
-  opacity: 0.38;
   transform: translate(6%, 6%) rotate(-1.5deg) scale(0.94);
   transform-origin: 80% 60%;
-  filter: saturate(0.7);
+  pointer-events: none;
+}
+
+/* Lift the aside above CTAs only while the note is open. */
+.hero-aside:has(.proof-popover:not([hidden])) {
+  z-index: 4;
 }
 
 @media (min-width: 768px) and (min-height: 700px) {
-  .hero-peek {
+  .hero-aside {
     display: block;
   }
 }
 
 @media (min-width: 768px) and (max-width: 1099px) {
-  .hero-peek {
+  .hero-aside {
     width: min(40vw, 20rem);
-    height: min(44%, 18rem);
-    opacity: 0.24;
     top: 30%;
+  }
+}
+
+.hero-aside .hero-peek {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: min(52vh, 28rem);
+  opacity: 0.38;
+  filter: saturate(0.7);
+  pointer-events: none;
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  .hero-aside .hero-peek {
+    height: min(36vh, 16rem);
+    opacity: 0.24;
+  }
+}
+
+/* Narrow / short viewports: no peek, but keep the popover near the proof. */
+@media (max-width: 767px), (max-height: 699px) {
+  .hero {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-aside {
+    display: block;
+    position: relative;
+    top: auto;
+    right: auto;
+    width: auto;
+    transform: none;
+    pointer-events: auto;
+    order: 4;
+    z-index: 3;
+  }
+
+  .hero-proof {
+    order: 3;
+  }
+
+  .cta-row {
+    order: 5;
+  }
+
+  .cta-note {
+    order: 6;
+  }
+
+  .hero-hint {
+    order: 7;
+  }
+
+  .hero h1 {
+    order: 1;
+  }
+
+  .hero-lede {
+    order: 2;
+  }
+
+  .hero-aside .hero-peek {
+    display: none;
   }
 }
 
@@ -727,32 +791,51 @@ h2 {
 }
 
 @supports (animation-timeline: view()) {
-  .hero-peek {
-    animation: peek-merge linear both;
-    animation-timeline: view();
-    animation-range: exit 0% exit 100%;
+  @media (min-width: 768px) and (min-height: 700px) {
+    .hero-aside {
+      animation: peek-merge-move linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
+
+    .hero-aside .hero-peek {
+      animation: peek-merge-fade linear both;
+      animation-timeline: view();
+      animation-range: exit 0% exit 100%;
+    }
   }
 }
 
-@keyframes peek-merge {
+@keyframes peek-merge-move {
+  0% {
+    transform: translate(6%, 6%) rotate(-1.5deg) scale(0.94);
+  }
+  45% {
+    transform: translate(2%, 36%) rotate(-0.4deg) scale(0.97);
+  }
+  85% {
+    transform: translate(0%, 80%) rotate(0deg) scale(1);
+  }
+  100% {
+    transform: translate(0%, 98%) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes peek-merge-fade {
   0% {
     opacity: 0.38;
-    transform: translate(6%, 6%) rotate(-1.5deg) scale(0.94);
     filter: saturate(0.7);
   }
   45% {
     opacity: 0.6;
-    transform: translate(2%, 36%) rotate(-0.4deg) scale(0.97);
     filter: saturate(0.85);
   }
   85% {
     opacity: 0.5;
-    transform: translate(0%, 80%) rotate(0deg) scale(1);
     filter: saturate(1);
   }
   100% {
     opacity: 0;
-    transform: translate(0%, 98%) rotate(0deg) scale(1);
     filter: saturate(1);
   }
 }
@@ -809,15 +892,9 @@ h2 {
 /* Proof stays in the typographic flow: a bigger accent number, not a card.
    Methodology opens from the quiet text button beside it. */
 .hero-proof {
-  position: relative;
-  z-index: 3;
   margin: 1.5rem 0 0;
   align-self: flex-start;
   max-width: 42rem;
-}
-
-.hero > .hero-proof {
-  z-index: 3;
 }
 
 .hero-proof-line {
@@ -1071,23 +1148,19 @@ h2 {
   display: none;
 }
 
-/* The hero variant sits in the empty right gutter beside the proof line,
-   so it never covers the CTA row below. Declared after every .method-popover
-   rule (including media queries) so its position wins. */
+/* Hero methodology note: docks under the tilted peek (inherits the aside
+   transform). On narrow screens the aside is in normal flow under the proof. */
 .method-popover.proof-popover {
-  left: calc(100% + 1rem);
+  position: relative;
+  left: auto;
   right: auto;
-  top: 0;
+  top: auto;
   bottom: auto;
-  width: min(28rem, 36vw);
-}
-
-@media (max-width: 959px) {
-  .method-popover.proof-popover {
-    left: 0;
-    top: calc(100% + 0.55rem);
-    width: min(34rem, calc(100vw - 2.5rem));
-  }
+  width: 100%;
+  margin-top: 0.85rem;
+  max-height: none;
+  pointer-events: auto;
+  z-index: 4;
 }
 
 .method-popover p {
