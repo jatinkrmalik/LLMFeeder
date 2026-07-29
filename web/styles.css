@@ -146,11 +146,25 @@ a {
 
 /* Hover colour is declared per component rather than globally: a blanket
    a:hover would repaint button labels sitting on filled surfaces. */
+.hero-proof a {
+  display: inline-block;
+  padding: 0.35rem 0;
+  min-height: 2.75rem;
+  line-height: 2;
+}
+
 .hero-proof a:hover,
 .method-popover a:hover,
 .install-lede a:hover {
   color: var(--accent-strong);
   text-decoration-thickness: 2px;
+}
+
+.site-footer a {
+  display: inline-block;
+  padding: 0.45rem 0.1rem;
+  min-height: 2.75rem;
+  line-height: 1.8;
 }
 
 :focus-visible {
@@ -235,6 +249,7 @@ h2 {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
+  min-height: 2.75rem;
   color: var(--ink);
   text-decoration: none;
   font-family: var(--display);
@@ -328,9 +343,12 @@ h2 {
 .mobile-nav a {
   color: var(--ink);
   text-decoration: none;
-  padding: 0.75rem 0.25rem;
+  padding: 0.95rem 0.4rem;
+  min-height: 2.75rem;
   font-weight: 500;
   border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
 }
 
 .mobile-nav a:last-child {
@@ -496,9 +514,18 @@ h2 {
   filter: saturate(0.75);
 }
 
-@media (min-width: 1100px) and (min-height: 720px) {
+@media (min-width: 768px) and (min-height: 700px) {
   .hero-peek {
     display: block;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  .hero-peek {
+    width: min(42vw, 22rem);
+    height: min(48%, 20rem);
+    opacity: 0.32;
+    top: 28%;
   }
 }
 
@@ -757,7 +784,9 @@ h2 {
   height: calc(100vh - 4rem);
   display: flex;
   align-items: center;
-  overflow: hidden;
+  /* Visible so the methodology popover can escape; the mock still clips its
+     own flying layers. */
+  overflow: visible;
   padding: 0.75rem 0 1rem;
 }
 
@@ -791,13 +820,14 @@ h2 {
   align-items: center;
   gap: 0.4rem;
   margin: 0;
-  padding: 0.35rem 0.55rem;
+  padding: 0.55rem 0.75rem;
+  min-height: 2.75rem;
   border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: var(--ink-dim);
   font-family: var(--body);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
 }
@@ -820,8 +850,10 @@ h2 {
   position: absolute;
   left: 0;
   bottom: calc(100% + 0.55rem);
-  z-index: 20;
-  width: min(34rem, calc(100vw - 3rem));
+  z-index: 30;
+  width: min(34rem, calc(100vw - 2.5rem));
+  max-height: min(50vh, 16rem);
+  overflow: auto;
   padding: 0.9rem 1rem;
   border: 1px solid var(--rule);
   border-radius: 10px;
@@ -837,6 +869,15 @@ h2 {
     /* Sit under the browser mock, not over the step list. */
     left: calc(0.55 / 1.75 * 100%);
     width: min(32rem, 52%);
+  }
+}
+
+@media (max-width: 700px) {
+  .method-popover {
+    left: 0;
+    right: 0;
+    width: auto;
+    bottom: calc(100% + 0.4rem);
   }
 }
 

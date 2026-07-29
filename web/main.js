@@ -263,6 +263,7 @@
 
   if (methodTrigger && methodPopover) {
     let hoverTimer = 0;
+    let suppressDocClose = false;
 
     const open = () => {
       methodPopover.hidden = false;
@@ -277,42 +278,42 @@
     const isOpen = () => methodTrigger.getAttribute("aria-expanded") === "true";
 
     methodTrigger.addEventListener("click", (event) => {
+      event.preventDefault();
       event.stopPropagation();
-      if (isOpen()) close();
-      else open();
+      suppressDocClose = true;
+      window.setTimeout(() => {
+        suppressDocClose = false;
+      }, 50);
+      // Always open. Close via outside click, Esc, or mouseleave.
+      open();
     });
 
     methodTrigger.addEventListener("mouseenter", () => {
+      if (!window.matchMedia("(hover: hover)").matches) return;
       window.clearTimeout(hoverTimer);
       open();
     });
 
     methodTrigger.addEventListener("mouseleave", () => {
+      if (!window.matchMedia("(hover: hover)").matches) return;
       hoverTimer = window.setTimeout(() => {
-        if (!methodPopover.matches(":hover")) close();
-      }, 120);
+        if (!methodPopover.matches(":hover") && document.activeElement !== methodTrigger) {
+          close();
+        }
+      }, 180);
     });
 
     methodPopover.addEventListener("mouseenter", () => {
+      if (!window.matchMedia("(hover: hover)").matches) return;
       window.clearTimeout(hoverTimer);
       open();
     });
 
     methodPopover.addEventListener("mouseleave", () => {
-      hoverTimer = window.setTimeout(close, 120);
-    });
-
-    methodTrigger.addEventListener("focus", open);
-    methodTrigger.addEventListener("blur", () => {
-      // Delay so focus can move into the popover link.
-      window.setTimeout(() => {
-        if (
-          document.activeElement !== methodTrigger &&
-          !methodPopover.contains(document.activeElement)
-        ) {
-          close();
-        }
-      }, 0);
+      if (!window.matchMedia("(hover: hover)").matches) return;
+      hoverTimer = window.setTimeout(() => {
+        if (document.activeElement !== methodTrigger) close();
+      }, 180);
     });
 
     document.addEventListener("keydown", (event) => {
@@ -323,7 +324,7 @@
     });
 
     document.addEventListener("click", (event) => {
-      if (!isOpen()) return;
+      if (suppressDocClose || !isOpen()) return;
       if (
         !methodTrigger.contains(event.target) &&
         !methodPopover.contains(event.target)
