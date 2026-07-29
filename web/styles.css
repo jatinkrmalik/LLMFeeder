@@ -798,6 +798,34 @@ h2 {
   opacity: 1;
 }
 
+.peek-related {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+}
+
+.peek-card {
+  height: 2rem;
+  border-radius: 5px;
+  background: var(--peek-paper-3);
+}
+
+.peek-footer {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--peek-rule);
+}
+
+.peek-frow {
+  height: 1.5rem;
+  border-radius: 4px;
+  background: var(--peek-paper-2);
+}
+
 /* As the hero scrolls away the peek straightens up, comes into full focus and
    sinks toward the strip scene's browser window, so the two read as one
    window travelling down the page. */
@@ -867,19 +895,26 @@ h2 {
 }
 
 .hint-text {
+  /* color:transparent would zero out currentColor inside the gradient, so the
+     base tone is spelled out via a custom property instead. */
+  --hint-ink: var(--ink-dim);
   background: linear-gradient(
     90deg,
-    currentColor 0%,
-    currentColor 38%,
+    var(--hint-ink) 0%,
+    var(--hint-ink) 38%,
     var(--accent) 50%,
-    currentColor 62%,
-    currentColor 100%
+    var(--hint-ink) 62%,
+    var(--hint-ink) 100%
   );
   background-size: 250% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   animation: hint-shimmer 3.2s linear infinite;
+}
+
+.hero-hint:hover .hint-text {
+  --hint-ink: var(--accent);
 }
 
 @keyframes hint-shimmer {
@@ -953,9 +988,13 @@ h2 {
    footnote. */
 .hero-proof {
   position: relative;
-  z-index: 3;
   margin: 1.75rem 0 0;
   align-self: flex-start;
+}
+
+/* Outranks the `.hero > *` rule so the popover paints over the CTA row. */
+.hero > .hero-proof {
+  z-index: 3;
 }
 
 .proof-stat {
@@ -1018,14 +1057,6 @@ h2 {
   height: 0.9rem;
   flex: 0 0 auto;
   opacity: 0.8;
-}
-
-.proof-popover {
-  left: 0;
-  right: auto;
-  bottom: auto;
-  top: calc(100% + 0.55rem);
-  width: min(34rem, calc(100vw - 2.5rem));
 }
 
 /* "Works with" strip: puts the hero's spare room to work as social proof. */
@@ -1261,6 +1292,16 @@ h2 {
 
 .method-popover[hidden] {
   display: none;
+}
+
+/* The hero variant opens downward from the stat card. Declared after every
+   .method-popover rule (including its media queries) so its position wins. */
+.method-popover.proof-popover {
+  left: 0;
+  right: auto;
+  top: calc(100% + 0.55rem);
+  bottom: auto;
+  width: min(34rem, calc(100vw - 2.5rem));
 }
 
 .method-popover p {
