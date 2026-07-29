@@ -1,0 +1,2268 @@
+/* LLMFeeder landing  -  "Plain Text"
+   Ink-on-paper document world. Accent is the extension's own blue.
+   Scroll-driven scenes animate transform/opacity/filter only, so they stay
+   on the compositor. Firefox (no scroll-timeline yet) gets a staged fallback. */
+
+/* Literata carries the headlines: a serif designed for screens, with real
+   optical sizing. Source Sans 3 handles body copy. IBM Plex Mono is used only
+   where the content genuinely is code or Markdown. */
+
+@font-face {
+  font-family: "Literata";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("./assets/fonts/literata-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("./assets/fonts/source-sans-3-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/ibm-plex-mono-400-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./assets/fonts/ibm-plex-mono-500-latin.woff2") format("woff2");
+}
+
+/* ---------- tokens ---------- */
+
+:root,
+[data-theme="light"] {
+  --paper: #fbfaf7;
+  --paper-2: #f2f0ea;
+  --paper-3: #e7e4db;
+  --rule: #d5d1c6;
+  --ink: #17191c;
+  --ink-dim: #575c64;
+  /* Google's own blue ramp, split by job: Blue 700 for text (5.1:1 on paper  - 
+     Blue 600 only reaches 4.31:1) and Blue 600 for fills, where white type
+     sits at 4.8:1. */
+  --accent: #1967d2;
+  --accent-strong: #185abc;
+  --accent-fill: #1a73e8;
+  --accent-on-fill: #ffffff;
+  --accent-soft: rgba(26, 115, 232, 0.1);
+  --firefox: #e05e12;
+  --firefox-soft: rgba(255, 113, 57, 0.12);
+  --good: #1f6f3f;
+  --warn: #9a4a1a;
+  --md-marker: #1967d2;
+  --md-bold: #1f6f3f;
+  --header-bg: #fbfaf7;
+  --shadow: 0 18px 40px rgba(23, 25, 28, 0.1);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --paper: #0f1115;
+  --paper-2: #171a20;
+  --paper-3: #1f242c;
+  --rule: #2c333d;
+  --ink: #e7e9ec;
+  --ink-dim: #98a1ac;
+  --accent: #8ab4f8;
+  --accent-strong: #a8c7fa;
+  --accent-fill: #8ab4f8;
+  --accent-on-fill: #0f1115;
+  --accent-soft: rgba(138, 180, 248, 0.14);
+  --firefox: #ff9500;
+  --firefox-soft: rgba(255, 113, 57, 0.16);
+  --good: #7bc47f;
+  --warn: #e0a458;
+  --md-marker: #8ab4f8;
+  --md-bold: #7bc47f;
+  --header-bg: #0f1115;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+:root {
+  --display: "Literata", Georgia, "Times New Roman", serif;
+  --body: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --shell: min(1280px, calc(100% - 3rem));
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Keep the sticky header from covering snap targets and anchor jumps. */
+  scroll-padding-top: 4rem;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  margin: 0;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  /* Source Sans 3 runs small at 16px; 1.0625rem lands at a comfortable
+     reading size without shouting. */
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+video {
+  max-width: 100%;
+  display: block;
+}
+
+code,
+kbd,
+pre {
+  font-family: var(--mono);
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.18em;
+}
+
+/* Hover colour is declared per component rather than globally: a blanket
+   a:hover would repaint button labels sitting on filled surfaces. */
+.hero-proof a {
+  display: inline-block;
+  padding: 0.35rem 0;
+  min-height: 2.75rem;
+  line-height: 2;
+}
+
+.hero-proof a:hover,
+.method-popover a:hover,
+.install-lede a:hover {
+  color: var(--accent-strong);
+  text-decoration-thickness: 2px;
+}
+
+.site-footer a {
+  display: inline-block;
+  padding: 0.45rem 0.1rem;
+  min-height: 2.75rem;
+  line-height: 1.8;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+h1,
+h2 {
+  font-family: var(--display);
+  font-optical-sizing: auto;
+  /* A serif needs far less negative tracking than the previous grotesque. */
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  margin: 0;
+}
+
+.shell {
+  width: var(--shell);
+  margin-inline: auto;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  line-height: 1.5;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  background: var(--accent-fill);
+  color: var(--accent-on-fill);
+  padding: 0.6rem 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Filled surface: keep the label readable instead of taking the link hover. */
+.skip-link:hover,
+.skip-link:focus {
+  color: var(--accent-on-fill);
+}
+
+/* ---------- header ---------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--header-bg);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s var(--ease);
+}
+
+.site-header.is-scrolled {
+  border-bottom-color: var(--rule);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.brand img {
+  border-radius: 7px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.nav {
+  display: none;
+  align-items: center;
+  gap: 1.3rem;
+  margin-right: 0.4rem;
+}
+
+.nav a {
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.nav a:hover {
+  color: var(--ink);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 0;
+}
+
+.icon-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.theme-toggle svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.theme-toggle .icon-sun,
+[data-theme="dark"] .theme-toggle .icon-moon {
+  display: none;
+}
+
+[data-theme="dark"] .theme-toggle .icon-sun {
+  display: block;
+}
+
+.nav-toggle {
+  flex-direction: column;
+  gap: 5px;
+}
+
+.nav-toggle span {
+  display: block;
+  width: 1rem;
+  height: 2px;
+  background: currentColor;
+}
+
+.mobile-nav {
+  display: grid;
+  padding: 0.25rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.mobile-nav[hidden] {
+  display: none;
+}
+
+.mobile-nav a {
+  color: var(--ink);
+  text-decoration: none;
+  padding: 0.95rem 0.4rem;
+  min-height: 2.75rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+}
+
+.mobile-nav a:last-child {
+  border-bottom: 0;
+}
+
+/* Very small phones: the header keeps the brand, theme and menu only. The
+   install CTAs live in the hero a few hundred pixels below. */
+@media (max-width: 400px) {
+  .header-actions > .btn {
+    display: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .nav {
+    display: flex;
+  }
+
+  .nav-toggle,
+  .mobile-nav {
+    display: none !important;
+  }
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding: 0.7rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), background-color 0.2s var(--ease),
+    border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-sm {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9375rem;
+}
+
+.btn-ico {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: 0 0 auto;
+}
+
+/* Firefox keeps its own brand edge; orange on white can't carry label text at
+   AA, so the colour lives in the border, icon and hover wash. */
+.btn-firefox {
+  border-color: color-mix(in srgb, var(--firefox) 45%, var(--rule));
+}
+
+.btn-firefox:hover {
+  border-color: var(--firefox);
+  background: var(--firefox-soft);
+  color: var(--ink);
+}
+
+.btn-primary {
+  background: var(--accent-fill);
+  color: var(--accent-on-fill);
+}
+
+.btn-primary:hover {
+  background: var(--accent-strong);
+  color: var(--accent-on-fill);
+}
+
+.btn-secondary {
+  background: var(--paper-2);
+  color: var(--ink);
+  border-color: var(--rule);
+}
+
+.btn-secondary:hover {
+  border-color: var(--ink-dim);
+  color: var(--ink);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+
+.btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------- hero ---------- */
+
+/* ---------- scroll rhythm ---------- */
+
+/* Proximity, never mandatory: the strip scene is a long scrub and mandatory
+   snapping would fight the user mid-scene. */
+@media (min-height: 620px) and (min-width: 700px) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+
+  /* Only the scene is a snap point. Making the hero one too meant a small
+     nudge got pulled backwards instead of advancing. */
+  /* No scroll-margin here: html's scroll-padding-top already reserves the
+     header, and setting both stacked into a 64px gap under it. */
+  .scene-track {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+}
+
+.hero {
+  position: relative;
+  z-index: 2;
+  padding: 2.5rem 0 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  isolation: isolate;
+}
+
+.hero > *:not(.hero-peek) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Only claim the full viewport where there's actually room for it. */
+@media (min-height: 620px) {
+  .hero {
+    min-height: calc(100svh - 4rem);
+  }
+}
+
+/* Peek of the strip scene in the empty right side of the hero  -  soft and
+   waiting to be scrolled into focus. */
+.hero-peek {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+  top: 12%;
+  right: 0;
+  width: min(48vw, 38rem);
+  height: min(70%, 34rem);
+  z-index: 0;
+  opacity: 0.45;
+  transform: translate(4%, 6%) rotate(-1.5deg) scale(0.96);
+  transform-origin: 80% 60%;
+  filter: saturate(0.75);
+}
+
+@media (min-width: 768px) and (min-height: 700px) {
+  .hero-peek {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1099px) {
+  .hero-peek {
+    width: min(42vw, 22rem);
+    height: min(48%, 20rem);
+    opacity: 0.32;
+    top: 28%;
+  }
+}
+
+.hero-peek-frame {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.hero-peek-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  background: #f4f2ee;
+  border-bottom: 1px solid #d8d4cb;
+}
+
+.hero-peek-chrome span {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #d8d4cb;
+}
+
+.hero-peek-chrome span:last-child {
+  width: auto;
+  height: auto;
+  margin-left: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: #8a8f96;
+  background: transparent;
+}
+
+.hero-peek-body {
+  padding: 1rem 1.1rem;
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
+  background: linear-gradient(180deg, #fff 0%, #f7f5f0 100%);
+}
+
+.hero-peek-line {
+  height: 0.55rem;
+  border-radius: 4px;
+  background: #e6e3dc;
+}
+
+.hero-peek-line.wide {
+  width: 78%;
+  height: 1.1rem;
+  background: #17191c;
+  opacity: 0.72;
+}
+
+.hero-peek-line.mid {
+  width: 92%;
+}
+
+.hero-peek-line.short {
+  width: 54%;
+}
+
+.hero-peek-ad {
+  margin-top: 0.35rem;
+  height: 2.2rem;
+  border: 1px dashed #c47a3a;
+  border-radius: 6px;
+  background: rgba(196, 122, 58, 0.08);
+}
+
+@supports (animation-timeline: view()) {
+  .hero-peek {
+    animation: peek-in linear both;
+    animation-timeline: view();
+    animation-range: exit 0% exit 70%;
+  }
+}
+
+@keyframes peek-in {
+  to {
+    opacity: 0;
+    transform: translate(10%, 18%) rotate(-3deg) scale(0.88);
+    filter: blur(3px) saturate(0.35);
+  }
+}
+
+/* Sits just below the CTAs rather than pinned to the bottom edge: pushing it
+   down left a dead band in the middle of the hero. */
+.hero-hint {
+  position: relative;
+  z-index: 2;
+  padding-top: 3.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hero-hint:hover {
+  color: var(--accent);
+}
+
+.hero-hint svg {
+  width: 1rem;
+  height: 1rem;
+  animation: nudge 2.4s var(--ease) infinite;
+}
+
+@keyframes nudge {
+  0%,
+  55%,
+  100% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(0.28rem);
+  }
+}
+
+/* One inline number instead of the slab of stat that used to sit above the
+   headline and delay the actual message. */
+.hero-proof {
+  margin: 1.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-dim);
+  max-width: 60rem;
+}
+
+.hero-proof strong {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.375rem;
+  color: var(--accent);
+  margin-right: 0.15rem;
+}
+
+/* The headline is the hero's visual: let it run wide rather than leaving two
+   thirds of the viewport empty beside a narrow column. */
+.hero h1 {
+  font-weight: 700;
+  font-size: clamp(1.9rem, 5.2vw, 3.75rem);
+  line-height: 1.08;
+  max-width: 36ch;
+  overflow-wrap: break-word;
+}
+
+/* HTML markup styling for "div soup"  -  tags in muted mono, soup struck through. */
+.markup-phrase {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: max(0.7em, 0.75rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  vertical-align: 0.08em;
+}
+
+.markup-phrase .markup {
+  color: var(--accent);
+}
+
+.markup-phrase .markup-core {
+  color: var(--ink-dim);
+  text-decoration: line-through;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 0.07em;
+}
+
+@media (min-width: 620px) {
+  .markup-phrase {
+    font-size: max(0.72em, 0.8125rem);
+  }
+}
+
+.hero-lede {
+  margin: 1.6rem 0 0;
+  color: var(--ink-dim);
+  font-size: 1.3125rem;
+  line-height: 1.6;
+  max-width: 62ch;
+}
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.9rem;
+}
+
+.cta-note {
+  margin: 1.1rem 0 0;
+  color: var(--ink-dim);
+}
+
+/* ---------- scene: shared ---------- */
+
+.stage-heading {
+  margin: 0 0 1.1rem;
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.09em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.section-head h2,
+.privacy h2,
+.install h2,
+.paste-copy h2,
+.demo-copy h2 {
+  font-weight: 700;
+  font-size: clamp(1.85rem, 3.6vw, 2.75rem);
+  line-height: 1.12;
+}
+
+.section-head p,
+.privacy p,
+.install-lede,
+.paste-copy > p,
+.demo-copy > p {
+  margin: 0.9rem 0 0;
+  color: var(--ink-dim);
+  max-width: 58ch;
+}
+
+/* ---------- scene A: the strip ---------- */
+
+.scene-track {
+  height: 420vh;
+  position: relative;
+}
+
+.scene-stage {
+  position: sticky;
+  top: 4rem;
+  height: calc(100vh - 4rem);
+  display: flex;
+  align-items: center;
+  /* Visible so the methodology popover can escape; the mock still clips its
+     own flying layers. */
+  overflow: visible;
+  padding: 0.75rem 0 1rem;
+}
+
+.stage-grid {
+  display: grid;
+  gap: 1.25rem 1.75rem;
+  align-items: center;
+  width: var(--shell);
+  min-width: 0;
+}
+
+/* Grid/flex items default to min-width:auto, which would let the mock's
+   nowrap URL set a min-content floor wider than a small phone. */
+.stage-readout,
+.stage-artifact {
+  min-width: 0;
+}
+
+.stage-footnote {
+  grid-column: 1 / -1;
+  position: relative;
+  margin: 0;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.method-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  min-height: 2.75rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: var(--body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.method-trigger svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  opacity: 0.8;
+}
+
+.method-trigger:hover,
+.method-trigger:focus-visible,
+.method-trigger[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: var(--rule);
+  background: var(--paper-2);
+}
+
+.method-popover {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.55rem);
+  z-index: 30;
+  width: min(34rem, calc(100vw - 2.5rem));
+  max-height: min(50vh, 16rem);
+  overflow: auto;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+@media (min-width: 960px) {
+  .method-popover {
+    /* Sit under the browser mock, not over the step list. */
+    left: calc(0.55 / 1.75 * 100%);
+    width: min(32rem, 52%);
+  }
+}
+
+@media (max-width: 700px) {
+  .method-popover {
+    left: 0;
+    right: 0;
+    width: auto;
+    bottom: calc(100% + 0.4rem);
+  }
+}
+
+.method-popover[hidden] {
+  display: none;
+}
+
+.method-popover p {
+  margin: 0;
+}
+
+.method-popover code {
+  font-size: 0.875em;
+}
+
+.method-popover strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.method-popover a {
+  color: var(--accent);
+}
+
+@media (min-width: 960px) {
+  .stage-grid {
+    /* Bigger mock: give the artifact most of the width. */
+    grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.2fr);
+    gap: 0.85rem 2.5rem;
+    align-content: center;
+  }
+
+  .stage-readout,
+  .stage-artifact {
+    align-self: center;
+  }
+
+  .stage-footnote {
+    align-self: end;
+  }
+
+  .scroll-cue {
+    margin-top: 0.45rem;
+  }
+}
+
+/* readout */
+
+@property --tok {
+  syntax: "<integer>";
+  initial-value: 100238;
+  inherits: false;
+}
+
+.readout {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.readout-num {
+  line-height: 1;
+  --tok: 100238;
+  counter-reset: tok var(--tok);
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 7vw, 4.6rem);
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.readout-num::after {
+  content: counter(tok);
+}
+
+.readout-label {
+  margin-top: 0.5rem;
+  color: var(--ink-dim);
+  font-size: 0.9375rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rail {
+  margin: 1.25rem 0 1.5rem;
+  height: 3px;
+  background: var(--paper-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.rail-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+.stage-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.stage-steps li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  color: var(--ink-dim);
+  opacity: 0.38;
+  transition: opacity 0.35s var(--ease), color 0.35s var(--ease);
+}
+
+/* Explicit numbering: CSS counters skip the steps hidden on narrow screens. */
+.stage-steps li::before {
+  content: "0" attr(data-step);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+.stage-steps li.is-active {
+  opacity: 1;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.stage-steps li.is-done {
+  opacity: 0.72;
+}
+
+/* Narrow screens: the stage must fit one viewport, so the step list collapses
+   to the current step only and the artifact gets shorter. */
+@media (max-width: 959px) {
+  .stage-steps {
+    gap: 0;
+  }
+
+  .stage-steps li {
+    display: none;
+  }
+
+  .stage-steps li.is-active {
+    display: flex;
+    opacity: 1;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .readout-num {
+    font-size: clamp(2.1rem, 11vw, 3rem);
+  }
+
+  .rail {
+    margin: 0.9rem 0 1rem;
+  }
+}
+
+/* artifact */
+
+.stage-artifact {
+  position: relative;
+}
+
+.artifact-row {
+  display: grid;
+  gap: 1rem;
+  align-items: end;
+}
+
+@media (min-width: 1100px) {
+  .artifact-row {
+    grid-template-columns: minmax(0, 1fr) 8.5rem;
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+}
+
+/* ---------- trash bin ---------- */
+
+.trash {
+  display: none;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+@media (min-width: 1100px) {
+  .trash {
+    display: flex;
+  }
+}
+
+.trash-bin {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding: 1.1rem 0.75rem 0.9rem;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  transition: border-color 0.3s var(--ease), background-color 0.3s var(--ease),
+    transform 0.25s var(--ease);
+}
+
+.trash-bin.is-active {
+  border-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 8%, var(--paper-2));
+  transform: scale(1.03);
+}
+
+.trash-bin.is-full {
+  border-style: solid;
+  border-color: var(--warn);
+}
+
+.trash-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--ink-dim);
+}
+
+.trash-bin.is-active .trash-icon {
+  color: var(--warn);
+}
+
+.trash-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.trash-count {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.trash-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.trash-chips li {
+  opacity: 0;
+  transform: translateY(0.4rem) scale(0.92);
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--ink-dim);
+  text-align: center;
+  transition: opacity 0.35s var(--ease), transform 0.35s var(--ease),
+    border-color 0.35s var(--ease), color 0.35s var(--ease);
+}
+
+.trash-chips li.is-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--rule));
+  color: var(--warn);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+/* The artifact depicts somebody else's web page, so it keeps a light surface in
+   both themes. Following the site theme turned it into low-contrast mush in
+   dark mode and lost the "this is a real page" read. */
+.mock {
+  --paper: #ffffff;
+  --paper-2: #f4f2ee;
+  --paper-3: #e6e3dc;
+  --rule: #d8d4cb;
+  --ink: #17191c;
+  --ink-dim: #5a6068;
+  --accent: #1967d2;
+  --accent-fill: #1a73e8;
+  /* 5.5:1 on the ad tint; the lighter orange only reached 4.35:1 at 9.6px. */
+  --warn: #9e4413;
+  --md-marker: #1967d2;
+  --md-bold: #1f6f3f;
+  position: relative;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  /* Slightly shorter so the stage footnote stays in view. */
+  height: min(66vh, 32rem);
+  color: var(--ink);
+}
+
+/* In dark mode the bright artifact needs a rim so it doesn't float. */
+[data-theme="dark"] .mock {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 959px) {
+  .mock {
+    height: min(56vh, 26rem);
+  }
+
+  .scene-track {
+    height: 360vh;
+  }
+}
+
+.mock-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--paper-2);
+  border-bottom: 1px solid var(--rule);
+}
+
+.mock-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--paper-3);
+}
+
+.mock-url {
+  margin-left: 0.6rem;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mock-body {
+  padding: 0.75rem;
+  height: calc(100% - 2.4rem);
+  overflow: hidden;
+}
+
+/* fake nav */
+.mock-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.mock-logo {
+  width: 1.5rem;
+  height: 0.55rem;
+  border-radius: 3px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.mock-link {
+  width: 2.2rem;
+  height: 0.4rem;
+  border-radius: 3px;
+  background: var(--paper-3);
+}
+
+.mock-link.short {
+  width: 1.4rem;
+}
+
+.mock-cta {
+  margin-left: auto;
+  width: 3rem;
+  height: 1.1rem;
+  border-radius: 5px;
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+/* fake ads */
+.mock-ad {
+  margin: 0.6rem 0;
+  height: 2.4rem;
+  padding: 0.5rem 0.85rem;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--warn);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--warn);
+}
+
+.mock-ad.small {
+  height: 3.4rem;
+  margin: 0.5rem 0 0;
+}
+
+.mock-columns {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr);
+  gap: 0.7rem;
+}
+
+/* As the nav and ad fade they leave their boxes behind, which read as a gap.
+   Sliding the content column up closes it with a transform instead of
+   animating layout. */
+@supports (animation-timeline: view()) {
+  .scene-track .mock-columns {
+    animation: rise linear both;
+    animation-timeline: --strip;
+    animation-range: contain 20% contain 44%;
+    animation-duration: auto;
+  }
+}
+
+@keyframes rise {
+  to {
+    transform: translateY(-3.6rem);
+  }
+}
+
+@media (min-width: 700px) {
+  .mock-columns {
+    grid-template-columns: 1.1rem minmax(0, 1fr) 5.5rem;
+  }
+}
+
+.mock-share {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+.mock-pill {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--paper-3);
+}
+
+.mock-side {
+  display: none;
+  gap: 0.35rem;
+  align-content: start;
+}
+
+@media (min-width: 700px) {
+  .mock-side {
+    display: grid;
+  }
+}
+
+.mock-side-title {
+  height: 0.45rem;
+  width: 70%;
+  border-radius: 3px;
+  background: var(--paper-3);
+}
+
+.mock-side-row {
+  height: 0.35rem;
+  border-radius: 3px;
+  background: var(--paper-3);
+  opacity: 0.7;
+}
+
+/* the actual article */
+.mock-article {
+  min-width: 0;
+}
+
+.mock-kicker {
+  margin: 0 0 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.mock-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.mock-byline {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.mock-avatar {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+.mock-byline-text {
+  height: 0.35rem;
+  width: 5rem;
+  border-radius: 3px;
+  background: var(--paper-3);
+}
+
+.mock-p {
+  margin: 0 0 0.5rem;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.mock-list {
+  margin: 0 0 0.55rem;
+  padding-left: 1rem;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.mock-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+}
+
+.mock-table th,
+.mock-table td {
+  border: 1px solid var(--rule);
+  padding: 0.2rem 0.4rem;
+  text-align: left;
+  color: var(--ink);
+}
+
+.mock-table th {
+  background: var(--paper-2);
+}
+
+/* related + footer junk */
+.mock-related {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+}
+
+.mock-card {
+  height: 2rem;
+  border-radius: 5px;
+  background: var(--paper-3);
+}
+
+.mock-footer {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.mock-frow {
+  height: 1.5rem;
+  border-radius: 4px;
+  background: var(--paper-2);
+}
+
+/* interrupts */
+.mock-cookie {
+  position: absolute;
+  left: 0.6rem;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper-2);
+  box-shadow: var(--shadow);
+}
+
+.mock-cookie-text {
+  flex: 1;
+  height: 0.4rem;
+  border-radius: 3px;
+  background: var(--paper-3);
+}
+
+.mock-cookie-btn {
+  width: 3rem;
+  height: 1.2rem;
+  border-radius: 5px;
+  background: var(--accent);
+  opacity: 0.75;
+}
+
+.mock-newsletter {
+  position: absolute;
+  top: 32%;
+  left: 50%;
+  width: min(15rem, 70%);
+  translate: -50% 0;
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.mock-nl-title {
+  height: 0.55rem;
+  width: 75%;
+  border-radius: 3px;
+  background: var(--ink-dim);
+  opacity: 0.55;
+}
+
+.mock-nl-row {
+  height: 1.4rem;
+  border-radius: 5px;
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+}
+
+.mock-nl-btn {
+  height: 1.4rem;
+  border-radius: 5px;
+  background: var(--accent);
+  opacity: 0.8;
+}
+
+/* Markdown result. Revealed with a clip-path wipe rather than a cross-fade:
+   half-transparent text would sit below WCAG contrast the whole way through. */
+.mock-md {
+  position: absolute;
+  inset: 2.4rem 0 0;
+  margin: 0;
+  padding: 1rem 1.1rem;
+  background: var(--paper);
+  font-size: clamp(0.6rem, 1.15vw, 0.76rem);
+  line-height: 1.6;
+  color: var(--ink);
+  overflow: hidden;
+  white-space: pre-wrap;
+  clip-path: inset(0 0 100% 0);
+}
+
+.md-h {
+  color: var(--md-marker);
+  font-weight: 600;
+}
+
+.md-b {
+  color: var(--md-bold);
+}
+
+.md-m {
+  color: var(--md-marker);
+}
+
+.scroll-cue {
+  margin: 0.9rem 0 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* ---------- scroll-driven animation (progressive enhancement) ---------- */
+
+@supports (animation-timeline: view()) {
+  .scene-track {
+    view-timeline-name: --strip;
+    view-timeline-axis: block;
+  }
+
+  .scene-track .layer-interrupt,
+  .scene-track .layer-chrome,
+  .scene-track .layer-deco,
+  .scene-track .layer-content,
+  .scene-track .layer-md,
+  .scene-track .rail-fill,
+  .scene-track .readout-num,
+  .scene-track .mock {
+    animation-timeline: --strip;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    animation-duration: auto;
+  }
+
+  /* 1. interrupts fly to the trash */
+  .scene-track .mock-cookie {
+    animation-name: trash-fly;
+    animation-range: contain 2% contain 15%;
+  }
+
+  .scene-track .mock-newsletter {
+    animation-name: trash-fly-center;
+    animation-range: contain 0% contain 12%;
+  }
+
+  /* 2. page furniture flies out to the trash */
+  .scene-track .mock-nav {
+    animation-name: trash-fly;
+    animation-range: contain 16% contain 32%;
+  }
+
+  .scene-track .mock-ad {
+    animation-name: trash-fly;
+    animation-range: contain 18% contain 34%;
+  }
+
+  .scene-track .mock-share {
+    animation-name: trash-fly;
+    animation-range: contain 20% contain 36%;
+  }
+
+  .scene-track .mock-side {
+    animation-name: trash-fly;
+    animation-range: contain 22% contain 38%;
+  }
+
+  .scene-track .mock-related {
+    animation-name: trash-fly;
+    animation-range: contain 24% contain 40%;
+  }
+
+  .scene-track .mock-footer {
+    animation-name: trash-fly;
+    animation-range: contain 26% contain 42%;
+  }
+
+  /* 3. presentation layer drains */
+  .scene-track .layer-deco {
+    animation-name: fade-out;
+    animation-range: contain 42% contain 56%;
+  }
+
+  /* 4. markdown wipes in as the styled article wipes out */
+  .scene-track .layer-content {
+    animation-name: wipe-out;
+    animation-range: contain 56% contain 80%;
+  }
+
+  .scene-track .mock-md {
+    animation-name: wipe-in;
+    animation-range: contain 56% contain 80%;
+  }
+
+  /* 5. the artifact settles */
+  .scene-track .mock {
+    animation-name: settle;
+    animation-range: contain 80% contain 96%;
+  }
+
+  .scene-track .scroll-cue {
+    animation: cue-out linear both;
+    animation-timeline: --strip;
+    animation-range: contain 78% contain 92%;
+  }
+
+  /* readout + rail */
+  .scene-track .rail-fill {
+    animation-name: rail;
+    animation-range: contain 0% contain 100%;
+  }
+
+  .scene-track .readout-num {
+    animation-name: countdown;
+    animation-range: contain 4% contain 82%;
+  }
+
+  /* scene B bars */
+  .bars .bar-fill {
+    animation: bar-grow linear both;
+    animation-timeline: view();
+    animation-range: entry 30% cover 45%;
+  }
+}
+
+/* Discarded chrome flies toward the trash: shrink, rotate, fade. */
+@keyframes trash-fly {
+  to {
+    opacity: 0;
+    transform: translate(42%, 28%) scale(0.18) rotate(12deg);
+    filter: blur(1px);
+  }
+}
+
+@keyframes trash-fly-center {
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + 42%), 55%) scale(0.18) rotate(-8deg);
+    filter: blur(1px);
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Wipe, not dissolve: every glyph is either fully painted or fully clipped,
+   so contrast never dips mid-transition. */
+@keyframes wipe-out {
+  /* An explicit start shape is required: interpolating from `none` snaps. */
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(100% 0 0 0);
+  }
+}
+
+@keyframes wipe-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes settle {
+  to {
+    transform: scale(0.985);
+  }
+}
+
+@keyframes rail {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes countdown {
+  from {
+    --tok: 100238;
+  }
+  to {
+    --tok: 8577;
+  }
+}
+
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes cue-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---------- staged fallback (Firefox, older Safari) ---------- */
+
+@supports not (animation-timeline: view()) {
+  /* The sticky scene is kept so the story still scrubs with scroll; main.js
+     supplies the stage and CSS transitions do the interpolation. */
+  .layer-interrupt,
+  .layer-chrome,
+  .layer-deco,
+  .layer-content,
+  .mock-md,
+  .rail-fill {
+    transition: opacity 0.5s var(--ease), transform 0.5s var(--ease),
+      clip-path 0.5s var(--ease);
+  }
+
+  /* stage classes are applied by main.js */
+  [data-stage="1"] .layer-interrupt,
+  [data-stage="2"] .layer-interrupt,
+  [data-stage="3"] .layer-interrupt,
+  [data-stage="4"] .layer-interrupt {
+    opacity: 0;
+    transform: translate(42%, 28%) scale(0.18) rotate(12deg);
+  }
+
+  [data-stage="2"] .layer-chrome,
+  [data-stage="3"] .layer-chrome,
+  [data-stage="4"] .layer-chrome {
+    opacity: 0;
+    transform: translate(42%, 28%) scale(0.18) rotate(8deg);
+  }
+
+  [data-stage="3"] .layer-deco,
+  [data-stage="4"] .layer-deco {
+    opacity: 0;
+  }
+
+  [data-stage="4"] .layer-content {
+    clip-path: inset(100% 0 0 0);
+  }
+
+  [data-stage="4"] .mock-md {
+    clip-path: inset(0 0 0 0);
+  }
+
+  [data-stage="4"] .scroll-cue {
+    opacity: 0;
+  }
+
+  .scroll-cue {
+    transition: opacity 0.4s var(--ease);
+  }
+
+  [data-stage="1"] .rail-fill { transform: scaleX(0.25); }
+  [data-stage="2"] .rail-fill { transform: scaleX(0.5); }
+  [data-stage="3"] .rail-fill { transform: scaleX(0.75); }
+  [data-stage="4"] .rail-fill { transform: scaleX(1); }
+
+  .bars .bar-fill {
+    transform: scaleX(1);
+  }
+}
+
+/* ---------- scene B: the paste ---------- */
+
+.paste {
+  display: grid;
+  gap: 2.5rem;
+  padding: 4.5rem 0 4rem;
+  align-items: center;
+}
+
+.paste-copy {
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .paste {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+    gap: 3.5rem;
+  }
+}
+
+.bars {
+  list-style: none;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1.4rem;
+}
+
+.bar-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.bar-num {
+  font-family: var(--mono);
+  font-weight: 400;
+  color: var(--ink-dim);
+  font-size: 0.9375rem;
+}
+
+.bar {
+  display: block;
+  height: 0.7rem;
+  background: var(--paper-3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  transform-origin: 0 50%;
+}
+
+.bar-raw {
+  width: 78%;
+  background: var(--warn);
+}
+
+.bar-md {
+  width: 7%;
+  background: var(--good);
+}
+
+.bar-foot {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--ink-dim);
+  font-size: 0.9375rem;
+}
+
+.composer {
+  margin: 0;
+  min-width: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  overflow: hidden;
+}
+
+.composer-head {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+}
+
+.composer-body {
+  padding: 1.1rem;
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.composer-you {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.composer-attach {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--paper);
+}
+
+.composer-file {
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.composer-size {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--good);
+  white-space: nowrap;
+}
+
+.composer-hint {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.9375rem;
+}
+
+/* ---------- demo ---------- */
+
+.demo {
+  padding: 1rem 0 4.5rem;
+  display: grid;
+  gap: 2.25rem;
+  align-items: center;
+}
+
+/* The capture is portrait (830x936). Giving it its own column at natural
+   aspect avoids the letterbox bands a full-width frame produced. */
+@media (min-width: 900px) {
+  .demo {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
+    gap: 3.5rem;
+  }
+}
+
+.demo-copy {
+  min-width: 0;
+}
+
+.demo-steps {
+  list-style: none;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+  counter-reset: dstep;
+}
+
+.demo-steps li {
+  position: relative;
+  padding-left: 2rem;
+  color: var(--ink-dim);
+}
+
+.demo-steps li::before {
+  counter-increment: dstep;
+  content: counter(dstep);
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  width: 1.35rem;
+  height: 1.35rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+
+.section-head {
+  max-width: 52rem;
+  margin-bottom: 1.75rem;
+}
+
+.section-head.wide {
+  max-width: 58rem;
+}
+
+.demo-frame {
+  margin: 0;
+  max-width: 26rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--paper-2);
+  box-shadow: var(--shadow);
+}
+
+.demo-video {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 830 / 936;
+  display: block;
+}
+
+.demo-frame figcaption {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-dim);
+  max-width: 65ch;
+}
+
+/* ---------- features ---------- */
+
+.features {
+  padding: 1rem 0 4.5rem;
+}
+
+.spec-strip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.spec-strip li {
+  display: grid;
+  gap: 0.3rem 1.5rem;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+@media (min-width: 760px) {
+  .spec-strip li {
+    grid-template-columns: minmax(14rem, 19rem) minmax(0, 1fr);
+    align-items: baseline;
+  }
+}
+
+.spec-strip strong {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+}
+
+.spec-strip span {
+  color: var(--ink-dim);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.5rem;
+  padding: 0.1rem 0.35rem;
+  margin-right: 0.15rem;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+/* ---------- privacy ---------- */
+
+.privacy {
+  padding: 1rem 0 4.5rem;
+}
+
+.privacy-grid {
+  display: grid;
+  gap: 2rem;
+  padding: 2.25rem 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+@media (min-width: 900px) {
+  .privacy-grid {
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: center;
+  }
+}
+
+.privacy-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.privacy-points li {
+  position: relative;
+  padding-left: 1.3rem;
+  font-weight: 500;
+}
+
+.privacy-points li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--good);
+}
+
+/* ---------- install ---------- */
+
+.install {
+  padding: 1rem 0 5rem;
+}
+
+.install .cta-row {
+  margin-top: 1.6rem;
+}
+
+.install-lede code {
+  font-size: 0.9em;
+}
+
+/* ---------- footer ---------- */
+
+.site-footer {
+  border-top: 1px solid var(--rule);
+  padding: 1.6rem 0 2.4rem;
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
+  justify-content: space-between;
+  color: var(--ink-dim);
+}
+
+.footer-inner p {
+  margin: 0;
+}
+
+.footer-inner a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+}
+
+.footer-inner a:hover {
+  color: var(--accent);
+}
+
+.footer-inner strong {
+  font-family: var(--display);
+  color: var(--ink);
+}
+
+/* ---------- reduced motion: show the conclusion, skip the ride ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .scene-track {
+    height: auto !important;
+    view-timeline-name: none !important;
+  }
+
+  .scene-stage {
+    position: static !important;
+    height: auto !important;
+    padding: 1rem 0 2rem;
+  }
+
+  .layer-interrupt,
+  .layer-chrome,
+  .layer-deco {
+    display: none !important;
+  }
+
+  .layer-content {
+    clip-path: inset(100% 0 0 0) !important;
+  }
+
+  .mock-md {
+    clip-path: inset(0 0 0 0) !important;
+  }
+
+  .rail-fill,
+  .bar-fill {
+    transform: scaleX(1) !important;
+  }
+
+  html {
+    scroll-snap-type: none !important;
+  }
+
+  .hero-hint svg {
+    animation: none !important;
+  }
+
+  .readout-num {
+    --tok: 8577 !important;
+  }
+
+  .scroll-cue {
+    display: none;
+  }
+
+  .stage-steps li {
+    opacity: 1;
+    color: var(--ink);
+  }
+}
