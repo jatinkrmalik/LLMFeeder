@@ -209,6 +209,24 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M6 13l6 6 6-6"></path>
           </svg>
         </a>
+
+        <div class="hero-peek" aria-hidden="true">
+          <div class="hero-peek-frame">
+            <div class="hero-peek-chrome">
+              <span></span><span></span><span></span>
+              <span>example.com/why-context-quality-wins</span>
+            </div>
+            <div class="hero-peek-body">
+              <div class="hero-peek-line wide"></div>
+              <div class="hero-peek-line mid"></div>
+              <div class="hero-peek-line mid"></div>
+              <div class="hero-peek-line short"></div>
+              <div class="hero-peek-ad"></div>
+              <div class="hero-peek-line mid"></div>
+              <div class="hero-peek-line short"></div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ================= SCENE A: THE STRIP ================= -->
@@ -366,18 +384,19 @@ language model.
                 </div>
                 <p class="scroll-cue" aria-hidden="true">keep scrolling</p>
               </div>
+
+              <footer class="stage-footnote">
+                <p>
+                  Measured with this repository’s own <code>readability.js</code> and
+                  <code>turndown.js</code> on
+                  <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN’s <code>animation-timeline</code> page</a>
+                  (100,238 → 8,577 est. tokens). Across five pages: median
+                  <strong>10.4&times;</strong> reduction (4.5&times;–15.1&times;). Estimates use the
+                  extension’s own ~4 bytes/token heuristic, not a billed tokenizer.
+                </p>
+              </footer>
             </div>
           </div>
-        </div>
-
-        <div class="measure-note shell">
-          <p>
-            Measured by running this repository’s own <code>readability.js</code> and
-            <code>turndown.js</code> against
-            <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/animation-timeline" target="_blank" rel="noopener noreferrer">MDN’s <code>animation-timeline</code> page</a>.
-            Token counts are estimates from the same heuristic the extension ships
-            (about 4 bytes per token), not a billed tokenizer.
-          </p>
         </div>
       </section>
 
@@ -401,10 +420,6 @@ language model.
               <span class="bar-foot">7% of a 128K window</span>
             </li>
           </ul>
-          <p class="paste-foot">
-            Across five measured pages: median <strong>10.4&times;</strong> reduction,
-            from 4.5&times; on already-lean docs to 15.1&times; on a heavy wiki page.
-          </p>
         </div>
 
         <figure class="composer" aria-hidden="true">
