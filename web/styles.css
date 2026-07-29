@@ -864,6 +864,8 @@ h2 {
   line-height: 1.08;
   max-width: 36ch;
   overflow-wrap: break-word;
+  /* Intentional two-line break; don't let balance reflow the period/clause. */
+  text-wrap: wrap;
 }
 
 /* HTML markup styling for "div soup"  -  tags in muted mono, soup struck through. */
