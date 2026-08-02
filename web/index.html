@@ -3,43 +3,55 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LLMFeeder: Webpage to Markdown for ChatGPT, Claude and Gemini</title>
+    <!-- ~51 chars: stays within Google's typical SERP title budget (~50–60). -->
+    <title>LLMFeeder: Webpage to Markdown for ChatGPT &amp; Claude</title>
     <meta
       name="description"
-      content="Convert any webpage to clean Markdown for ChatGPT, Claude, and Gemini. Multi-tab copy, token counter, 100% private. Free for Chrome and Firefox."
+      content="Strip nav, ads, and script noise from any page into clean Markdown for ChatGPT, Claude, and Gemini. Private. Free for Chrome &amp; Firefox."
     >
     <link rel="canonical" href="https://llmfeeder.fyi/">
+    <link rel="alternate" hreflang="en" href="https://llmfeeder.fyi/">
+    <meta name="application-name" content="LLMFeeder">
+    <meta name="author" content="Jatin K Malik">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 
     <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_US">
     <meta property="og:url" content="https://llmfeeder.fyi/">
     <meta property="og:site_name" content="LLMFeeder">
-    <meta property="og:title" content="LLMFeeder: Webpage to Markdown for AI">
+    <meta property="og:title" content="LLMFeeder: Webpage to Markdown for ChatGPT &amp; Claude">
     <meta
       property="og:description"
-      content="Convert any webpage to clean Markdown for ChatGPT, Claude, and Gemini. Runs locally. Free for Chrome and Firefox."
+      content="Strip nav, ads, and script noise from any page into clean Markdown for ChatGPT, Claude, and Gemini. Private. Free for Chrome &amp; Firefox."
     >
     <meta property="og:image" content="https://llmfeeder.fyi/assets/og-image.png">
+    <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="LLMFeeder: Webpage to Markdown for AI">
+    <meta property="og:image:alt" content="LLMFeeder: Webpage to Markdown for ChatGPT and Claude">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:creator" content="@jatinkrmalik">
-    <meta name="twitter:title" content="LLMFeeder: Webpage to Markdown for AI">
+    <meta name="twitter:title" content="LLMFeeder: Webpage to Markdown for ChatGPT &amp; Claude">
     <meta
       name="twitter:description"
-      content="Convert any webpage to clean Markdown for ChatGPT, Claude, and Gemini. Runs locally. Free for Chrome and Firefox."
+      content="Strip nav, ads, and script noise from any page into clean Markdown for ChatGPT, Claude, and Gemini. Private. Free for Chrome &amp; Firefox."
     >
     <meta name="twitter:image" content="https://llmfeeder.fyi/assets/og-image.png">
-    <meta name="twitter:image:alt" content="LLMFeeder: Webpage to Markdown for AI">
+    <meta name="twitter:image:alt" content="LLMFeeder: Webpage to Markdown for ChatGPT and Claude">
 
     <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
     <meta name="color-scheme" content="light dark">
 
-    <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon.png">
-    <link rel="icon" type="image/png" sizes="48x48" href="./assets/icon-48.png">
-    <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+    <!-- Favicons: Google recommends a square icon larger than 48x48; /favicon.ico is the classic crawl target. -->
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon-96.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="/assets/icon-48.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="preload" href="./assets/fonts/literata-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="./assets/fonts/source-sans-3-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="./styles.css">
@@ -75,38 +87,71 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "LLMFeeder",
-        "applicationCategory": "BrowserApplication",
-        "operatingSystem": "Chrome, Firefox, Chromium",
-        "description": "Convert any webpage to clean Markdown for ChatGPT, Claude, and Gemini. Multi-tab copy, token counter, 100% private.",
-        "url": "https://llmfeeder.fyi/",
-        "downloadUrl": "https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk",
-        "softwareVersion": "2.2.0",
-        "license": "https://opensource.org/licenses/MIT",
-        "isAccessibleForFree": true,
-        "image": "https://llmfeeder.fyi/assets/og-image.png",
-        "featureList": [
-          "One-click webpage to Markdown conversion",
-          "Multi-tab batch conversion",
-          "Token count estimation",
-          "Local, private processing",
-          "Chrome and Firefox support"
-        ],
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "author": {
-          "@type": "Person",
-          "name": "Jatin K Malik",
-          "url": "https://x.com/jatinkrmalik"
-        },
-        "sameAs": [
-          "https://github.com/jatinkrmalik/LLMFeeder",
-          "https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk",
-          "https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://llmfeeder.fyi/#website",
+            "url": "https://llmfeeder.fyi/",
+            "name": "LLMFeeder",
+            "description": "Strip nav, ads, and script noise from any page into clean Markdown for ChatGPT, Claude, and Gemini.",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://llmfeeder.fyi/#organization" }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://llmfeeder.fyi/#organization",
+            "name": "LLMFeeder",
+            "url": "https://llmfeeder.fyi/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://llmfeeder.fyi/assets/icon-128.png",
+              "width": 128,
+              "height": 128
+            },
+            "sameAs": [
+              "https://github.com/jatinkrmalik/LLMFeeder",
+              "https://x.com/jatinkrmalik",
+              "https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk",
+              "https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
+            ]
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://llmfeeder.fyi/#app",
+            "name": "LLMFeeder",
+            "applicationCategory": "BrowserApplication",
+            "operatingSystem": "Chrome, Firefox, Chromium",
+            "description": "Strip nav, ads, and script noise from any page into clean Markdown for ChatGPT, Claude, and Gemini. Multi-tab copy, token counter, 100% private.",
+            "url": "https://llmfeeder.fyi/",
+            "downloadUrl": "https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk",
+            "softwareVersion": "2.2.0",
+            "license": "https://opensource.org/licenses/MIT",
+            "isAccessibleForFree": true,
+            "image": "https://llmfeeder.fyi/assets/og-image.png",
+            "featureList": [
+              "One-click webpage to Markdown conversion",
+              "Multi-tab batch conversion",
+              "Token count estimation",
+              "Local, private processing",
+              "Chrome and Firefox support"
+            ],
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "author": {
+              "@type": "Person",
+              "name": "Jatin K Malik",
+              "url": "https://x.com/jatinkrmalik"
+            },
+            "publisher": { "@id": "https://llmfeeder.fyi/#organization" },
+            "sameAs": [
+              "https://github.com/jatinkrmalik/LLMFeeder",
+              "https://chromewebstore.google.com/detail/llmfeeder/cjjfhhapabcpcokkfldbiiojiphbifdk",
+              "https://addons.mozilla.org/en-US/firefox/addon/llmfeeder/"
+            ]
+          }
         ]
       }
     </script>
