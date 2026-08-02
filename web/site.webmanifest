@@ -1,0 +1,26 @@
+{
+  "name": "LLMFeeder",
+  "short_name": "LLMFeeder",
+  "description": "Convert any webpage to clean Markdown for ChatGPT, Claude, and Gemini.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbfaf7",
+  "theme_color": "#fbfaf7",
+  "icons": [
+    {
+      "src": "/assets/favicon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
