@@ -154,7 +154,7 @@ describe('MultiTabUtils.ensureContentScriptLoaded', () => {
     expect(loaded).toBe(true);
     expect(api.scripting.executeScript).toHaveBeenCalledWith({
       target: { tabId: 7 },
-      files: ['libs/readability.js', 'libs/turndown.js', 'content.js']
+      files: ['libs/readability.js', 'libs/turndown.js', 'settings.js', 'content.js']
     });
   });
 

@@ -4,7 +4,7 @@
 const MultiTabUtils = (function() {
   const MAX_FILENAME_LENGTH = 100;
   const LARGE_TAB_COUNT_THRESHOLD = 20; // Warn user when processing more than this many tabs
-  const CONTENT_SCRIPT_FILES = ['libs/readability.js', 'libs/turndown.js', 'content.js'];
+  const CONTENT_SCRIPT_FILES = ['libs/readability.js', 'libs/turndown.js', 'settings.js', 'content.js'];
 
   // Confirm the content script is listening in a tab, injecting it if not.
   // A rejected ping means there is no receiver (Chrome/Firefox); a null or

@@ -521,11 +521,15 @@ async function handleKeyboardShortcut(command) {
             await showNotificationInTab("Success", `Markdown file downloaded${tokenMessage}`);
           } else {
             // Copy to clipboard via content script
-            await browserAPI.tabs.sendMessage(activeTab.id, {
+            const copyResponse = await browserAPI.tabs.sendMessage(activeTab.id, {
               action: "copyToClipboard",
               text: response.markdown
             });
-            await showNotificationInTab("Success", `Content converted and copied to clipboard${tokenMessage}`);
+            if (copyResponse && copyResponse.success) {
+              await showNotificationInTab("Success", `Content converted and copied to clipboard${tokenMessage}`);
+            } else {
+              await showNotificationInTab("Copy Failed", (copyResponse && copyResponse.error) || "Could not write to the clipboard");
+            }
           }
         } else {
           await showNotificationInTab("Conversion Failed", response?.error || "Unknown error");
@@ -540,7 +544,38 @@ async function handleKeyboardShortcut(command) {
   }
 }
 
-// Handle keyboard shortcuts
+// Handle keyboard shortcuts. Both the native commands API and the
+// content-script fallback can deliver the same chord, so triggers arriving
+// within a short window are treated as one press.
+const recentShortcutTriggers = {};
+
+function isDuplicateTrigger(command) {
+  const now = Date.now();
+  const last = recentShortcutTriggers[command] || 0;
+  recentShortcutTriggers[command] = now;
+  return now - last < 500;
+}
+
 browserAPI.commands.onCommand.addListener(async (command) => {
+  if (isDuplicateTrigger(command)) return;
   await handleKeyboardShortcut(command);
+});
+
+// Keyboard fallback for browsers that register manifest commands but never
+// dispatch them (eg. Orion). Those browsers also don't consume the chord,
+// so the content script sees the keydown and forwards it here.
+browserAPI.runtime.onMessage.addListener((request) => {
+  if (!request || request.action !== 'keyboardShortcutFallback') return;
+
+  if (request.command === 'open_popup') {
+    const actionAPI = (typeof browser !== 'undefined' ? browser : chrome).action;
+    if (actionAPI && actionAPI.openPopup) {
+      Promise.resolve(actionAPI.openPopup()).catch(() => {});
+    }
+    return;
+  }
+
+  if (!isDuplicateTrigger(request.command)) {
+    handleKeyboardShortcut(request.command);
+  }
 });
