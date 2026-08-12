@@ -24,6 +24,7 @@ const browserAPI = (function () {
     api.runtime = browser.runtime;
     api.storage = browser.storage;
     api.commands = browser.commands;
+    api.scripting = browser.scripting;
   } else if (isChrome) {
     // Chrome APIs
     api.tabs = {
@@ -81,6 +82,9 @@ const browserAPI = (function () {
     };
 
     api.commands = chrome.commands;
+
+    // chrome.scripting is promise-based in MV3, no wrapping needed
+    api.scripting = chrome.scripting;
   }
 
   return api;
@@ -444,7 +448,7 @@ async function copyLogs() {
       action: "getDebugLogs",
     });
 
-    if (response.success && response.logs) {
+    if (response && response.success && response.logs) {
       await navigator.clipboard.writeText(response.logs);
 
       // Update button text temporarily to show feedback
@@ -844,6 +848,13 @@ async function convertToMarkdown(scopeOverride) {
     const debugMode = debugModeCheckbox.checked;
     const triggerLazyLoading = triggerLazyLoadingCheckbox.checked;
 
+    // Make sure the content script is there (tabs opened before the
+    // extension was installed don't have it)
+    const loaded = await MultiTabUtils.ensureContentScriptLoaded(browserAPI, tabs[0].id);
+    if (!loaded) {
+      throw new Error("Cannot access this page - reload the tab and try again");
+    }
+
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
       action: "convertToMarkdown",
@@ -860,8 +871,8 @@ async function convertToMarkdown(scopeOverride) {
       },
     });
 
-    if (!response.success) {
-      throw new Error(response.error || "Unknown error");
+    if (!response || !response.success) {
+      throw new Error((response && response.error) || "No response from the page - reload the tab and try again");
     }
 
     // Use token count from content script response for consistency
@@ -930,6 +941,13 @@ async function downloadMarkdown() {
     const debugMode = debugModeCheckbox.checked;
     const triggerLazyLoading = triggerLazyLoadingCheckbox.checked;
 
+    // Make sure the content script is there (tabs opened before the
+    // extension was installed don't have it)
+    const loaded = await MultiTabUtils.ensureContentScriptLoaded(browserAPI, tabs[0].id);
+    if (!loaded) {
+      throw new Error("Cannot access this page - reload the tab and try again");
+    }
+
     // Send message to content script
     const response = await browserAPI.tabs.sendMessage(tabs[0].id, {
       action: "convertToMarkdown",
@@ -946,8 +964,8 @@ async function downloadMarkdown() {
       },
     });
 
-    if (!response.success) {
-      throw new Error(response.error || "Unknown error");
+    if (!response || !response.success) {
+      throw new Error((response && response.error) || "No response from the page - reload the tab and try again");
     }
 
     // Use token count from content script response for consistency

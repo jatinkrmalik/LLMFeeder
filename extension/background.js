@@ -130,24 +130,6 @@ const browserAPI = (function() {
   return api;
 })();
 
-// Ensure content script is injected before sending messages
-async function ensureContentScriptLoaded(tabId) {
-  try {
-    // Try sending a ping message to check if content script is loaded
-    await browserAPI.tabs.sendMessage(tabId, { action: "ping" }).catch(() => {
-      // If error, inject the content script
-      return browserAPI.scripting.executeScript({
-        target: { tabId: tabId },
-        files: ["libs/readability.js", "libs/turndown.js", "content.js"]
-      });
-    });
-    return true;
-  } catch (error) {
-    console.error("Cannot inject content script:", error);
-    return false;
-  }
-}
-
 // Context Menu Management
 const CONTEXT_MENU_IDS = {
   PARENT: 'llmfeeder-parent',
@@ -362,15 +344,10 @@ async function handleMultiTabCommand(command, tabs) {
       await showNotificationInTab("Processing Many Tabs", `Converting ${tabs.length} tabs. This may take some time...`);
     }
 
-    // Ensure content scripts are loaded in all tabs
-    for (const tab of tabs) {
-      await ensureContentScriptLoaded(tab.id);
-    }
-
     // Get user settings
     const settings = await SettingsUtils.getUserSettings(browserAPI);
 
-    // Process all tabs
+    // Process all tabs (content scripts are ensured per tab in the worker)
     const results = await MultiTabUtils.processMultipleTabs(tabs, settings, browserAPI, null);
     const { message, successCount } = MultiTabUtils.getResultsSummary(results);
 
@@ -497,7 +474,7 @@ async function handleKeyboardShortcut(command) {
       }
       
       // Ensure content script is loaded
-      const isLoaded = await ensureContentScriptLoaded(activeTab.id);
+      const isLoaded = await MultiTabUtils.ensureContentScriptLoaded(browserAPI, activeTab.id);
       if (!isLoaded) {
         await showNotificationInTab("Error", "Could not load content script. Try refreshing the page.");
         return;
