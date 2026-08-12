@@ -164,8 +164,16 @@ const MultiTabUtils = (function() {
       currentWindow: true
     });
 
+    // Some browsers (e.g. Orion) ignore the `highlighted` query filter and
+    // return every tab in the window, each with `highlighted: false`.
+    // Re-check each tab's own state so those browsers fall back to the
+    // active tab instead of treating all open tabs as selected. Compliant
+    // browsers are unaffected: every tab they return here is highlighted,
+    // and the active tab is always part of the highlighted set.
+    const selectedTabs = highlightedTabs.filter(tab => tab.highlighted || tab.active);
+
     // Filter out browser internal pages
-    const validTabs = highlightedTabs.filter(tab =>
+    const validTabs = selectedTabs.filter(tab =>
       tab.url &&
       !tab.url.startsWith('chrome://') &&
       !tab.url.startsWith('edge://') &&
@@ -209,4 +217,9 @@ const MultiTabUtils = (function() {
 // For use in browser extension contexts (not modules)
 if (typeof window !== 'undefined') {
   window.MultiTabUtils = MultiTabUtils;
+}
+
+// Export for use in other scripts
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = MultiTabUtils;
 }
