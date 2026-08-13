@@ -824,8 +824,16 @@
   // link/warning instead of asking another window to echo its HTML.
 
   function isHttpOrHttpsUrl(src) {
+    if (!src || typeof src !== 'string') {
+      return false;
+    }
+    // Require an explicit http(s) URL so srcdoc HTML cannot be resolved as
+    // a relative path against the page.
+    if (!/^https?:\/\//i.test(src.trim())) {
+      return false;
+    }
     try {
-      const url = new URL(src, document.baseURI);
+      const url = new URL(src);
       return url.protocol === 'http:' || url.protocol === 'https:';
     } catch (e) {
       return false;
