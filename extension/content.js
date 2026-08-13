@@ -16,9 +16,7 @@
   };
 
   const CONVERSION_TIMEOUT = 15000; // 15 seconds baseline (extended dynamically when scrolling lazy-loaded pages)
-  const IFRAME_EXTRACTION_TIMEOUT = 1000; // 1 second per iframe
   const MIN_CONTENT_LENGTH = 50; // Minimum meaningful content length
-  const MAX_IFRAME_BATCH_SIZE = 5; // Process up to 5 iframes in parallel
   const MAX_DEBUG_LOG_ENTRIES = 500; // Keep memory usage in check
   const SCROLL_LOAD_DELAY = 300; // ms to wait after scroll for content to load
   const MAX_SCROLL_ATTEMPTS = 50; // Maximum scroll iterations per container
@@ -29,12 +27,6 @@
   // the user has been shown an error.
   const SCROLL_PASS_BUDGET = 15000;
   const SCROLL_TIMEOUT_HEADROOM = SCROLL_PASS_BUDGET; // ms of extra time we may need when scrolling
-
-  // Message action constants for security validation
-  const MESSAGE_ACTIONS = {
-    EXTRACT_CONTENT: 'llmfeeder_extract_content',
-    EXTRACT_RESPONSE: 'llmfeeder_extract_content_response'
-  };
 
   // ==========================================================================
   // DEBUG LOGGING SYSTEM
@@ -105,45 +97,6 @@
       onMessage: { addListener: function() {} }
     };
   })();
-
-  // ==========================================================================
-  // CROSS-ORIGIN IFRAME MESSAGE LISTENER
-  // ==========================================================================
-
-  // Listen for messages from parent window for iframe content extraction
-  window.addEventListener('message', (event) => {
-    if (event.data && event.data.action === MESSAGE_ACTIONS.EXTRACT_CONTENT) {
-      try {
-        const content = document.body.cloneNode(true);
-        const elementsToRemove = content.querySelectorAll('script, style, noscript, iframe');
-        for (let i = elementsToRemove.length - 1; i >= 0; i--) {
-          if (elementsToRemove[i].parentNode) {
-            elementsToRemove[i].parentNode.removeChild(elementsToRemove[i]);
-          }
-        }
-        const contentText = content.textContent || '';
-        if (contentText.trim().length > MIN_CONTENT_LENGTH) {
-          event.source.postMessage({
-            action: MESSAGE_ACTIONS.EXTRACT_RESPONSE,
-            messageId: event.data.messageId,
-            content: content.innerHTML
-          }, event.origin);
-        } else {
-          event.source.postMessage({
-            action: MESSAGE_ACTIONS.EXTRACT_RESPONSE,
-            messageId: event.data.messageId,
-            content: null
-          }, event.origin);
-        }
-      } catch (e) {
-        event.source.postMessage({
-          action: MESSAGE_ACTIONS.EXTRACT_RESPONSE,
-          messageId: event.data.messageId,
-          content: null
-        }, event.origin);
-      }
-    }
-  });
 
   // ==========================================================================
   // MESSAGE HANDLERS
@@ -866,6 +819,45 @@
   // IFRAME CONTENT EXTRACTION
   // ==========================================================================
 
+  // Same-origin frames (including srcdoc) are read through the DOM.
+  // Cross-origin frames stay behind the browser's origin checks: we keep a
+  // link/warning instead of asking another window to echo its HTML.
+
+  function isHttpOrHttpsUrl(src) {
+    try {
+      const url = new URL(src, document.baseURI);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function iframeFallbackInfo(iframe, iframeSrc) {
+    return {
+      src: iframeSrc,
+      title: iframe.title || iframe.getAttribute('aria-label') || 'Embedded content'
+    };
+  }
+
+  function createIframePlaceholder(iframeSrc, iframeTitle) {
+    const linkDiv = document.createElement('div');
+    linkDiv.className = 'llmfeeder-iframe-link';
+    const p = document.createElement('p');
+    p.appendChild(document.createTextNode('[Embedded content: '));
+    const title = iframeTitle || 'Embedded content';
+    if (isHttpOrHttpsUrl(iframeSrc)) {
+      const a = document.createElement('a');
+      a.href = iframeSrc;
+      a.textContent = title;
+      p.appendChild(a);
+    } else {
+      p.appendChild(document.createTextNode(title));
+    }
+    p.appendChild(document.createTextNode(']'));
+    linkDiv.appendChild(p);
+    return linkDiv;
+  }
+
   function isSameOriginIframe(iframe) {
     try {
       if (!iframe.contentWindow) {
@@ -878,153 +870,78 @@
     }
   }
 
-  function extractSingleIframe(iframe, iframeSrc) {
-    return new Promise((resolve) => {
-      const messageId = `llmfeeder-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      let timeoutId = null;
-      let messageHandler = null;
-
-      const cleanup = () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        if (messageHandler) window.removeEventListener('message', messageHandler);
-      };
-
-      messageHandler = (event) => {
-        if (event.data &&
-            event.data.action === MESSAGE_ACTIONS.EXTRACT_RESPONSE &&
-            event.data.messageId === messageId) {
-          cleanup();
-          resolve({
-            success: true,
-            content: event.data.content,
-            src: iframeSrc
-          });
-        }
-      };
-
-      window.addEventListener('message', messageHandler);
-
-      timeoutId = setTimeout(() => {
-        cleanup();
-        resolve({ success: false, content: null, src: iframeSrc });
-      }, IFRAME_EXTRACTION_TIMEOUT);
-
-      try {
-        iframe.contentWindow.postMessage({
-          action: MESSAGE_ACTIONS.EXTRACT_CONTENT,
-          messageId: messageId
-        }, '*');
-      } catch (e) {
-        cleanup();
-        resolve({ success: false, content: null, src: iframeSrc });
-      }
-    });
+  function isHiddenEmptyIframe(iframe) {
+    return !iframe.offsetParent && !iframe.src && !iframe.srcdoc;
   }
 
-  async function extractIframesInBatches(iframes) {
-    const results = [];
-    for (let i = 0; i < iframes.length; i += MAX_IFRAME_BATCH_SIZE) {
-      const batch = iframes.slice(i, i + MAX_IFRAME_BATCH_SIZE);
-      const batchResults = await Promise.all(
-        batch.map(iframe => extractSingleIframe(iframe, iframe.src))
-      );
-      results.push(...batchResults);
+  function isRemoteIframeSrc(iframe) {
+    return !!(iframe.src && iframe.src !== 'about:blank' && iframe.src !== 'javascript:void(0)');
+  }
+
+  function tryExtractSameOriginIframe(iframe, iframeSrc, index) {
+    const iframeDoc = iframe.contentWindow.document;
+    const iframeBody = iframeDoc.body;
+    const clonedIframeContent = iframeBody.cloneNode(true);
+
+    const scripts = clonedIframeContent.querySelectorAll('script, style, noscript');
+    for (let j = scripts.length - 1; j >= 0; j--) {
+      scripts[j].parentNode.removeChild(scripts[j]);
     }
-    return results;
+
+    const iframeText = clonedIframeContent.textContent || '';
+    if (iframeText.trim().length <= MIN_CONTENT_LENGTH) {
+      return { skipped: true, contentLength: iframeText.length };
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'llmfeeder-iframe-content';
+    wrapper.setAttribute('data-iframe-src', iframeSrc);
+    wrapper.setAttribute('data-iframe-index', String(index));
+    while (clonedIframeContent.firstChild) {
+      wrapper.appendChild(clonedIframeContent.firstChild);
+    }
+    return { wrapper, contentLength: iframeText.length };
   }
 
-  /**
-   * Extract iframe content from the ORIGINAL document and append to content
-   * This is needed because Readability may remove iframes from the content
-   */
-  async function extractAndReplaceIframesFromOriginal(clonedContent, preserveIframeLinks) {
-    const originalIframes = Array.from(document.querySelectorAll('iframe'));
+  function collectIframeExtraction(iframes, logLabel) {
     const extractedContents = [];
     const crossOriginIframes = [];
-    const inaccessibleIframes = [];
 
-    DebugLog.log('Starting iframe extraction from original document', {
-      originalIframes: originalIframes.length
+    DebugLog.log(logLabel, {
+      originalIframes: iframes.length
     });
 
-    for (let i = 0; i < originalIframes.length; i++) {
-      const iframe = originalIframes[i];
+    for (let i = 0; i < iframes.length; i++) {
+      const iframe = iframes[i];
       const iframeSrc = iframe.src || iframe.srcdoc || 'about:blank';
 
-      // Skip hidden/empty iframes
-      if (!iframe.offsetParent && !iframe.src && !iframe.srcdoc) {
+      if (isHiddenEmptyIframe(iframe)) {
         continue;
       }
 
       if (isSameOriginIframe(iframe)) {
         try {
-          const iframeDoc = iframe.contentWindow.document;
-          const iframeBody = iframeDoc.body;
-          const clonedContent = iframeBody.cloneNode(true);
-
-          // Clean scripts, styles
-          const scripts = clonedContent.querySelectorAll('script, style, noscript');
-          for (let j = scripts.length - 1; j >= 0; j--) {
-            scripts[j].parentNode.removeChild(scripts[j]);
-          }
-
-          const iframeText = clonedContent.textContent || '';
-          if (iframeText.trim().length > MIN_CONTENT_LENGTH) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'llmfeeder-iframe-content';
-            wrapper.setAttribute('data-iframe-src', iframeSrc);
-            wrapper.setAttribute('data-iframe-index', i);
-            wrapper.innerHTML = clonedContent.innerHTML;
-            extractedContents.push(wrapper);
+          const result = tryExtractSameOriginIframe(iframe, iframeSrc, i);
+          if (result.wrapper) {
+            extractedContents.push(result.wrapper);
             DebugLog.log('Extracted same-origin iframe', {
               src: iframeSrc.substring(0, 50),
-              contentLength: iframeText.length
+              contentLength: result.contentLength
             });
           } else {
             DebugLog.log('Iframe skipped (not enough content)', {
               src: iframeSrc.substring(0, 50),
-              contentLength: iframeText.length
+              contentLength: result.contentLength
             });
           }
         } catch (e) {
           DebugLog.error('Same-origin iframe extraction failed', e);
           if (iframe.src) {
-            inaccessibleIframes.push({ iframe, index: i, src: iframeSrc });
+            crossOriginIframes.push(iframeFallbackInfo(iframe, iframeSrc));
           }
         }
-      } else if (iframe.src && iframe.src !== 'about:blank' && iframe.src !== 'javascript:void(0)') {
-        inaccessibleIframes.push({ iframe, index: i, src: iframeSrc });
-      }
-    }
-
-    // Try cross-origin via messaging
-    if (inaccessibleIframes.length > 0) {
-      DebugLog.log('Attempting cross-origin iframe extraction', {
-        count: inaccessibleIframes.length
-      });
-      const iframesToExtract = inaccessibleIframes.map(item => item.iframe);
-      const results = await extractIframesInBatches(iframesToExtract);
-
-      for (let j = 0; j < results.length; j++) {
-        const result = results[j];
-        const originalItem = inaccessibleIframes[j];
-
-        if (result.success && result.content) {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'llmfeeder-iframe-content';
-          wrapper.setAttribute('data-iframe-src', result.src);
-          wrapper.setAttribute('data-iframe-index', originalItem.index);
-          wrapper.innerHTML = result.content;
-          extractedContents.push(wrapper);
-          DebugLog.log('Extracted cross-origin iframe via messaging', {
-            src: result.src.substring(0, 50)
-          });
-        } else {
-          crossOriginIframes.push({
-            src: result.src,
-            title: originalItem.iframe?.title || originalItem.iframe?.getAttribute('aria-label') || 'Embedded content'
-          });
-        }
+      } else if (isRemoteIframeSrc(iframe)) {
+        crossOriginIframes.push(iframeFallbackInfo(iframe, iframeSrc));
       }
     }
 
@@ -1033,9 +950,33 @@
       crossOrigin: crossOriginIframes.length
     });
 
-    // CRITICAL FIX: For mainContent scope, Readability has already removed iframes
-    // So we APPEND the extracted iframe content directly to the cloned content
-    // instead of trying to replace non-existent iframes
+    return { extractedContents, crossOriginIframes };
+  }
+
+  function crossOriginIframeWarnings(crossOriginIframes) {
+    if (crossOriginIframes.length === 0) {
+      return [];
+    }
+    return [{
+      type: 'crossOriginIframe',
+      count: crossOriginIframes.length,
+      details: crossOriginIframes.slice(0, 3)
+    }];
+  }
+
+  /**
+   * Extract iframe content from the ORIGINAL document and append to content
+   * This is needed because Readability may remove iframes from the content
+   */
+  async function extractAndReplaceIframesFromOriginal(clonedContent, preserveIframeLinks) {
+    const originalIframes = Array.from(document.querySelectorAll('iframe'));
+    const { extractedContents, crossOriginIframes } = collectIframeExtraction(
+      originalIframes,
+      'Starting iframe extraction from original document'
+    );
+
+    // For mainContent scope, Readability has already removed iframes, so
+    // append extracted iframe content directly to the cloned article.
     if (extractedContents.length > 0) {
       DebugLog.log('Appending extracted iframe content to cloned content', {
         count: extractedContents.length
@@ -1047,7 +988,11 @@
       extractedContents.forEach((wrapper, index) => {
         const section = document.createElement('div');
         section.className = 'llmfeeder-iframe-section';
-        section.innerHTML = `<hr>\n<h3>Embedded Content ${index + 1}</h3>\n` + wrapper.innerHTML;
+        section.appendChild(document.createElement('hr'));
+        const heading = document.createElement('h3');
+        heading.textContent = `Embedded Content ${index + 1}`;
+        section.appendChild(heading);
+        section.appendChild(wrapper);
         iframeSection.appendChild(section);
       });
 
@@ -1055,16 +1000,7 @@
       DebugLog.log('Appended iframe content to cloned content');
     }
 
-    const warnings = [];
-    if (crossOriginIframes.length > 0) {
-      warnings.push({
-        type: 'crossOriginIframe',
-        count: crossOriginIframes.length,
-        details: crossOriginIframes.slice(0, 3)
-      });
-    }
-
-    return warnings;
+    return crossOriginIframeWarnings(crossOriginIframes);
   }
 
   /**
@@ -1073,117 +1009,36 @@
    */
   async function extractAndReplaceIframesFromCloned(content, preserveIframeLinks) {
     const originalIframes = Array.from(document.querySelectorAll('iframe'));
-    const extractedContents = [];
-    const crossOriginIframes = [];
-    const inaccessibleIframes = [];
+    const { extractedContents, crossOriginIframes } = collectIframeExtraction(
+      originalIframes,
+      'Starting iframe extraction from cloned content'
+    );
 
-    DebugLog.log('Starting iframe extraction from cloned content', { 
-      originalIframes: originalIframes.length 
-    });
-
-    for (let i = 0; i < originalIframes.length; i++) {
-      const iframe = originalIframes[i];
-      const iframeSrc = iframe.src || iframe.srcdoc || 'about:blank';
-
-      if (!iframe.offsetParent && !iframe.src && !iframe.srcdoc) {
-        continue;
-      }
-
-      if (isSameOriginIframe(iframe)) {
-        try {
-          const iframeDoc = iframe.contentWindow.document;
-          const iframeBody = iframeDoc.body;
-          const clonedContent = iframeBody.cloneNode(true);
-
-          const scripts = clonedContent.querySelectorAll('script, style, noscript');
-          for (let j = scripts.length - 1; j >= 0; j--) {
-            scripts[j].parentNode.removeChild(scripts[j]);
-          }
-
-          const iframeText = clonedContent.textContent || '';
-          if (iframeText.trim().length > MIN_CONTENT_LENGTH) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'llmfeeder-iframe-content';
-            wrapper.setAttribute('data-iframe-src', iframeSrc);
-            wrapper.setAttribute('data-iframe-index', i);
-            wrapper.innerHTML = clonedContent.innerHTML;
-            extractedContents.push(wrapper);
-            DebugLog.log('Extracted same-origin iframe', { 
-              src: iframeSrc.substring(0, 50), 
-              contentLength: iframeText.length 
-            });
-          }
-        } catch (e) {
-          DebugLog.error('Same-origin iframe extraction failed', e);
-          if (iframe.src) {
-            inaccessibleIframes.push({ iframe, index: i, src: iframeSrc });
-          }
-        }
-      } else if (iframe.src && iframe.src !== 'about:blank' && iframe.src !== 'javascript:void(0)') {
-        inaccessibleIframes.push({ iframe, index: i, src: iframeSrc });
-      }
-    }
-
-    if (inaccessibleIframes.length > 0) {
-      const iframesToExtract = inaccessibleIframes.map(item => item.iframe);
-      const results = await extractIframesInBatches(iframesToExtract);
-
-      for (let j = 0; j < results.length; j++) {
-        const result = results[j];
-        const originalItem = inaccessibleIframes[j];
-
-        if (result.success && result.content) {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'llmfeeder-iframe-content';
-          wrapper.setAttribute('data-iframe-src', result.src);
-          wrapper.setAttribute('data-iframe-index', originalItem.index);
-          wrapper.innerHTML = result.content;
-          extractedContents.push(wrapper);
-        } else {
-          crossOriginIframes.push({
-            src: result.src,
-            title: originalItem.iframe?.title || originalItem.iframe?.getAttribute('aria-label') || 'Embedded content'
-          });
-        }
-      }
-    }
-
-    // Replace iframes in cloned content
     const clonedIframes = Array.from(content.querySelectorAll('iframe'));
     for (let i = 0; i < clonedIframes.length; i++) {
       const iframe = clonedIframes[i];
       const iframeSrc = iframe.src || iframe.srcdoc || 'about:blank';
 
       const extractedContent = extractedContents.find(c =>
-        parseInt(c.getAttribute('data-iframe-index')) === i
+        parseInt(c.getAttribute('data-iframe-index'), 10) === i
       );
 
       if (extractedContent) {
         const replacementDiv = document.createElement('div');
         replacementDiv.className = 'llmfeeder-iframe-replacement';
-        replacementDiv.innerHTML = extractedContent.innerHTML;
+        while (extractedContent.firstChild) {
+          replacementDiv.appendChild(extractedContent.firstChild);
+        }
         iframe.parentNode.replaceChild(replacementDiv, iframe);
       } else if (preserveIframeLinks && iframeSrc && iframeSrc !== 'about:blank') {
-        const linkDiv = document.createElement('div');
-        linkDiv.className = 'llmfeeder-iframe-link';
         const iframeTitle = iframe.title || iframe.getAttribute('aria-label') || 'Embedded content';
-        linkDiv.innerHTML = `<p>[Embedded content: <a href="${iframeSrc}">${iframeTitle}</a>]</p>`;
-        iframe.parentNode.replaceChild(linkDiv, iframe);
+        iframe.parentNode.replaceChild(createIframePlaceholder(iframeSrc, iframeTitle), iframe);
       } else {
         iframe.parentNode.removeChild(iframe);
       }
     }
 
-    const warnings = [];
-    if (crossOriginIframes.length > 0) {
-      warnings.push({
-        type: 'crossOriginIframe',
-        count: crossOriginIframes.length,
-        details: crossOriginIframes.slice(0, 3)
-      });
-    }
-
-    return warnings;
+    return crossOriginIframeWarnings(crossOriginIframes);
   }
 
   // ==========================================================================
