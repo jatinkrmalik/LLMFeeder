@@ -16,7 +16,12 @@ A browser extension that converts web page content to clean Markdown format and 
 
 **Website:** [llmfeeder.fyi](https://llmfeeder.fyi/)
 
-## ✨ What's New in v2.2.0
+## ✨ What's New in v2.2.1
+
+- 🖼️ **More robust iframe extraction** - Same-origin and srcdoc frames are read through the DOM; cross-origin frames keep a link/warning instead of page-to-page HTML messaging
+- 🔗 **Safer iframe placeholders** - Embedded-content links are built with DOM APIs and only for explicit `http(s)` URLs
+
+### Previous Release (v2.2.0)
 
 - 📜 **Lazy-Loading Auto-Scroll** - Opt-in setting to scroll chat/AI pages (Gemini, ChatGPT, Claude, etc.) before extraction so long conversations aren't truncated (#91)
 - 📋 **Alternative Copy Mode** - Split copy button with a one-click override for Full Page vs Main Content without changing your default setting
