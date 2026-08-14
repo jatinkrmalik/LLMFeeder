@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LLMFeeder - Web to Markdown for AI",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Convert any webpage to clean Markdown for ChatGPT, Claude & Gemini. Multi-tab copy, token counter. 100% private.",
   "author": "@jatinkrmalik",
   "icons": {
