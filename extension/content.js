@@ -614,10 +614,10 @@
     // For mainContent scope, we need to extract from original document since Readability may remove iframes
     let iframeWarnings = [];
     if (settings.contentScope === 'mainContent') {
-      iframeWarnings = await extractAndReplaceIframesFromOriginal(content, settings.preserveIframeLinks !== false);
+      iframeWarnings = extractAndReplaceIframesFromOriginal(content);
     }
     
-    const cleanWarnings = await cleanContent(content, settings);
+    const cleanWarnings = cleanContent(content, settings);
     iframeWarnings = iframeWarnings.concat(cleanWarnings);
 
     DebugLog.log('Iframe warnings', { count: iframeWarnings.length, types: iframeWarnings.map(w => w.type) });
@@ -976,7 +976,7 @@
    * Extract iframe content from the ORIGINAL document and append to content
    * This is needed because Readability may remove iframes from the content
    */
-  async function extractAndReplaceIframesFromOriginal(clonedContent, preserveIframeLinks) {
+  function extractAndReplaceIframesFromOriginal(clonedContent) {
     const originalIframes = Array.from(document.querySelectorAll('iframe'));
     const { extractedContents, crossOriginIframes } = collectIframeExtraction(
       originalIframes,
@@ -1015,7 +1015,7 @@
    * Extract and replace iframes for fullPage/selection scope
    * (For these scopes, iframes are still present in the cloned content)
    */
-  async function extractAndReplaceIframesFromCloned(content, preserveIframeLinks) {
+  function extractAndReplaceIframesFromCloned(content, preserveIframeLinks) {
     const originalIframes = Array.from(document.querySelectorAll('iframe'));
     const { extractedContents, crossOriginIframes } = collectIframeExtraction(
       originalIframes,
@@ -1053,12 +1053,12 @@
   // CONTENT CLEANING
   // ==========================================================================
 
-  async function cleanContent(content, settings) {
+  function cleanContent(content, settings) {
     // For fullPage and selection scopes, extract iframes from cloned content
     // For mainContent scope, this was already done before Readability
     let iframeWarnings = [];
     if (settings.contentScope !== 'mainContent') {
-      iframeWarnings = await extractAndReplaceIframesFromCloned(content, settings.preserveIframeLinks !== false);
+      iframeWarnings = extractAndReplaceIframesFromCloned(content, settings.preserveIframeLinks !== false);
     }
 
     // Remove elements that shouldn't be included

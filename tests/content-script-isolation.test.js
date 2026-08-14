@@ -12,6 +12,7 @@ describe('content script page isolation', () => {
   it('does not register a window message listener', () => {
     expect(source).not.toMatch(/addEventListener\(\s*['"]message['"]/);
     expect(source).not.toMatch(/llmfeeder_extract_content/);
+    expect(source).not.toMatch(/event\.source\.postMessage/);
   });
 
   it('does not echo document HTML in response to page messages', (done) => {
