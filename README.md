@@ -442,4 +442,4 @@ Thanks a lot for spending your time helping LLMFeeder grow.🍻
 
 ## Star Chart
 
-[![Star History Chart](https://api.star-history.com/svg?repos=jatinkrmalik/LLMFeeder&type=Date)](https://star-history.com/#jatinkrmalik/LLMFeeder&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=jatinkrmalik/LLMFeeder&type=Date)](https://star-history.dera.page/#jatinkrmalik/LLMFeeder&Date)
