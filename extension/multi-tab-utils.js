@@ -4,6 +4,31 @@
 const MultiTabUtils = (function() {
   const MAX_FILENAME_LENGTH = 100;
   const LARGE_TAB_COUNT_THRESHOLD = 20; // Warn user when processing more than this many tabs
+  const CONTENT_SCRIPT_FILES = ['libs/readability.js', 'libs/turndown.js', 'settings.js', 'content.js'];
+
+  // Confirm the content script is listening in a tab, injecting it if not.
+  // A rejected ping means there is no receiver (Chrome/Firefox); a null or
+  // undefined response means the same on browsers that resolve instead of
+  // reject (eg. Orion). Injection needs host access (activeTab covers the
+  // active tab) and never works on browser internal pages - those failures
+  // surface as a false return.
+  async function ensureContentScriptLoaded(browserAPI, tabId) {
+    const ping = () =>
+      browserAPI.tabs.sendMessage(tabId, { action: 'ping' }).catch(() => null);
+
+    if (await ping()) return true;
+
+    try {
+      await browserAPI.scripting.executeScript({
+        target: { tabId: tabId },
+        files: CONTENT_SCRIPT_FILES
+      });
+    } catch (error) {
+      console.error('Cannot inject content script:', error);
+      return false;
+    }
+    return Boolean(await ping());
+  }
 
   function shouldWarnAboutLargeTabCount(tabCount) {
     return tabCount > LARGE_TAB_COUNT_THRESHOLD;
@@ -34,12 +59,17 @@ const MultiTabUtils = (function() {
         const tab = tabs[index];
 
         try {
+          const loaded = await ensureContentScriptLoaded(browserAPI, tab.id);
+          if (!loaded) {
+            throw new Error("Cannot access this tab - try reloading it");
+          }
+
           const response = await browserAPI.tabs.sendMessage(tab.id, {
             action: "convertToMarkdown",
             settings: settings
           });
 
-          if (response.success) {
+          if (response && response.success) {
             results[index] = {
               success: true,
               tab: tab,
@@ -51,7 +81,7 @@ const MultiTabUtils = (function() {
             results[index] = {
               success: false,
               tab: tab,
-              error: response.error || "Conversion failed"
+              error: (response && response.error) || "No response from tab - try reloading it"
             };
           }
         } catch (error) {
@@ -164,8 +194,16 @@ const MultiTabUtils = (function() {
       currentWindow: true
     });
 
+    // Some browsers (e.g. Orion) ignore the `highlighted` query filter and
+    // return every tab in the window, each with `highlighted: false`.
+    // Re-check each tab's own state so those browsers fall back to the
+    // active tab instead of treating all open tabs as selected. Compliant
+    // browsers are unaffected: every tab they return here is highlighted,
+    // and the active tab is always part of the highlighted set.
+    const selectedTabs = highlightedTabs.filter(tab => tab.highlighted || tab.active);
+
     // Filter out browser internal pages
-    const validTabs = highlightedTabs.filter(tab =>
+    const validTabs = selectedTabs.filter(tab =>
       tab.url &&
       !tab.url.startsWith('chrome://') &&
       !tab.url.startsWith('edge://') &&
@@ -193,6 +231,7 @@ const MultiTabUtils = (function() {
 
   // Public API
   return {
+    ensureContentScriptLoaded,
     processMultipleTabs,
     mergeMarkdownResults,
     generateUniqueFilename,
@@ -209,4 +248,9 @@ const MultiTabUtils = (function() {
 // For use in browser extension contexts (not modules)
 if (typeof window !== 'undefined') {
   window.MultiTabUtils = MultiTabUtils;
+}
+
+// Export for use in other scripts
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = MultiTabUtils;
 }

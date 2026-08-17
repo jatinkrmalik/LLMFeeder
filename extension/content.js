@@ -223,6 +223,114 @@
   });
 
   // ==========================================================================
+  // KEYBOARD SHORTCUT FALLBACK
+  // ==========================================================================
+
+  // Some browsers (eg. Orion) register manifest commands but never dispatch
+  // them, and don't consume the chord either - the page still receives the
+  // keydown. Handle the default shortcuts here. Browsers with a working
+  // commands API consume these chords before the page sees them, so this
+  // only runs where the native path is dead.
+  // e.code is used because macOS Option-key composing changes e.key.
+  const FALLBACK_SHORTCUT_COMMANDS = {
+    KeyL: 'open_popup',
+    KeyM: 'convert_to_markdown',
+    KeyD: 'download_markdown',
+    KeyZ: 'download_zip'
+  };
+
+  // Convert and copy/download directly in this page. The background flow is
+  // no use to the keyboard fallback for these two commands: clipboard writes
+  // (and downloads) need the user activation of the keydown, which only
+  // exists here in the page that received it.
+  //
+  // WebKit only honours clipboard writes made inside the gesture handler
+  // itself - by the time the conversion has finished, the gesture is spent
+  // and writeText rejects with NotAllowedError. The sanctioned pattern is to
+  // call clipboard.write() synchronously and hand it a ClipboardItem whose
+  // payload is a promise. This function is therefore deliberately NOT async.
+  function handleShortcutInPage(command) {
+    let conversionError = null;
+    const markdownPromise = (async () => {
+      const storageAPI = (typeof browser !== 'undefined' && browser.storage) ? browser.storage
+        : ((typeof chrome !== 'undefined' && chrome.storage) ? chrome.storage : null);
+      if (!storageAPI || typeof SettingsUtils === 'undefined') {
+        throw new Error('Settings unavailable');
+      }
+      const settings = await SettingsUtils.getUserSettings({ storage: storageAPI });
+      return await convertToMarkdown(settings);
+    })().catch((error) => {
+      conversionError = error;
+      throw error;
+    });
+
+    const notifyFailure = (error) => {
+      console.error('Shortcut conversion error:', error);
+      const message = (conversionError && conversionError.message) ||
+        (error && error.message) || 'Could not convert page';
+      showNotification('Conversion Failed', message);
+    };
+
+    if (command === 'convert_to_markdown') {
+      let copyPromise;
+      if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
+        copyPromise = navigator.clipboard.write([
+          new ClipboardItem({
+            'text/plain': markdownPromise.then(
+              (markdown) => new Blob([markdown], { type: 'text/plain' })
+            )
+          })
+        ]);
+      } else {
+        copyPromise = markdownPromise.then((markdown) => copyTextToClipboard(markdown));
+      }
+      copyPromise
+        .then(() => showNotification('Success', 'Content converted and copied to clipboard'))
+        .catch(notifyFailure);
+    } else {
+      markdownPromise
+        .then((markdown) => {
+          downloadMarkdownFile(markdown, document.title || 'llmfeeder');
+          showNotification('Success', 'Markdown file downloaded');
+        })
+        .catch(notifyFailure);
+    }
+  }
+
+  window.addEventListener('keydown', (event) => {
+    if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
+
+    const command = FALLBACK_SHORTCUT_COMMANDS[event.code];
+    if (!command) return;
+
+    // Leave typing contexts alone
+    const target = event.target;
+    if (target && (target.isContentEditable ||
+        /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName || ''))) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (command === 'convert_to_markdown' || command === 'download_markdown') {
+      handleShortcutInPage(command);
+      return;
+    }
+
+    // open_popup and download_zip need the background script
+    try {
+      const sent = browserRuntime.sendMessage({
+        action: 'keyboardShortcutFallback',
+        command: command
+      });
+      if (sent && typeof sent.catch === 'function') sent.catch(() => {});
+    } catch (e) {
+      // No runtime available (detached frame etc.) - nothing to do
+    }
+  }, true);
+
+  // ==========================================================================
   // UTILITY FUNCTIONS
   // ==========================================================================
 

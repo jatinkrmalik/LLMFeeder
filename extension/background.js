@@ -130,24 +130,6 @@ const browserAPI = (function() {
   return api;
 })();
 
-// Ensure content script is injected before sending messages
-async function ensureContentScriptLoaded(tabId) {
-  try {
-    // Try sending a ping message to check if content script is loaded
-    await browserAPI.tabs.sendMessage(tabId, { action: "ping" }).catch(() => {
-      // If error, inject the content script
-      return browserAPI.scripting.executeScript({
-        target: { tabId: tabId },
-        files: ["libs/readability.js", "libs/turndown.js", "content.js"]
-      });
-    });
-    return true;
-  } catch (error) {
-    console.error("Cannot inject content script:", error);
-    return false;
-  }
-}
-
 // Context Menu Management
 const CONTEXT_MENU_IDS = {
   PARENT: 'llmfeeder-parent',
@@ -362,15 +344,10 @@ async function handleMultiTabCommand(command, tabs) {
       await showNotificationInTab("Processing Many Tabs", `Converting ${tabs.length} tabs. This may take some time...`);
     }
 
-    // Ensure content scripts are loaded in all tabs
-    for (const tab of tabs) {
-      await ensureContentScriptLoaded(tab.id);
-    }
-
     // Get user settings
     const settings = await SettingsUtils.getUserSettings(browserAPI);
 
-    // Process all tabs
+    // Process all tabs (content scripts are ensured per tab in the worker)
     const results = await MultiTabUtils.processMultipleTabs(tabs, settings, browserAPI, null);
     const { message, successCount } = MultiTabUtils.getResultsSummary(results);
 
@@ -497,7 +474,7 @@ async function handleKeyboardShortcut(command) {
       }
       
       // Ensure content script is loaded
-      const isLoaded = await ensureContentScriptLoaded(activeTab.id);
+      const isLoaded = await MultiTabUtils.ensureContentScriptLoaded(browserAPI, activeTab.id);
       if (!isLoaded) {
         await showNotificationInTab("Error", "Could not load content script. Try refreshing the page.");
         return;
@@ -544,11 +521,15 @@ async function handleKeyboardShortcut(command) {
             await showNotificationInTab("Success", `Markdown file downloaded${tokenMessage}`);
           } else {
             // Copy to clipboard via content script
-            await browserAPI.tabs.sendMessage(activeTab.id, {
+            const copyResponse = await browserAPI.tabs.sendMessage(activeTab.id, {
               action: "copyToClipboard",
               text: response.markdown
             });
-            await showNotificationInTab("Success", `Content converted and copied to clipboard${tokenMessage}`);
+            if (copyResponse && copyResponse.success) {
+              await showNotificationInTab("Success", `Content converted and copied to clipboard${tokenMessage}`);
+            } else {
+              await showNotificationInTab("Copy Failed", (copyResponse && copyResponse.error) || "Could not write to the clipboard");
+            }
           }
         } else {
           await showNotificationInTab("Conversion Failed", response?.error || "Unknown error");
@@ -563,7 +544,38 @@ async function handleKeyboardShortcut(command) {
   }
 }
 
-// Handle keyboard shortcuts
+// Handle keyboard shortcuts. Both the native commands API and the
+// content-script fallback can deliver the same chord, so triggers arriving
+// within a short window are treated as one press.
+const recentShortcutTriggers = {};
+
+function isDuplicateTrigger(command) {
+  const now = Date.now();
+  const last = recentShortcutTriggers[command] || 0;
+  recentShortcutTriggers[command] = now;
+  return now - last < 500;
+}
+
 browserAPI.commands.onCommand.addListener(async (command) => {
+  if (isDuplicateTrigger(command)) return;
   await handleKeyboardShortcut(command);
+});
+
+// Keyboard fallback for browsers that register manifest commands but never
+// dispatch them (eg. Orion). Those browsers also don't consume the chord,
+// so the content script sees the keydown and forwards it here.
+browserAPI.runtime.onMessage.addListener((request) => {
+  if (!request || request.action !== 'keyboardShortcutFallback') return;
+
+  if (request.command === 'open_popup') {
+    const actionAPI = (typeof browser !== 'undefined' ? browser : chrome).action;
+    if (actionAPI && actionAPI.openPopup) {
+      Promise.resolve(actionAPI.openPopup()).catch(() => {});
+    }
+    return;
+  }
+
+  if (!isDuplicateTrigger(request.command)) {
+    handleKeyboardShortcut(request.command);
+  }
 });
