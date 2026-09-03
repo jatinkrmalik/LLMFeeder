@@ -7,7 +7,7 @@ set -euo pipefail
 # Usage: ./scripts/build.sh [chrome|firefox|source|all]
 
 # Default values
-VERSION="2.2.0"
+VERSION="2.2.1"
 TARGET="all"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"

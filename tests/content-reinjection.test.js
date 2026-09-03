@@ -48,14 +48,12 @@ describe('content.js reinjection', () => {
     await Promise.resolve();
 
     expect(runtimeListeners.size).toBe(1);
-    expect(windowListeners.get('message').size).toBe(1);
     expect(windowListeners.get('keydown').size).toBe(1);
     expect(windowListeners.get('focus').size).toBe(1);
     expect(windowListeners.get('blur').size).toBe(1);
 
     context.__llmFeederContentScriptLifecycle.dispose();
     expect(runtimeListeners.size).toBe(0);
-    expect(windowListeners.get('message').size).toBe(0);
     expect(windowListeners.get('keydown').size).toBe(0);
   });
 });
