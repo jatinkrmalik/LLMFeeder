@@ -4,7 +4,13 @@
 const MultiTabUtils = (function() {
   const MAX_FILENAME_LENGTH = 100;
   const LARGE_TAB_COUNT_THRESHOLD = 20; // Warn user when processing more than this many tabs
-  const CONTENT_SCRIPT_FILES = ['libs/readability.js', 'libs/turndown.js', 'settings.js', 'content.js'];
+  const CONTENT_SCRIPT_FILES = [
+    'libs/readability.js',
+    'libs/turndown.js',
+    'shortcut-utils.js',
+    'settings.js',
+    'content.js'
+  ];
 
   // Confirm the content script is listening in a tab, injecting it if not.
   // A rejected ping means there is no receiver (Chrome/Firefox); a null or
@@ -188,11 +194,18 @@ const MultiTabUtils = (function() {
   }
 
   // Get highlighted/selected tabs
-  async function getHighlightedTabs(browserAPI) {
-    const highlightedTabs = await browserAPI.tabs.query({
-      highlighted: true,
-      currentWindow: true
-    });
+  async function getHighlightedTabs(browserAPI, windowId) {
+    const query = { highlighted: true };
+    if (windowId === undefined || windowId === null) {
+      query.currentWindow = true;
+    } else {
+      query.windowId = windowId;
+    }
+
+    const highlightedTabs = await browserAPI.tabs.query(query);
+    const tabsInWindow = windowId === undefined || windowId === null
+      ? highlightedTabs
+      : highlightedTabs.filter(tab => tab.windowId === windowId);
 
     // Some browsers (e.g. Orion) ignore the `highlighted` query filter and
     // return every tab in the window, each with `highlighted: false`.
@@ -200,7 +213,7 @@ const MultiTabUtils = (function() {
     // active tab instead of treating all open tabs as selected. Compliant
     // browsers are unaffected: every tab they return here is highlighted,
     // and the active tab is always part of the highlighted set.
-    const selectedTabs = highlightedTabs.filter(tab => tab.highlighted || tab.active);
+    const selectedTabs = tabsInWindow.filter(tab => tab.highlighted || tab.active);
 
     // Filter out browser internal pages
     const validTabs = selectedTabs.filter(tab =>

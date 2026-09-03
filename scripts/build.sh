@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # LLMFeeder Build Script
 # Consolidated build script for generating Chrome, Firefox, and source packages
 # Usage: ./scripts/build.sh [chrome|firefox|source|all]
@@ -51,6 +53,16 @@ if [ $# -gt 0 ]; then
   shift
 fi
 
+if ! command -v zip >/dev/null 2>&1; then
+  echo "Error: zip is required"
+  exit 1
+fi
+
+if [ "$TARGET" != "source" ] && ! command -v jq >/dev/null 2>&1; then
+  echo "Error: jq is required for browser packages"
+  exit 1
+fi
+
 # Create distribution directory if it doesn't exist
 mkdir -p "$DIST_DIR"
 
@@ -85,6 +97,7 @@ build_chrome() {
   cp "$EXT_DIR/popup.html" "$CHROME_DIR/"
   cp "$EXT_DIR/popup.js" "$CHROME_DIR/"
   cp "$EXT_DIR/multi-tab-utils.js" "$CHROME_DIR/"
+  cp "$EXT_DIR/shortcut-utils.js" "$CHROME_DIR/"
   cp "$EXT_DIR/settings.js" "$CHROME_DIR/"
   cp "$EXT_DIR/styles.css" "$CHROME_DIR/"
   cp "$EXT_DIR/token-counter.js" "$CHROME_DIR/" 2>/dev/null || echo "Warning: token-counter.js not found"
@@ -96,32 +109,9 @@ build_chrome() {
   cp "$EXT_DIR/libs/"* "$CHROME_DIR/libs/" 2>/dev/null
   
   # Create Chrome-specific manifest
-  if command -v jq &> /dev/null; then
-    echo "Using jq to create Chrome manifest..."
-    # Remove Firefox-specific settings and "menus" permission (Chrome doesn't support it)
-    jq 'del(.browser_specific_settings) | .permissions = (.permissions - ["menus"])' "$EXT_DIR/manifest.json" > "$CHROME_DIR/manifest.json"
-  else
-    echo "WARNING: jq not found, using sed fallback (less reliable)..."
-    cp "$EXT_DIR/manifest.json" "$CHROME_DIR/manifest.json"
-
-    # Remove browser_specific_settings section
-    if ! sed -i.bak '/browser_specific_settings/,/}/d' "$CHROME_DIR/manifest.json" 2>/dev/null; then
-      echo "WARNING: Failed to remove browser_specific_settings from manifest"
-    fi
-
-    # Remove "menus" permission
-    if ! sed -i.bak '/"menus"/d' "$CHROME_DIR/manifest.json" 2>/dev/null; then
-      echo "WARNING: Failed to remove 'menus' permission from manifest"
-    fi
-
-    rm -f "$CHROME_DIR/manifest.json.bak" 2>/dev/null || true
-
-    # Verify the result
-    if grep -q '"menus"' "$CHROME_DIR/manifest.json" 2>/dev/null; then
-      echo "ERROR: Chrome manifest still contains 'menus' permission - build may fail"
-      echo "Please install jq for reliable manifest processing: sudo apt-get install jq"
-    fi
-  fi
+  echo "Using jq to create Chrome manifest..."
+  # Remove Firefox-specific settings and "menus" permission (Chrome doesn't support it)
+  jq 'del(.browser_specific_settings) | .permissions = (.permissions - ["menus"])' "$EXT_DIR/manifest.json" > "$CHROME_DIR/manifest.json"
   
   # Create the ZIP file
   echo "Creating Chrome ZIP file..."
@@ -150,6 +140,7 @@ build_firefox() {
   cp "$EXT_DIR/popup.html" "$FIREFOX_DIR/"
   cp "$EXT_DIR/popup.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/multi-tab-utils.js" "$FIREFOX_DIR/"
+  cp "$EXT_DIR/shortcut-utils.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/settings.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/styles.css" "$FIREFOX_DIR/"
   cp "$EXT_DIR/token-counter.js" "$FIREFOX_DIR/" 2>/dev/null || echo "Warning: token-counter.js not found"
@@ -161,10 +152,9 @@ build_firefox() {
   cp "$EXT_DIR/libs/"* "$FIREFOX_DIR/libs/" 2>/dev/null
   
   # Create Firefox-specific manifest with required settings
-  if command -v jq &> /dev/null; then
-    echo "Using jq to create Firefox manifest..."
-    # For Firefox 109, modify the background section to use scripts instead of service_worker
-    jq '
+  echo "Using jq to create Firefox manifest..."
+  # For Firefox 109, modify the background section to use scripts instead of service_worker
+  jq '
     .browser_specific_settings = {
       "gecko": {
         "id": "llmfeeder@j47.in",
@@ -173,19 +163,12 @@ build_firefox() {
     } |
     if has("background") then
       .background = {
-        "scripts": ["libs/jszip.min.js", "multi-tab-utils.js", "settings.js", "background.js"]
+        "scripts": ["libs/jszip.min.js", "shortcut-utils.js", "settings.js", "multi-tab-utils.js", "background.js"]
       }
     else
       .
     end
     ' "$EXT_DIR/manifest.json" > "$FIREFOX_DIR/manifest.json"
-  else
-    echo "jq not found, using manual modification..."
-    cp "$EXT_DIR/manifest.json" "$FIREFOX_DIR/manifest.json"
-    # This is a basic substitution but might not work for all cases
-    sed -i.bak 's/"service_worker": "background.js",\s*"type": "module"/"scripts": ["libs\/jszip.min.js", "multi-tab-utils.js", "background.js"]/' "$FIREFOX_DIR/manifest.json" || true
-    rm -f "$FIREFOX_DIR/manifest.json.bak" 2>/dev/null || true
-  fi
   
   # Create the ZIP file
   echo "Creating Firefox ZIP file..."
@@ -214,6 +197,7 @@ build_source() {
   cp "$EXT_DIR/popup.html" "$SOURCE_DIR/"
   cp "$EXT_DIR/popup.js" "$SOURCE_DIR/"
   cp "$EXT_DIR/multi-tab-utils.js" "$SOURCE_DIR/"
+  cp "$EXT_DIR/shortcut-utils.js" "$SOURCE_DIR/"
   cp "$EXT_DIR/settings.js" "$SOURCE_DIR/"
   cp "$EXT_DIR/styles.css" "$SOURCE_DIR/"
   cp "$EXT_DIR/token-counter.js" "$SOURCE_DIR/" 2>/dev/null || echo "Warning: token-counter.js not found"

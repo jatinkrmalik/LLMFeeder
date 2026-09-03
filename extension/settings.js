@@ -1,7 +1,9 @@
 // LLMFeeder Settings Utilities
 // Shared settings constants and functions used across popup and background scripts
 
-const SettingsUtils = (function() {
+(function(root) {
+  'use strict';
+
   // Default metadata format template
   const DEFAULT_METADATA_FORMAT = "---\nSource: [{title}]({url})";
 
@@ -24,13 +26,8 @@ const SettingsUtils = (function() {
   }
 
   // Public API
-  return {
+  root.SettingsUtils = {
     DEFAULT_METADATA_FORMAT,
     getUserSettings
   };
-})();
-
-// For use in browser extension contexts (not modules)
-if (typeof window !== 'undefined') {
-  window.SettingsUtils = SettingsUtils;
-}
+})(typeof globalThis !== 'undefined' ? globalThis : this);

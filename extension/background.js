@@ -1,12 +1,12 @@
 // LLMFeeder Background Script
 // Handles keyboard shortcuts and background tasks
-// Dependencies: libs/jszip.min.js, settings.js, and multi-tab-utils.js
+// Dependencies: libs/jszip.min.js, shortcut-utils.js, settings.js, and multi-tab-utils.js
 // (loaded via manifest in Firefox, or importScripts in Chrome service worker)
 
 // Load dependencies for Chrome service worker (not needed in Firefox)
 if (typeof importScripts === 'function') {
   try {
-    importScripts('libs/jszip.min.js', 'settings.js', 'multi-tab-utils.js');
+    importScripts('libs/jszip.min.js', 'shortcut-utils.js', 'settings.js', 'multi-tab-utils.js');
   } catch (e) {
     console.error('Failed to load dependencies:', e);
     throw new Error('Critical dependencies failed to load. Please reinstall the extension.');
@@ -45,6 +45,7 @@ const browserAPI = (function() {
     api.storage = browser.storage;
     api.commands = browser.commands;
     api.scripting = browser.scripting;
+    api.action = browser.action;
     // Use browser.menus for Firefox (more features than contextMenus)
     api.contextMenus = browser.menus || browser.contextMenus;
   } else if (isChrome) {
@@ -92,10 +93,12 @@ const browserAPI = (function() {
     };
     
     api.commands = {
+      getAll: promisify(chrome.commands.getAll, chrome.commands),
       onCommand: chrome.commands.onCommand
     };
 
     api.scripting = chrome.scripting;
+    api.action = chrome.action;
 
     // Chrome contextMenus has special handling - create() returns ID synchronously
     api.contextMenus = {
@@ -278,19 +281,17 @@ browserAPI.contextMenus.onClicked.addListener(async (info, tab) => {
 
   // Single-tab actions
   if (menuItemId === CONTEXT_MENU_IDS.SINGLE_COPY) {
-    // Trigger the keyboard shortcut handler for copy
-    await handleKeyboardShortcut('convert_to_markdown');
+    await handleKeyboardShortcut('convert_to_markdown', { tab });
   } else if (menuItemId === CONTEXT_MENU_IDS.SINGLE_DOWNLOAD) {
-    // Trigger the keyboard shortcut handler for download
-    await handleKeyboardShortcut('download_markdown');
+    await handleKeyboardShortcut('download_markdown', { tab });
   }
   // Multi-tab actions
   else if (menuItemId === CONTEXT_MENU_IDS.MULTI_COPY) {
-    await handleKeyboardShortcut('convert_to_markdown');
+    await handleKeyboardShortcut('convert_to_markdown', { tab });
   } else if (menuItemId === CONTEXT_MENU_IDS.MULTI_DOWNLOAD) {
-    await handleKeyboardShortcut('download_markdown');
+    await handleKeyboardShortcut('download_markdown', { tab });
   } else if (menuItemId === CONTEXT_MENU_IDS.MULTI_ZIP) {
-    await handleKeyboardShortcut('download_zip');
+    await handleKeyboardShortcut('download_zip', { tab });
   }
 });
 
@@ -337,10 +338,19 @@ async function showNotificationInTab(title, message) {
 }
 
 // Handle multi-tab commands
-async function handleMultiTabCommand(command, tabs) {
+async function handleMultiTabCommand(command, tabs, options) {
+  const returnResult = options && options.returnResult === true;
+
+  async function fail(title, message) {
+    if (!returnResult) {
+      await showNotificationInTab(title, message);
+    }
+    return { success: false, error: message };
+  }
+
   try {
     // Warn about large operations (can't use confirm in background, so just notify)
-    if (MultiTabUtils.shouldWarnAboutLargeTabCount(tabs.length)) {
+    if (!returnResult && MultiTabUtils.shouldWarnAboutLargeTabCount(tabs.length)) {
       await showNotificationInTab("Processing Many Tabs", `Converting ${tabs.length} tabs. This may take some time...`);
     }
 
@@ -352,8 +362,7 @@ async function handleMultiTabCommand(command, tabs) {
     const { message, successCount } = MultiTabUtils.getResultsSummary(results);
 
     if (successCount === 0) {
-      await showNotificationInTab("Conversion Failed", "No tabs were successfully converted");
-      return;
+      return fail("Conversion Failed", "No tabs were successfully converted");
     }
 
     // Get token count settings
@@ -387,32 +396,70 @@ async function handleMultiTabCommand(command, tabs) {
     if (command === "convert_to_markdown") {
       // Copy All: Merge and copy to clipboard
       const merged = MultiTabUtils.mergeMarkdownResults(results);
+      const notification = {
+        title: "Success",
+        message: `${message} copied to clipboard${tokenMessage}`
+      };
 
-      // Copy to clipboard via active tab's content script
-      const activeTabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
-      if (activeTabs && activeTabs.length > 0) {
-        await browserAPI.tabs.sendMessage(activeTabs[0].id, {
+      if (returnResult) {
+        return {
+          success: true,
+          action: "copy",
+          text: merged,
+          notification
+        };
+      }
+
+      // Use the tab that was active when this multi-tab action started.
+      const outputTab = tabs.find(tab => tab.active) || tabs[0];
+      if (outputTab) {
+        const copyResponse = await browserAPI.tabs.sendMessage(outputTab.id, {
           action: "copyToClipboard",
           text: merged
         });
-        await showNotificationInTab("Success", `${message} copied to clipboard${tokenMessage}`);
+        if (!copyResponse || !copyResponse.success) {
+          return fail("Copy Failed", (copyResponse && copyResponse.error) || "Could not write to the clipboard");
+        }
+        await showNotificationInTab(notification.title, notification.message);
+        return { success: true };
       }
+      return fail("Copy Failed", "No active tab found");
 
     } else if (command === "download_markdown") {
       // Download Merged: Single .md file
       const merged = MultiTabUtils.mergeMarkdownResults(results);
       const filename = `llmfeeder-merged-${MultiTabUtils.getDateString()}.md`;
+      const title = filename.replace('.md', '');
+      const notification = {
+        title: "Success",
+        message: `${message} downloaded as merged file${tokenMessage}`
+      };
 
-      // Trigger download via active tab
-      const activeTabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
-      if (activeTabs && activeTabs.length > 0) {
-        await browserAPI.tabs.sendMessage(activeTabs[0].id, {
+      if (returnResult) {
+        return {
+          success: true,
           action: "downloadMarkdown",
           markdown: merged,
-          title: filename.replace('.md', '')
-        });
-        await showNotificationInTab("Success", `${message} downloaded as merged file${tokenMessage}`);
+          title,
+          notification
+        };
       }
+
+      // Trigger the download in the tab that started the action.
+      const outputTab = tabs.find(tab => tab.active) || tabs[0];
+      if (outputTab) {
+        const downloadResponse = await browserAPI.tabs.sendMessage(outputTab.id, {
+          action: "downloadMarkdown",
+          markdown: merged,
+          title
+        });
+        if (!downloadResponse || !downloadResponse.success) {
+          return fail("Download Failed", (downloadResponse && downloadResponse.error) || "Could not download the Markdown file");
+        }
+        await showNotificationInTab(notification.title, notification.message);
+        return { success: true };
+      }
+      return fail("Download Failed", "No active tab found");
 
     } else if (command === "download_zip") {
       // Download ZIP: Individual files in archive
@@ -425,157 +472,287 @@ async function handleMultiTabCommand(command, tabs) {
         reader.onerror = () => reject(new Error('Failed to read blob'));
         reader.readAsDataURL(blob);
       });
+      const notification = {
+        title: "Success",
+        message: `ZIP with ${message} downloaded${tokenMessage}`
+      };
 
-      const activeTabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
-      if (activeTabs && activeTabs.length > 0) {
+      if (returnResult) {
+        return {
+          success: true,
+          action: "downloadFile",
+          dataUrl,
+          filename,
+          notification
+        };
+      }
+
+      const outputTab = tabs.find(tab => tab.active) || tabs[0];
+      if (outputTab) {
         // Send download message to content script
-        await browserAPI.tabs.sendMessage(activeTabs[0].id, {
+        const downloadResponse = await browserAPI.tabs.sendMessage(outputTab.id, {
           action: "downloadFile",
           dataUrl: dataUrl,
           filename: filename
         });
-        await showNotificationInTab("Success", `ZIP with ${message} downloaded${tokenMessage}`);
+        if (!downloadResponse || !downloadResponse.success) {
+          return fail("Download Failed", (downloadResponse && downloadResponse.error) || "Could not download the ZIP file");
+        }
+        await showNotificationInTab(notification.title, notification.message);
+        return { success: true };
       }
+      return fail("Download Failed", "No active tab found");
     }
 
   } catch (error) {
     console.error("Multi-tab command error:", error);
-    await showNotificationInTab("Error", error.message || "Failed to process multiple tabs");
+    return fail("Error", error.message || "Failed to process multiple tabs");
   }
+
+  return { success: false, error: "Unknown keyboard command" };
 }
 
-// Handle keyboard shortcut/context menu action
-async function handleKeyboardShortcut(command) {
-  if (command === "convert_to_markdown" || command === "download_markdown" || command === "download_zip") {
+// Handle a shortcut after the native/fallback arbiter accepts it.
+async function handleKeyboardShortcut(command, options) {
+  const returnResult = options && options.returnResult === true;
+  const invocationTab = options && options.tab;
+
+  async function fail(title, message) {
+    if (!returnResult) {
+      await showNotificationInTab(title, message);
+    }
+    return { success: false, error: message };
+  }
+
+  if (command === '_execute_action') {
     try {
-      // Check if multiple tabs are selected
-      const highlightedTabs = await MultiTabUtils.getHighlightedTabs(browserAPI);
-
-      // Route to multi-tab handler if 2+ tabs selected
-      if (highlightedTabs.length > 1) {
-        await handleMultiTabCommand(command, highlightedTabs);
-        return;
+      if (!browserAPI.action || typeof browserAPI.action.openPopup !== 'function') {
+        return fail('Error', 'This browser cannot open the extension popup from a shortcut');
       }
+      // Orion only preserves the user activation for its no-argument form.
+      // This runs in the key event task, before focus can move to another window.
+      await browserAPI.action.openPopup();
+      return { success: true, action: 'handled' };
+    } catch (error) {
+      console.error('Could not open extension popup:', error);
+      return fail('Error', error.message || 'Could not open the extension popup');
+    }
+  }
 
-      // Single-tab handling (existing behavior)
+  if (command !== 'convert_to_markdown' &&
+      command !== 'download_markdown' &&
+      command !== 'download_zip') {
+    return { success: false, error: 'Unknown keyboard command' };
+  }
+
+  try {
+    // Every accepted shortcut checks selected tabs before choosing its path.
+    const highlightedTabs = options && options.highlightedTabs
+      ? options.highlightedTabs
+      : await MultiTabUtils.getHighlightedTabs(
+        browserAPI,
+        invocationTab && invocationTab.windowId
+      );
+    if (highlightedTabs.length > 1) {
+      return handleMultiTabCommand(command, highlightedTabs, { returnResult });
+    }
+
+    let activeTab = invocationTab;
+    if (!activeTab) {
       const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
       if (!tabs || !tabs.length) {
-        console.error("No active tab found");
-        return;
+        console.error('No active tab found');
+        return fail('Error', 'No active tab found');
       }
-
-      const activeTab = tabs[0];
-      
-      // Check if the URL is valid for content scripts
-      const url = activeTab.url || "";
-      if (!url || url.startsWith("chrome://") || url.startsWith("edge://") || url.startsWith("about:")) {
-        await showNotificationInTab("Cannot Convert", "Cannot run on browser pages. Please try on a regular website.");
-        return;
-      }
-      
-      // Ensure content script is loaded
-      const isLoaded = await MultiTabUtils.ensureContentScriptLoaded(browserAPI, activeTab.id);
-      if (!isLoaded) {
-        await showNotificationInTab("Error", "Could not load content script. Try refreshing the page.");
-        return;
-      }
-
-      // Get user settings
-      const settings = await SettingsUtils.getUserSettings(browserAPI);
-      
-      // Send message to content script to perform conversion
-      try {
-        const response = await browserAPI.tabs.sendMessage(activeTab.id, {
-          action: "convertToMarkdown",
-          settings: settings
-        });
-        
-        if (response && response.success) {
-          // Get token count settings
-          let tokenSettings;
-          try {
-            tokenSettings = await browserAPI.storage.sync.get({
-              showTokenCount: true,
-              tokenContextLimit: 8192
-            });
-          } catch (e) {
-            tokenSettings = { showTokenCount: true, tokenContextLimit: 8192 };
-          }
-
-          // Format token count message
-          let tokenMessage = "";
-          if (tokenSettings.showTokenCount && response.tokenCount > 0) {
-            const limit = tokenSettings.tokenContextLimit;
-            const percentage = Math.round((response.tokenCount / limit) * 100);
-            tokenMessage = `\n${response.tokenCount.toLocaleString()} tokens (${percentage}% of ${(limit/1000).toFixed(0)}K limit)`;
-          }
-
-          if (command === "download_markdown") {
-            // Download as file
-            const pageTitle = activeTab.title || "llmfeeder";
-            await browserAPI.tabs.sendMessage(activeTab.id, {
-              action: "downloadMarkdown",
-              markdown: response.markdown,
-              title: pageTitle
-            });
-            await showNotificationInTab("Success", `Markdown file downloaded${tokenMessage}`);
-          } else {
-            // Copy to clipboard via content script
-            const copyResponse = await browserAPI.tabs.sendMessage(activeTab.id, {
-              action: "copyToClipboard",
-              text: response.markdown
-            });
-            if (copyResponse && copyResponse.success) {
-              await showNotificationInTab("Success", `Content converted and copied to clipboard${tokenMessage}`);
-            } else {
-              await showNotificationInTab("Copy Failed", (copyResponse && copyResponse.error) || "Could not write to the clipboard");
-            }
-          }
-        } else {
-          await showNotificationInTab("Conversion Failed", response?.error || "Unknown error");
-        }
-      } catch (error) {
-        console.error("Error during conversion:", error);
-        await showNotificationInTab("Error", "Could not convert page. Please try again or open the extension popup.");
-      }
-    } catch (error) {
-      console.error("Command handler error:", error);
+      activeTab = tabs[0];
     }
+
+    const url = activeTab.url || '';
+    if (!url || url.startsWith('chrome://') || url.startsWith('edge://') ||
+        url.startsWith('about:') || url.startsWith('chrome-extension://') ||
+        url.startsWith('moz-extension://')) {
+      return fail('Cannot Convert', 'Cannot run on browser pages. Please try on a regular website.');
+    }
+
+    const isLoaded = await MultiTabUtils.ensureContentScriptLoaded(browserAPI, activeTab.id);
+    if (!isLoaded) {
+      return fail('Error', 'Could not load content script. Try refreshing the page.');
+    }
+
+    const settings = await SettingsUtils.getUserSettings(browserAPI);
+    const response = await browserAPI.tabs.sendMessage(activeTab.id, {
+      action: 'convertToMarkdown',
+      settings
+    });
+
+    if (!response || !response.success) {
+      return fail('Conversion Failed', (response && response.error) || 'Unknown error');
+    }
+
+    let tokenSettings;
+    try {
+      tokenSettings = await browserAPI.storage.sync.get({
+        showTokenCount: true,
+        tokenContextLimit: 8192
+      });
+    } catch (error) {
+      tokenSettings = { showTokenCount: true, tokenContextLimit: 8192 };
+    }
+
+    let tokenMessage = '';
+    if (tokenSettings.showTokenCount && response.tokenCount > 0) {
+      const limit = tokenSettings.tokenContextLimit;
+      const percentage = Math.round((response.tokenCount / limit) * 100);
+      tokenMessage = `\n${response.tokenCount.toLocaleString()} tokens (${percentage}% of ${(limit / 1000).toFixed(0)}K limit)`;
+    }
+
+    if (command === 'download_markdown') {
+      const pageTitle = activeTab.title || 'llmfeeder';
+      const notification = {
+        title: 'Success',
+        message: `Markdown file downloaded${tokenMessage}`
+      };
+
+      if (returnResult) {
+        return {
+          success: true,
+          action: 'downloadMarkdown',
+          markdown: response.markdown,
+          title: pageTitle,
+          notification
+        };
+      }
+
+      const downloadResponse = await browserAPI.tabs.sendMessage(activeTab.id, {
+        action: 'downloadMarkdown',
+        markdown: response.markdown,
+        title: pageTitle
+      });
+      if (!downloadResponse || !downloadResponse.success) {
+        return fail('Download Failed', (downloadResponse && downloadResponse.error) || 'Could not download the Markdown file');
+      }
+      await showNotificationInTab(notification.title, notification.message);
+      return { success: true };
+    }
+
+    const notification = {
+      title: 'Success',
+      message: `Content converted and copied to clipboard${tokenMessage}`
+    };
+
+    if (returnResult) {
+      return {
+        success: true,
+        action: 'copy',
+        text: response.markdown,
+        notification
+      };
+    }
+
+    const copyResponse = await browserAPI.tabs.sendMessage(activeTab.id, {
+      action: 'copyToClipboard',
+      text: response.markdown
+    });
+    if (!copyResponse || !copyResponse.success) {
+      return fail('Copy Failed', (copyResponse && copyResponse.error) || 'Could not write to the clipboard');
+    }
+    await showNotificationInTab(notification.title, notification.message);
+    return { success: true };
+  } catch (error) {
+    console.error('Command handler error:', error);
+    return fail('Error', error.message || 'Could not convert page. Please try again or open the extension popup.');
   }
 }
 
-// Handle keyboard shortcuts. Both the native commands API and the
-// content-script fallback can deliver the same chord, so triggers arriving
-// within a short window are treated as one press.
-const recentShortcutTriggers = {};
+const shortcutArbiter = ShortcutUtils.createArbiter({ dedupeMs: 500 });
 
-function isDuplicateTrigger(command) {
-  const now = Date.now();
-  const last = recentShortcutTriggers[command] || 0;
-  recentShortcutTriggers[command] = now;
-  return now - last < 500;
+async function getAssignedShortcutBindings() {
+  try {
+    const commands = await browserAPI.commands.getAll();
+    return ShortcutUtils.getAssignedShortcuts(commands);
+  } catch (error) {
+    console.error('Could not read assigned keyboard shortcuts:', error);
+    return [];
+  }
 }
 
-browserAPI.commands.onCommand.addListener(async (command) => {
-  if (isDuplicateTrigger(command)) return;
-  await handleKeyboardShortcut(command);
+function submitShortcutCommand(command, source, options) {
+  return shortcutArbiter.submit(command, source, () =>
+    handleKeyboardShortcut(command, options)
+  );
+}
+
+async function handleShortcutFallback(request, sender) {
+  if (!sender || !sender.tab || sender.tab.id === undefined) {
+    return { accepted: false, error: 'Keyboard fallback requires a tab' };
+  }
+
+  // Reserved action commands never emit commands.onCommand. Calling
+  // openPopup after an await also loses user activation in Orion, so use the
+  // assigned binding already matched by the content script and route it now.
+  if (request.command === '_execute_action') {
+    return shortcutArbiter.submitImmediate(request.command, () =>
+      handleKeyboardShortcut(request.command, {
+        returnResult: true,
+        tab: sender.tab
+      })
+    );
+  }
+
+  const bindingsPromise = getAssignedShortcutBindings();
+  const highlightedTabsPromise = MultiTabUtils.getHighlightedTabs(
+    browserAPI,
+    sender.tab.windowId
+  ).then(tabs => ({ tabs }), error => ({ error }));
+  return shortcutArbiter.submit(
+    request.command,
+    'fallback',
+    async () => {
+      const highlightedSnapshot = await highlightedTabsPromise;
+      if (highlightedSnapshot.error) throw highlightedSnapshot.error;
+      return handleKeyboardShortcut(request.command, {
+        returnResult: true,
+        tab: sender.tab,
+        highlightedTabs: highlightedSnapshot.tabs
+      });
+    },
+    async () => {
+      const bindings = await bindingsPromise;
+      const assigned = bindings.some(binding =>
+        binding.command === request.command && binding.shortcut === request.shortcut
+      );
+      return assigned ? true : { error: 'Keyboard shortcut is not assigned' };
+    }
+  );
+}
+
+browserAPI.commands.onCommand.addListener((command, tab) => {
+  submitShortcutCommand(command, 'native', { tab }).catch(error => {
+    console.error('Native keyboard command failed:', error);
+  });
 });
 
-// Keyboard fallback for browsers that register manifest commands but never
-// dispatch them (eg. Orion). Those browsers also don't consume the chord,
-// so the content script sees the keydown and forwards it here.
-browserAPI.runtime.onMessage.addListener((request) => {
-  if (!request || request.action !== 'keyboardShortcutFallback') return;
+// Keep Chrome's callback channel open while asynchronous shortcut work runs.
+browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (!request) return;
 
-  if (request.command === 'open_popup') {
-    const actionAPI = (typeof browser !== 'undefined' ? browser : chrome).action;
-    if (actionAPI && actionAPI.openPopup) {
-      Promise.resolve(actionAPI.openPopup()).catch(() => {});
-    }
+  if (request.action === 'getAssignedKeyboardShortcuts') {
+    getAssignedShortcutBindings()
+      .then(bindings => sendResponse({ success: true, bindings }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  if (request.action === 'actionPopupOpened') {
+    shortcutArbiter.markHandled('_execute_action');
+    sendResponse({ success: true });
     return;
   }
 
-  if (!isDuplicateTrigger(request.command)) {
-    handleKeyboardShortcut(request.command);
+  if (request.action === 'keyboardShortcutFallback') {
+    handleShortcutFallback(request, sender)
+      .then(sendResponse)
+      .catch(error => sendResponse({ accepted: false, error: error.message }));
+    return true;
   }
 });

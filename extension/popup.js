@@ -90,6 +90,18 @@ const browserAPI = (function () {
   return api;
 })();
 
+// Reserved action commands do not emit commands.onCommand. This heartbeat
+// lets the background cancel a pending page fallback when the browser opened
+// the popup itself.
+try {
+  const popupOpened = browserAPI.runtime.sendMessage({ action: 'actionPopupOpened' });
+  if (popupOpened && typeof popupOpened.catch === 'function') {
+    popupOpened.catch(() => {});
+  }
+} catch (error) {
+  // The popup still works if a browser does not support this message.
+}
+
 // DOM elements - Main view
 const convertBtn = document.getElementById("convertBtn");
 const convertSplit = document.getElementById("convertSplit");

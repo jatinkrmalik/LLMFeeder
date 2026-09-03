@@ -3,6 +3,29 @@
 (function() {
   'use strict';
 
+  const lifecycleKey = '__llmFeederContentScriptLifecycle';
+  const previousLifecycle = globalThis[lifecycleKey];
+  if (previousLifecycle && typeof previousLifecycle.dispose === 'function') {
+    previousLifecycle.dispose();
+  }
+
+  const cleanupCallbacks = [];
+  const contentLifecycle = {
+    addCleanup(callback) {
+      cleanupCallbacks.push(callback);
+    },
+    dispose() {
+      while (cleanupCallbacks.length) {
+        try {
+          cleanupCallbacks.pop()();
+        } catch (error) {
+          // An extension update can invalidate the previous runtime object.
+        }
+      }
+    }
+  };
+  globalThis[lifecycleKey] = contentLifecycle;
+
   // ==========================================================================
   // CONSTANTS
   // ==========================================================================
@@ -111,7 +134,7 @@
   // ==========================================================================
 
   // Listen for messages from parent window for iframe content extraction
-  window.addEventListener('message', (event) => {
+  const handleCrossOriginMessage = event => {
     if (event.data && event.data.action === MESSAGE_ACTIONS.EXTRACT_CONTENT) {
       try {
         const content = document.body.cloneNode(true);
@@ -143,13 +166,17 @@
         }, event.origin);
       }
     }
+  };
+  window.addEventListener('message', handleCrossOriginMessage);
+  contentLifecycle.addCleanup(() => {
+    window.removeEventListener('message', handleCrossOriginMessage);
   });
 
   // ==========================================================================
   // MESSAGE HANDLERS
   // ==========================================================================
 
-  browserRuntime.onMessage.addListener((request, sender, sendResponse) => {
+  const handleRuntimeMessage = (request, sender, sendResponse) => {
     // Ping handler
     if (request.action === 'ping') {
       sendResponse({ success: true });
@@ -254,12 +281,7 @@
     // Download file from data URL (used for ZIP downloads)
     if (request.action === 'downloadFile') {
       try {
-        const a = document.createElement('a');
-        a.href = request.dataUrl;
-        a.download = request.filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        downloadDataUrlFile(request.dataUrl, request.filename);
         sendResponse({ success: true });
       } catch (error) {
         console.error('Download file error:', error);
@@ -267,119 +289,182 @@
       }
       return true;
     }
+  };
+  browserRuntime.onMessage.addListener(handleRuntimeMessage);
+  contentLifecycle.addCleanup(() => {
+    if (browserRuntime.onMessage.removeListener) {
+      browserRuntime.onMessage.removeListener(handleRuntimeMessage);
+    }
   });
 
   // ==========================================================================
   // KEYBOARD SHORTCUT FALLBACK
   // ==========================================================================
 
-  // Some browsers (eg. Orion) register manifest commands but never dispatch
-  // them, and don't consume the chord either - the page still receives the
-  // keydown. Handle the default shortcuts here. Browsers with a working
-  // commands API consume these chords before the page sees them, so this
-  // only runs where the native path is dead.
-  // e.code is used because macOS Option-key composing changes e.key.
-  const FALLBACK_SHORTCUT_COMMANDS = {
-    KeyL: 'open_popup',
-    KeyM: 'convert_to_markdown',
-    KeyD: 'download_markdown',
-    KeyZ: 'download_zip'
-  };
+  let assignedShortcutBindings = [];
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || '');
 
-  // Convert and copy/download directly in this page. The background flow is
-  // no use to the keyboard fallback for these two commands: clipboard writes
-  // (and downloads) need the user activation of the keydown, which only
-  // exists here in the page that received it.
-  //
-  // WebKit only honours clipboard writes made inside the gesture handler
-  // itself - by the time the conversion has finished, the gesture is spent
-  // and writeText rejects with NotAllowedError. The sanctioned pattern is to
-  // call clipboard.write() synchronously and hand it a ClipboardItem whose
-  // payload is a promise. This function is therefore deliberately NOT async.
-  function handleShortcutInPage(command) {
-    let conversionError = null;
-    const markdownPromise = (async () => {
-      const storageAPI = (typeof browser !== 'undefined' && browser.storage) ? browser.storage
-        : ((typeof chrome !== 'undefined' && chrome.storage) ? chrome.storage : null);
-      if (!storageAPI || typeof SettingsUtils === 'undefined') {
-        throw new Error('Settings unavailable');
-      }
-      const settings = await SettingsUtils.getUserSettings({ storage: storageAPI });
-      return await convertToMarkdown(settings);
-    })().catch((error) => {
-      conversionError = error;
-      throw error;
+  function sendRuntimeMessage(message) {
+    if (typeof browser !== 'undefined' && browser.runtime === browserRuntime) {
+      return Promise.resolve(browserRuntime.sendMessage(message));
+    }
+
+    return new Promise((resolve, reject) => {
+      browserRuntime.sendMessage(message, response => {
+        const lastError = typeof chrome !== 'undefined' && chrome.runtime
+          ? chrome.runtime.lastError
+          : null;
+        if (lastError) reject(new Error(lastError.message));
+        else resolve(response);
+      });
     });
+  }
 
-    const notifyFailure = (error) => {
-      console.error('Shortcut conversion error:', error);
-      const message = (conversionError && conversionError.message) ||
-        (error && error.message) || 'Could not convert page';
-      showNotification('Conversion Failed', message);
-    };
-
-    if (command === 'convert_to_markdown') {
-      let copyPromise;
-      if (navigator.clipboard && navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
-        copyPromise = navigator.clipboard.write([
-          new ClipboardItem({
-            'text/plain': markdownPromise.then(
-              (markdown) => new Blob([markdown], { type: 'text/plain' })
-            )
-          })
-        ]);
-      } else {
-        copyPromise = markdownPromise.then((markdown) => copyTextToClipboard(markdown));
-      }
-      copyPromise
-        .then(() => showNotification('Success', 'Content converted and copied to clipboard'))
-        .catch(notifyFailure);
-    } else {
-      markdownPromise
-        .then((markdown) => {
-          downloadMarkdownFile(markdown, document.title || 'llmfeeder');
-          showNotification('Success', 'Markdown file downloaded');
-        })
-        .catch(notifyFailure);
+  async function refreshShortcutBindings() {
+    try {
+      const response = await sendRuntimeMessage({ action: 'getAssignedKeyboardShortcuts' });
+      assignedShortcutBindings = response && response.success && Array.isArray(response.bindings)
+        ? response.bindings
+        : [];
+    } catch (error) {
+      assignedShortcutBindings = [];
     }
   }
 
-  window.addEventListener('keydown', (event) => {
-    if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
+  function getAcceptedShortcutResult(resultPromise) {
+    return resultPromise.then(result => {
+      if (!result || !result.accepted) {
+        const error = new Error((result && result.error) || 'Native shortcut handled');
+        error.shortcutIgnored = true;
+        throw error;
+      }
+      if (!result.success) {
+        throw new Error(result.error || 'Could not run keyboard shortcut');
+      }
+      return result;
+    });
+  }
 
-    const command = FALLBACK_SHORTCUT_COMMANDS[event.code];
-    if (!command) return;
+  function showShortcutNotification(result) {
+    if (result.notification) {
+      showNotification(result.notification.title, result.notification.message);
+    }
+  }
 
-    // Leave typing contexts alone
-    const target = event.target;
-    if (target && (target.isContentEditable ||
-        /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName || ''))) {
+  function reportShortcutError(error) {
+    if (error && error.shortcutIgnored) return;
+    console.error('Shortcut error:', error);
+    showNotification('Shortcut Failed', (error && error.message) || 'Could not run keyboard shortcut');
+  }
+
+  function finishShortcutInPage(result) {
+    if (result.action === 'copy') {
+      return copyTextToClipboard(result.text).then(() => showShortcutNotification(result));
+    }
+    if (result.action === 'downloadMarkdown') {
+      downloadMarkdownFile(result.markdown, result.title);
+      showShortcutNotification(result);
+      return Promise.resolve();
+    }
+    if (result.action === 'downloadFile') {
+      downloadDataUrlFile(result.dataUrl, result.filename);
+      showShortcutNotification(result);
+      return Promise.resolve();
+    }
+    return Promise.resolve();
+  }
+
+  // WebKit requires clipboard.write() during the physical key event. The
+  // payload stays pending while the background gives the native command a
+  // 500 ms head start and performs the normal single/multi-tab routing.
+  function handleShortcutFallback(binding) {
+    const resultPromise = getAcceptedShortcutResult(sendRuntimeMessage({
+      action: 'keyboardShortcutFallback',
+      command: binding.command,
+      shortcut: binding.shortcut
+    }));
+
+    const mayCopy = binding.command === 'convert_to_markdown' ||
+      binding.command === 'download_zip';
+    if (mayCopy && navigator.clipboard &&
+        navigator.clipboard.write && typeof ClipboardItem !== 'undefined') {
+      const copyPromise = navigator.clipboard.write([
+        new ClipboardItem({
+          'text/plain': resultPromise.then(result => {
+            if (result.action !== 'copy') {
+              throw new Error('Shortcut did not return clipboard text');
+            }
+            return new Blob([result.text], { type: 'text/plain' });
+          })
+        })
+      ]);
+
+      Promise.allSettled([resultPromise, copyPromise])
+        .then(([resultState, copyState]) => {
+          if (resultState.status === 'rejected') {
+            reportShortcutError(resultState.reason);
+            return;
+          }
+
+          const result = resultState.value;
+          if (result.action !== 'copy') {
+            finishShortcutInPage(result).catch(reportShortcutError);
+            return;
+          }
+          if (copyState.status === 'rejected') {
+            reportShortcutError(copyState.reason);
+            return;
+          }
+          showShortcutNotification(result);
+        });
       return;
     }
+
+    resultPromise
+      .then(finishShortcutInPage)
+      .catch(reportShortcutError);
+  }
+
+  const handleShortcutKeydown = event => {
+    const binding = ShortcutUtils.findMatchingShortcut(
+      assignedShortcutBindings,
+      event,
+      isMac
+    );
+    if (!binding) return;
 
     event.preventDefault();
     event.stopPropagation();
+    handleShortcutFallback(binding);
+  };
+  const handleShortcutFocus = () => refreshShortcutBindings();
+  const handleShortcutBlur = () => {
+    assignedShortcutBindings = [];
+  };
 
-    if (command === 'convert_to_markdown' || command === 'download_markdown') {
-      handleShortcutInPage(command);
-      return;
-    }
-
-    // open_popup and download_zip need the background script
-    try {
-      const sent = browserRuntime.sendMessage({
-        action: 'keyboardShortcutFallback',
-        command: command
-      });
-      if (sent && typeof sent.catch === 'function') sent.catch(() => {});
-    } catch (e) {
-      // No runtime available (detached frame etc.) - nothing to do
-    }
-  }, true);
+  window.addEventListener('keydown', handleShortcutKeydown, true);
+  window.addEventListener('focus', handleShortcutFocus);
+  window.addEventListener('blur', handleShortcutBlur);
+  contentLifecycle.addCleanup(() => {
+    window.removeEventListener('keydown', handleShortcutKeydown, true);
+    window.removeEventListener('focus', handleShortcutFocus);
+    window.removeEventListener('blur', handleShortcutBlur);
+  });
+  refreshShortcutBindings();
 
   // ==========================================================================
   // UTILITY FUNCTIONS
   // ==========================================================================
+
+  function downloadDataUrlFile(dataUrl, filename) {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 
   function downloadMarkdownFile(markdown, title) {
     const MAX_FILENAME_LENGTH = 100;

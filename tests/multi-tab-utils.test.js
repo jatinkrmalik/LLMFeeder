@@ -45,6 +45,28 @@ describe('MultiTabUtils.getHighlightedTabs', () => {
     });
   });
 
+  it('can query the window where a shortcut started', async () => {
+    const browserAPI = browserWithQueryResult([]);
+
+    await MultiTabUtils.getHighlightedTabs(browserAPI, 42);
+
+    expect(browserAPI.tabs.query).toHaveBeenCalledWith({
+      highlighted: true,
+      windowId: 42
+    });
+  });
+
+  it('drops tabs from other windows when a browser ignores windowId', async () => {
+    const browserAPI = browserWithQueryResult([
+      makeTab({ id: 1, windowId: 42, active: true }),
+      makeTab({ id: 2, windowId: 99, active: true })
+    ]);
+
+    const tabs = await MultiTabUtils.getHighlightedTabs(browserAPI, 42);
+
+    expect(tabs.map(tab => tab.id)).toEqual([1]);
+  });
+
   it('returns all highlighted tabs on compliant browsers (multi-select)', async () => {
     const browserAPI = browserWithQueryResult([
       makeTab({ id: 1, active: true, highlighted: true, url: 'https://a.example/' }),
@@ -154,7 +176,13 @@ describe('MultiTabUtils.ensureContentScriptLoaded', () => {
     expect(loaded).toBe(true);
     expect(api.scripting.executeScript).toHaveBeenCalledWith({
       target: { tabId: 7 },
-      files: ['libs/readability.js', 'libs/turndown.js', 'settings.js', 'content.js']
+      files: [
+        'libs/readability.js',
+        'libs/turndown.js',
+        'shortcut-utils.js',
+        'settings.js',
+        'content.js'
+      ]
     });
   });
 
