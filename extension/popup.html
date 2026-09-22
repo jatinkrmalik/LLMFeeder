@@ -99,6 +99,9 @@
                   <span class="btn-text">Download Markdown</span>
                   <span id="downloadBtnShortcut" class="shortcut-badge"></span>
                 </button>
+                <button id="moduleExportBtn" class="secondary-btn hidden" title="Export all units in this Microsoft Learn module">
+                  <span class="btn-text">Export Learn Module</span>
+                </button>
               </div>
 
               <!-- Multi-tab actions (hidden by default) -->
@@ -130,7 +133,7 @@
               </div>
 
               <div id="statusIndicator" class="status">Ready</div>
-              
+
               <!-- Token Counter Display -->
               <div id="tokenCounter" class="token-counter hidden">
                 <div class="token-counter-header">
@@ -376,6 +379,7 @@ Source: [{title}]({url})</textarea>
     <script src="settings.js"></script>
     <script src="multi-tab-utils.js"></script>
     <script src="token-counter.js"></script>
+    <script src="module-export-utils.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

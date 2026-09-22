@@ -138,6 +138,22 @@
       return true;
     }
 
+    if (request.action === 'discoverModuleUnits') {
+      const links = typeof ModuleExportUtils !== 'undefined'
+        ? ModuleExportUtils.discoverUnitLinks(
+            Array.from(document.querySelectorAll('a[href]')),
+            window.location.href
+          )
+        : [];
+      sendResponse({
+        success: links.length > 0,
+        urls: links,
+        title: document.title,
+        error: links.length > 0 ? undefined : 'No Microsoft Learn unit links found on this page'
+      });
+      return true;
+    }
+
     // Copy to clipboard handler
     if (request.action === 'copyToClipboard' && request.text) {
       copyTextToClipboard(request.text)
@@ -170,7 +186,7 @@
           const settings = request.settings || request.options || {};
           const markdown = await convertToMarkdown(settings);
           clearTimeout(timeoutId);
-          
+
           // Calculate token count estimation for response
           let tokenCount = 0;
           try {
@@ -181,8 +197,8 @@
           } catch (e) {
             console.error('Token estimation error:', e);
           }
-          
-          sendResponse({ success: true, markdown, tokenCount });
+
+          sendResponse({ success: true, markdown, tokenCount, title: document.title });
         } catch (error) {
           clearTimeout(timeoutId);
           console.error('Conversion error:', error);
@@ -422,12 +438,12 @@
       .replace(/[\s./]+/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_+|_+$/g, '');
-    
+
     if (filename.length > MAX_FILENAME_LENGTH) {
       filename = filename.substring(0, MAX_FILENAME_LENGTH).replace(/_+$/g, '');
     }
     if (!filename) filename = 'llmfeeder';
-    
+
     const blob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -722,6 +738,35 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  async function waitForAssessmentContent() {
+    if (!/\/training\/modules\/[^/]+\/\d+-knowledge-check\/?$/i.test(window.location.pathname)) {
+      return;
+    }
+
+    const deadline = Date.now() + 5000;
+    while (Date.now() < deadline) {
+      const questionForm = document.querySelector(
+        'form[aria-label="Knowledge check"], form[aria-label*="knowledge" i], [role="radiogroup"], input[type="radio"]'
+      );
+      if (questionForm) {
+        return;
+      }
+
+      const content = document.querySelector('#module-unit-content');
+      const text = content?.textContent.replace(/\s+/g, ' ').trim() || '';
+      if (text.length > 100 && !/please sign in/i.test(text)) {
+        return;
+      }
+      await sleep(250);
+    }
+
+    const content = document.querySelector('#module-unit-content');
+    const text = content?.textContent.replace(/\s+/g, ' ').trim() || '';
+    if (!text || /please sign in|sign in to use ask learn/i.test(text)) {
+      throw new Error('Microsoft Learn assessment content requires an authenticated Microsoft Learn session.');
+    }
+  }
+
   // ==========================================================================
   // MAIN CONVERSION FUNCTION
   // ==========================================================================
@@ -767,10 +812,12 @@
       }
     }
 
+    await waitForAssessmentContent();
+
     const docClone = document.cloneNode(true);
     let content;
     let articleData = null;
-    
+
     switch (settings.contentScope) {
       case 'fullPage':
         content = extractFullPageContent(docClone);
@@ -780,9 +827,14 @@
         break;
       case 'mainContent':
       default:
-        const result = extractMainContent(docClone);
-        content = result.content;
-        articleData = result.articleData;
+        if (isKnowledgeCheckPage() && hasKnowledgeCheckQuestions(docClone)) {
+          content = extractKnowledgeCheckContent(docClone);
+          articleData = { title: document.title };
+        } else {
+          const result = extractMainContent(docClone);
+          content = result.content;
+          articleData = result.articleData;
+        }
         break;
     }
 
@@ -805,7 +857,7 @@
     if (settings.contentScope === 'mainContent') {
       iframeWarnings = extractAndReplaceIframesFromOriginal(content);
     }
-    
+
     const cleanWarnings = cleanContent(content, settings);
     iframeWarnings = iframeWarnings.concat(cleanWarnings);
 
@@ -892,20 +944,68 @@
     return container;
   }
 
+  function isKnowledgeCheckPage() {
+    return /\/training\/modules\/[^/]+\/\d+-knowledge-check\/?$/i.test(window.location.pathname);
+  }
+
+  function hasKnowledgeCheckQuestions(doc) {
+    return doc.querySelectorAll('[role="radiogroup"] .quiz-choice').length > 0;
+  }
+
+  function extractKnowledgeCheckContent(doc) {
+    const container = document.createElement('div');
+    const heading = document.createElement('h2');
+    heading.textContent = 'Knowledge check';
+    container.appendChild(heading);
+
+    const groups = doc.querySelectorAll('[role="radiogroup"]');
+    groups.forEach((group, index) => {
+      const question = document.createElement('h3');
+      question.textContent = `Question ${index + 1}`;
+      container.appendChild(question);
+
+      const questionText = group.querySelector('.field-label p');
+      if (questionText) {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = questionText.textContent.trim();
+        container.appendChild(paragraph);
+      }
+
+      const choicesHeading = document.createElement('p');
+      const choicesLabel = document.createElement('strong');
+      choicesLabel.textContent = 'Answer choices';
+      choicesHeading.appendChild(choicesLabel);
+      container.appendChild(choicesHeading);
+
+      const choices = document.createElement('ul');
+      group.querySelectorAll('label.quiz-choice').forEach(choice => {
+        const choiceText = choice.querySelector('.radio-label-text');
+        if (!choiceText) return;
+        const item = document.createElement('li');
+        item.textContent = choiceText.textContent.replace(/\s+/g, ' ').trim();
+        choices.appendChild(item);
+      });
+      container.appendChild(choices);
+    });
+
+    return container;
+  }
+
   function extractMainContent(doc) {
     try {
       const documentClone = doc.implementation.createHTMLDocument('Article');
       documentClone.documentElement.innerHTML = doc.documentElement.innerHTML;
       const reader = new Readability(documentClone);
       const article = reader.parse();
-      
+
       if (!article || !article.content) {
         throw new Error('Could not extract main content');
       }
-      
+
       const container = document.createElement('div');
       container.innerHTML = article.content;
-      
+      preserveImportantContentBlocks(container);
+
       return {
         content: container,
         articleData: {
@@ -926,11 +1026,37 @@
     }
   }
 
+  function preserveImportantContentBlocks(content) {
+    const blocks = document.querySelectorAll('.alert, .nextstepaction');
+
+    blocks.forEach(block => {
+      const blockText = normalizeContentText(block.textContent);
+      const blockLinks = Array.from(block.querySelectorAll('a'))
+        .map(link => link.href)
+        .filter(Boolean);
+      const contentText = normalizeContentText(content.textContent);
+      const contentLinks = new Set(
+        Array.from(content.querySelectorAll('a'))
+          .map(link => link.href)
+          .filter(Boolean)
+      );
+      const hasMissingLink = blockLinks.some(link => !contentLinks.has(link));
+
+      if ((blockText && !contentText.includes(blockText)) || hasMissingLink) {
+        content.appendChild(block.cloneNode(true));
+      }
+    });
+  }
+
+  function normalizeContentText(text) {
+    return (text || '').replace(/\s+/g, ' ').trim();
+  }
+
   function fallbackContentExtraction(doc) {
     const container = document.createElement('div');
-    const mainContent = doc.querySelector('main') || 
-                        doc.querySelector('article') || 
-                        doc.querySelector('.content') || 
+    const mainContent = doc.querySelector('main') ||
+                        doc.querySelector('article') ||
+                        doc.querySelector('.content') ||
                         doc.querySelector('#content') ||
                         doc.body;
     container.appendChild(mainContent.cloneNode(true));
@@ -986,8 +1112,8 @@
     for (const selector of dateSelectors) {
       const element = document.querySelector(selector);
       if (element) {
-        const dateValue = element.getAttribute('content') || 
-                         element.getAttribute('datetime') || 
+        const dateValue = element.getAttribute('content') ||
+                         element.getAttribute('datetime') ||
                          element.textContent;
         if (dateValue) {
           try {
@@ -1562,7 +1688,7 @@
       word-wrap: break-word;
       white-space: pre-line;
     `;
-    
+
     // Handle multiline messages
     const lines = message.split('\n').filter(line => line.trim() !== '');
     if (lines.length > 1) {

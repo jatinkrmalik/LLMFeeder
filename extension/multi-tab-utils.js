@@ -9,6 +9,7 @@ const MultiTabUtils = (function() {
     'libs/turndown.js',
     'shortcut-utils.js',
     'settings.js',
+    'module-export-utils.js',
     'content.js'
   ];
 

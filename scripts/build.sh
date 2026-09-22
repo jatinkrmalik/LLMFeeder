@@ -81,42 +81,45 @@ echo ""
 # Function to build Chrome package
 build_chrome() {
   echo "Building Chrome package..."
-  
+
   # Remove any existing Chrome output files
   rm -f "$DIST_DIR/LLMFeeder-Chrome-v$VERSION.zip" 2>/dev/null
-  
+
   # Create a clean temporary directory
   CHROME_DIR="$TEMP_DIR/chrome"
   rm -rf "$CHROME_DIR" 2>/dev/null
   mkdir -p "$CHROME_DIR"
-  
+
   # Copy extension files to temp directory
   echo "Copying files for Chrome package..."
   cp "$EXT_DIR/background.js" "$CHROME_DIR/"
   cp "$EXT_DIR/content.js" "$CHROME_DIR/"
   cp "$EXT_DIR/popup.html" "$CHROME_DIR/"
   cp "$EXT_DIR/popup.js" "$CHROME_DIR/"
+  cp "$EXT_DIR/module-export.html" "$CHROME_DIR/"
+  cp "$EXT_DIR/module-export.js" "$CHROME_DIR/"
+  cp "$EXT_DIR/module-export-utils.js" "$CHROME_DIR/"
   cp "$EXT_DIR/multi-tab-utils.js" "$CHROME_DIR/"
   cp "$EXT_DIR/shortcut-utils.js" "$CHROME_DIR/"
   cp "$EXT_DIR/settings.js" "$CHROME_DIR/"
   cp "$EXT_DIR/styles.css" "$CHROME_DIR/"
   cp "$EXT_DIR/token-counter.js" "$CHROME_DIR/" 2>/dev/null || echo "Warning: token-counter.js not found"
-  
+
   # Create directories and copy additional files
   mkdir -p "$CHROME_DIR/icons"
   mkdir -p "$CHROME_DIR/libs"
   cp "$EXT_DIR/icons/"* "$CHROME_DIR/icons/" 2>/dev/null
   cp "$EXT_DIR/libs/"* "$CHROME_DIR/libs/" 2>/dev/null
-  
+
   # Create Chrome-specific manifest
   echo "Using jq to create Chrome manifest..."
   # Remove Firefox-specific settings and "menus" permission (Chrome doesn't support it)
   jq 'del(.browser_specific_settings) | .permissions = (.permissions - ["menus"])' "$EXT_DIR/manifest.json" > "$CHROME_DIR/manifest.json"
-  
+
   # Create the ZIP file
   echo "Creating Chrome ZIP file..."
   (cd "$CHROME_DIR" && zip -r "$DIST_DIR/LLMFeeder-Chrome-v$VERSION.zip" * -q)
-  
+
   echo "Chrome package created: $DIST_DIR/LLMFeeder-Chrome-v$VERSION.zip"
   return 0
 }
@@ -124,33 +127,36 @@ build_chrome() {
 # Function to build Firefox package
 build_firefox() {
   echo "Building Firefox package..."
-  
+
   # Remove any existing Firefox output files
   rm -f "$DIST_DIR/LLMFeeder-Firefox-v$VERSION.zip" 2>/dev/null
-  
+
   # Create a clean temporary directory
   FIREFOX_DIR="$TEMP_DIR/firefox"
   rm -rf "$FIREFOX_DIR" 2>/dev/null
   mkdir -p "$FIREFOX_DIR"
-  
+
   # Copy extension files to temp directory
   echo "Copying files for Firefox package..."
   cp "$EXT_DIR/background.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/content.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/popup.html" "$FIREFOX_DIR/"
   cp "$EXT_DIR/popup.js" "$FIREFOX_DIR/"
+  cp "$EXT_DIR/module-export.html" "$FIREFOX_DIR/"
+  cp "$EXT_DIR/module-export.js" "$FIREFOX_DIR/"
+  cp "$EXT_DIR/module-export-utils.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/multi-tab-utils.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/shortcut-utils.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/settings.js" "$FIREFOX_DIR/"
   cp "$EXT_DIR/styles.css" "$FIREFOX_DIR/"
   cp "$EXT_DIR/token-counter.js" "$FIREFOX_DIR/" 2>/dev/null || echo "Warning: token-counter.js not found"
-  
+
   # Create directories and copy additional files
   mkdir -p "$FIREFOX_DIR/icons"
   mkdir -p "$FIREFOX_DIR/libs"
   cp "$EXT_DIR/icons/"* "$FIREFOX_DIR/icons/" 2>/dev/null
   cp "$EXT_DIR/libs/"* "$FIREFOX_DIR/libs/" 2>/dev/null
-  
+
   # Create Firefox-specific manifest with required settings
   echo "Using jq to create Firefox manifest..."
   # For Firefox 109, modify the background section to use scripts instead of service_worker
@@ -163,17 +169,17 @@ build_firefox() {
     } |
     if has("background") then
       .background = {
-        "scripts": ["libs/jszip.min.js", "shortcut-utils.js", "settings.js", "multi-tab-utils.js", "background.js"]
+        "scripts": ["libs/jszip.min.js", "shortcut-utils.js", "settings.js", "module-export-utils.js", "multi-tab-utils.js", "background.js"]
       }
     else
       .
     end
     ' "$EXT_DIR/manifest.json" > "$FIREFOX_DIR/manifest.json"
-  
+
   # Create the ZIP file
   echo "Creating Firefox ZIP file..."
   (cd "$FIREFOX_DIR" && zip -r "$DIST_DIR/LLMFeeder-Firefox-v$VERSION.zip" * -q)
-  
+
   echo "Firefox package created: $DIST_DIR/LLMFeeder-Firefox-v$VERSION.zip"
   return 0
 }
@@ -181,15 +187,15 @@ build_firefox() {
 # Function to build source package
 build_source() {
   echo "Building source package..."
-  
+
   # Remove any existing source output files
   rm -f "$DIST_DIR/LLMFeeder-Source-v$VERSION.zip" 2>/dev/null
-  
+
   # Create a clean temporary directory
   SOURCE_DIR="$TEMP_DIR/source"
   rm -rf "$SOURCE_DIR" 2>/dev/null
   mkdir -p "$SOURCE_DIR"
-  
+
   # Copy extension files to temp directory
   echo "Copying files for source package..."
   cp "$EXT_DIR/background.js" "$SOURCE_DIR/"
@@ -202,17 +208,17 @@ build_source() {
   cp "$EXT_DIR/styles.css" "$SOURCE_DIR/"
   cp "$EXT_DIR/token-counter.js" "$SOURCE_DIR/" 2>/dev/null || echo "Warning: token-counter.js not found"
   cp "$EXT_DIR/manifest.json" "$SOURCE_DIR/"
-  
+
   # Create directories and copy additional files
   mkdir -p "$SOURCE_DIR/icons"
   mkdir -p "$SOURCE_DIR/libs"
   cp "$EXT_DIR/icons/"* "$SOURCE_DIR/icons/" 2>/dev/null
   cp "$EXT_DIR/libs/"* "$SOURCE_DIR/libs/" 2>/dev/null
-  
+
   # Create the ZIP file
   echo "Creating source ZIP file..."
   (cd "$SOURCE_DIR" && zip -r "$DIST_DIR/LLMFeeder-Source-v$VERSION.zip" * -q)
-  
+
   echo "Source package created: $DIST_DIR/LLMFeeder-Source-v$VERSION.zip"
   return 0
 }

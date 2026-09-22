@@ -25,7 +25,8 @@
     "menus"
   ],
   "host_permissions": [
-    "https://tiktoken.pages.dev/*"
+    "https://tiktoken.pages.dev/*",
+    "https://learn.microsoft.com/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -45,6 +46,7 @@
         "libs/turndown.js",
         "shortcut-utils.js",
         "settings.js",
+        "module-export-utils.js",
         "content.js"
       ]
     }

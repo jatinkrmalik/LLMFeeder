@@ -6,7 +6,7 @@
 // Load dependencies for Chrome service worker (not needed in Firefox)
 if (typeof importScripts === 'function') {
   try {
-    importScripts('libs/jszip.min.js', 'shortcut-utils.js', 'settings.js', 'multi-tab-utils.js');
+    importScripts('libs/jszip.min.js', 'shortcut-utils.js', 'settings.js', 'module-export-utils.js', 'multi-tab-utils.js');
   } catch (e) {
     console.error('Failed to load dependencies:', e);
     throw new Error('Critical dependencies failed to load. Please reinstall the extension.');
@@ -18,10 +18,10 @@ const browserAPI = (function() {
   // Check if we're in Firefox (browser is defined) or Chrome (chrome is defined)
   const isBrowser = typeof browser !== 'undefined';
   const isChrome = typeof chrome !== 'undefined';
-  
+
   // Base object
   const api = {};
-  
+
   // Helper to promisify callback-based Chrome APIs
   function promisify(chromeAPICall, context) {
     return (...args) => {
@@ -36,7 +36,7 @@ const browserAPI = (function() {
       });
     };
   }
-  
+
   // Set up APIs
   if (isBrowser) {
     // Firefox already has promise-based APIs
@@ -53,18 +53,21 @@ const browserAPI = (function() {
     api.tabs = {
       query: promisify(chrome.tabs.query, chrome.tabs),
       sendMessage: promisify(chrome.tabs.sendMessage, chrome.tabs),
+      create: promisify(chrome.tabs.create, chrome.tabs),
+      remove: promisify(chrome.tabs.remove, chrome.tabs),
       onHighlighted: chrome.tabs.onHighlighted,
       onActivated: chrome.tabs.onActivated
     };
-    
+
     api.runtime = {
       onMessage: chrome.runtime.onMessage,
       onInstalled: chrome.runtime.onInstalled,
       onStartup: chrome.runtime.onStartup,
       getURL: chrome.runtime.getURL,
+      sendMessage: promisify(chrome.runtime.sendMessage, chrome.runtime),
       lastError: chrome.runtime.lastError
     };
-    
+
     api.storage = {
       sync: {
         get: function(keys) {
@@ -91,7 +94,7 @@ const browserAPI = (function() {
         }
       }
     };
-    
+
     api.commands = {
       getAll: promisify(chrome.commands.getAll, chrome.commands),
       onCommand: chrome.commands.onCommand
@@ -732,6 +735,154 @@ browserAPI.commands.onCommand.addListener((command, tab) => {
   });
 });
 
+const moduleExportJobs = new Map();
+
+function delay(milliseconds) {
+  return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
+async function sendModuleExportEvent(exportId, event) {
+  try {
+    await browserAPI.runtime.sendMessage({ action: 'moduleExportEvent', exportId, ...event });
+  } catch (error) {
+    // The exporter page may have been closed while a job was running.
+  }
+}
+
+async function discoverModuleUnits(sourceTabId) {
+  const loaded = await MultiTabUtils.ensureContentScriptLoaded(browserAPI, sourceTabId);
+  if (!loaded) throw new Error('Cannot access the Microsoft Learn module page');
+  const response = await browserAPI.tabs.sendMessage(sourceTabId, { action: 'discoverModuleUnits' });
+  if (!response || !response.success || !response.urls?.length) {
+    throw new Error((response && response.error) || 'No Microsoft Learn unit links found');
+  }
+  return response.urls;
+}
+
+async function waitForContentScript(tabId) {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    if (await MultiTabUtils.ensureContentScriptLoaded(browserAPI, tabId)) return true;
+    await delay(300);
+  }
+  return false;
+}
+
+async function runModuleExport(request) {
+  const { exportId, sourceTabId, urls, settings } = request;
+  const job = { cancelled: false, createdTabs: new Set(), cleanupErrors: [] };
+  moduleExportJobs.set(exportId, job);
+
+  try {
+    const total = urls.length + 1;
+    let sourceTab;
+    try {
+      if (!job.cancelled) {
+        sourceTab = await browserAPI.tabs.sendMessage(sourceTabId, {
+          action: 'convertToMarkdown',
+          settings
+        });
+        if (!sourceTab || !sourceTab.success) {
+          throw new Error((sourceTab && sourceTab.error) || 'Module index conversion failed');
+        }
+        const validation = ModuleExportUtils.validateMarkdown(sourceTab.markdown, request.moduleUrl);
+        if (!validation.valid) throw new Error(validation.error);
+        await sendModuleExportEvent(exportId, {
+          type: 'file',
+          index: 0,
+          total,
+          filename: ModuleExportUtils.filenameForIndexTitle(sourceTab.title),
+          url: request.moduleUrl,
+          markdown: sourceTab.markdown
+        });
+      }
+    } catch (error) {
+      await sendModuleExportEvent(exportId, {
+        type: 'error',
+        index: 0,
+        total,
+        url: request.moduleUrl,
+        error: error.message || 'Module index conversion failed'
+      });
+    }
+    await sendModuleExportEvent(exportId, { type: 'progress', completed: 1, total });
+
+    for (let index = 0; index < urls.length; index++) {
+      if (job.cancelled) break;
+      const url = urls[index];
+      let tab;
+      try {
+        tab = await browserAPI.tabs.create({ url, active: false });
+        job.createdTabs.add(tab.id);
+        if (job.cancelled) break;
+        if (!await waitForContentScript(tab.id)) {
+          throw new Error('Could not load the unit content script');
+        }
+        const response = await browserAPI.tabs.sendMessage(tab.id, {
+          action: 'convertToMarkdown',
+          settings
+        });
+        if (!response || !response.success) {
+          throw new Error((response && response.error) || 'Unit conversion failed');
+        }
+        const validation = ModuleExportUtils.validateMarkdown(response.markdown, url);
+        if (!validation.valid) throw new Error(validation.error);
+        await sendModuleExportEvent(exportId, {
+          type: 'file',
+          index: index + 1,
+          total,
+          filename: ModuleExportUtils.filenameForUnitUrl(url, index),
+          url,
+          markdown: response.markdown
+        });
+      } catch (error) {
+        await sendModuleExportEvent(exportId, {
+          type: 'error',
+          index: index + 1,
+          total,
+          url,
+          error: error.message || 'Unit conversion failed'
+        });
+      } finally {
+        if (tab) {
+          try {
+            await browserAPI.tabs.remove(tab.id);
+            job.createdTabs.delete(tab.id);
+          } catch (error) {
+            job.cleanupErrors.push(`Could not remove export tab ${tab.id}: ${error.message}`);
+          }
+        }
+      }
+      await sendModuleExportEvent(exportId, {
+        type: 'progress',
+        completed: index + 2,
+        total,
+        cancelled: job.cancelled
+      });
+    }
+    await sendModuleExportEvent(exportId, {
+      type: job.cancelled ? 'cancelled' : 'complete'
+    });
+  } finally {
+    for (const tabId of job.createdTabs) {
+      try {
+        await browserAPI.tabs.remove(tabId);
+        job.createdTabs.delete(tabId);
+      } catch (error) {
+        job.cleanupErrors.push(`Could not remove export tab ${tabId}: ${error.message}`);
+      }
+    }
+    if (job.cleanupErrors.length) {
+      await sendModuleExportEvent(exportId, {
+        type: 'error',
+        index: 0,
+        total: urls.length + 1,
+        error: job.cleanupErrors.join('; ')
+      });
+    }
+    moduleExportJobs.delete(exportId);
+  }
+}
+
 // Keep Chrome's callback channel open while asynchronous shortcut work runs.
 browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (!request) return;
@@ -753,6 +904,33 @@ browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
     handleShortcutFallback(request, sender)
       .then(sendResponse)
       .catch(error => sendResponse({ accepted: false, error: error.message }));
+    return true;
+  }
+
+  if (request.action === 'discoverModuleUnits') {
+    discoverModuleUnits(request.sourceTabId)
+      .then(urls => sendResponse({ success: true, urls }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
+  }
+
+  if (request.action === 'startModuleExport') {
+    const validation = ModuleExportUtils.validateExportRequest(request);
+    if (!validation.valid) {
+      sendResponse({ success: false, error: validation.error });
+      return true;
+    }
+    runModuleExport(request).catch(error => {
+      sendModuleExportEvent(request.exportId, { type: 'fatalError', error: error.message });
+    });
+    sendResponse({ success: true });
+    return true;
+  }
+
+  if (request.action === 'cancelModuleExport') {
+    const job = moduleExportJobs.get(request.exportId);
+    if (job) job.cancelled = true;
+    sendResponse({ success: true });
     return true;
   }
 });

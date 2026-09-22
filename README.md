@@ -40,6 +40,7 @@ A browser extension that converts web page content to clean Markdown format and 
 - 🖼️ **Cross-Origin Iframe Support** - Improved extraction of embedded content from iframes
 - 📋 **Better Table Conversion** - Fixed table-to-markdown conversion for various HTML table formats
 - ⭐ **Review Prompt** - Gentle reminder to rate the extension after 20 successful conversions
+- 📚 **Microsoft Learn Module Export** - From a Learn module index, export every ordered unit to a chosen folder of Markdown files, with ZIP fallback and cancellation
 - 🔧 **Bug Fixes** - Fixed race condition in context menu initialization, CSS syntax errors, and removed dead code
 
 
@@ -55,7 +56,7 @@ LLMFeeder operates as a fully client-side extension with zero backend dependenci
 
 - **Zero Telemetry**: Unlike many extensions, LLMFeeder contains no analytics, tracking, or data collection mechanisms of any kind.
 
-- **Minimal Permissions**: The extension requests only the permissions strictly necessary for its core functionality (activeTab, clipboardWrite, storage, scripting).
+- **Minimal Permissions**: The extension requests only the permissions strictly necessary for its core functionality (activeTab, clipboardWrite, storage, scripting), plus narrow access to `learn.microsoft.com` for module batch export.
 
 - **Verifiable Codebase**: Being fully open source, the entire codebase is available for inspection to verify these privacy claims. Users are encouraged to review the source code to confirm the absence of any data exfiltration mechanisms.
 
@@ -74,6 +75,7 @@ This architecture ensures that your content remains exclusively on your device t
 - **Enhanced Image Processing**: Smart alt text generation with intelligent fallbacks for better image descriptions
 - **One-Click Simplicity**: Single action to process and copy content
 - **Download as File**: Save converted Markdown directly as .md files to your device
+- **Microsoft Learn Module Export**: Open a module index on `learn.microsoft.com`, choose **Export Learn Module**, then choose a local folder. Chrome writes or replaces numbered unit Markdown files after one overwrite confirmation. Browsers without the File System Access API download a ZIP instead. The export page shows progress, reports unit errors, supports cancellation, and removes its background tabs when finished.
 - **Page Title Integration**: Option to include webpage titles in your Markdown output
 - **Customizable Metadata Format**: Template-based system with 6 variables for flexible citation styles
 - **Debug Mode**: Built-in logging system for troubleshooting
@@ -144,14 +146,14 @@ This architecture ensures that your content remains exclusively on your device t
    ```
    git clone git@github.com:jatinkrmalik/LLMFeeder.git
    ```
-   
+
    (If you've already cloned, ensure you are on the desired branch/commit.)
 
 2. Navigate to the cloned directory:
    ```
    cd LLMFeeder
    ```
-   
+
 3. Build the extension:
 
 - Using the provided build script:
@@ -434,7 +436,7 @@ MIT
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Our Wonderful Contributors 💪 
+## Our Wonderful Contributors 💪
 
 Thanks a lot for spending your time helping LLMFeeder grow.🍻
 

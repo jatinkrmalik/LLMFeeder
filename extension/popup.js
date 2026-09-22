@@ -25,6 +25,7 @@ const browserAPI = (function () {
     api.storage = browser.storage;
     api.commands = browser.commands;
     api.scripting = browser.scripting;
+    api.runtime.getURL = browser.runtime.getURL.bind(browser.runtime);
   } else if (isChrome) {
     // Chrome APIs
     api.tabs = {
@@ -50,9 +51,18 @@ const browserAPI = (function () {
           });
         });
       },
+      create: function (createProperties) {
+        return new Promise((resolve, reject) => {
+          chrome.tabs.create(createProperties, (tab) => {
+            if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+            else resolve(tab);
+          });
+        });
+      },
     };
 
     api.runtime = chrome.runtime;
+    api.runtime.getURL = chrome.runtime.getURL.bind(chrome.runtime);
 
     api.storage = {
       sync: {
@@ -110,6 +120,7 @@ const convertMenu = document.getElementById("convertMenu");
 const convertOverrideBtn = document.getElementById("convertOverrideBtn");
 const convertOverrideLabel = convertOverrideBtn ? convertOverrideBtn.querySelector(".override-label") : null;
 const downloadBtn = document.getElementById("downloadBtn");
+const moduleExportBtn = document.getElementById("moduleExportBtn");
 const downloadBtnShortcut = document.getElementById("downloadBtnShortcut");
 const statusIndicator = document.getElementById("statusIndicator");
 const convertShortcut = document.getElementById("convertShortcut");
@@ -743,6 +754,26 @@ function getCurrentSettings() {
   };
 }
 
+async function updateModuleExportVisibility() {
+  if (!moduleExportBtn || typeof ModuleExportUtils === 'undefined') return;
+  const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
+  const isModule = tabs[0] && ModuleExportUtils.isModuleIndexUrl(tabs[0].url);
+  moduleExportBtn.classList.toggle('hidden', !isModule);
+}
+
+async function openModuleExporter() {
+  const tabs = await browserAPI.tabs.query({ active: true, currentWindow: true });
+  const tab = tabs[0];
+  if (!tab || !ModuleExportUtils.isModuleIndexUrl(tab.url)) return;
+
+  const exporterUrl = `${browserAPI.runtime.getURL('module-export.html')}?sourceTabId=${encodeURIComponent(tab.id)}&moduleUrl=${encodeURIComponent(tab.url)}`;
+  if (browserAPI.tabs.create) {
+    await browserAPI.tabs.create({ url: exporterUrl });
+  } else {
+    window.open(exporterUrl, '_blank');
+  }
+}
+
 // Check if user confirms large tab operation
 // Returns true to proceed, false to cancel
 function confirmLargeTabCount(tabs) {
@@ -1067,6 +1098,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   updateShortcutDisplay();
   await loadSettings();
+  updateModuleExportVisibility().catch(error => console.error('Module export detection failed:', error));
   initReviewBanner();
   initSettingsRatingCta();
 
@@ -1082,6 +1114,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     convertToMarkdown();
   });
   downloadBtn.addEventListener("click", downloadMarkdown);
+  if (moduleExportBtn) moduleExportBtn.addEventListener("click", openModuleExporter);
 
   // Convert split-button menu (override contentScope for one-shot full-page copy)
   updateConvertSplitVisibility();
