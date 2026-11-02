@@ -92,6 +92,51 @@
     });
   }
 
+  /* ---------- GitHub star count ----------
+     One unauthenticated API call per visitor per hour (cached), well inside
+     GitHub's 60/hour limit. Any failure leaves the plain "Star on GitHub". */
+
+  const starSlots = Array.from(document.querySelectorAll("[data-star-count]"));
+
+  function showStars(count) {
+    const label =
+      count >= 1000 ? `${(count / 1000).toFixed(count >= 10000 ? 0 : 1).replace(/\.0$/, "")}k` : String(count);
+    starSlots.forEach((slot) => {
+      slot.textContent = label;
+      slot.hidden = false;
+      const button = slot.closest("a");
+      if (button) button.setAttribute("aria-label", `Star on GitHub, ${count.toLocaleString("en-US")} stars`);
+    });
+  }
+
+  if (starSlots.length) {
+    const CACHE_KEY = "llmfeeder-stars";
+    let cached = null;
+    try {
+      cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+    } catch (_) {
+      /* private mode or bad JSON: fetch fresh */
+    }
+    if (cached && Date.now() - cached.at < 60 * 60 * 1000) {
+      showStars(cached.count);
+    } else {
+      fetch("https://api.github.com/repos/jatinkrmalik/LLMFeeder", { headers: { Accept: "application/vnd.github+json" } })
+        .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
+        .then((repo) => {
+          if (typeof repo.stargazers_count !== "number") return;
+          showStars(repo.stargazers_count);
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ count: repo.stargazers_count, at: Date.now() }));
+          } catch (_) {
+            /* private mode: no cache */
+          }
+        })
+        .catch(() => {
+          if (cached) showStars(cached.count);
+        });
+    }
+  }
+
   /* ---------- hero → scene advance ----------
      One nudge from the hero commits to the scene, so the first scroll lands on
      a composed panel instead of an awkward half-and-half view. Deliberately

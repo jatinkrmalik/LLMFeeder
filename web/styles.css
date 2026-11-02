@@ -738,6 +738,76 @@ h2 {
   color: var(--ink-dim);
 }
 
+/* ---------- demo video button (header) ---------- */
+
+.yt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.8rem 0 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.yt-btn svg {
+  width: 1.3rem;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.yt-btn:hover {
+  border-color: var(--ink-dim);
+  color: var(--ink);
+}
+
+/* Phones: logo only, the same square as the theme and menu buttons. Buttons
+   in the hero span the column so they stack as one aligned block. */
+@media (max-width: 559px) {
+  .yt-btn {
+    padding: 0;
+  }
+
+  .yt-btn-label {
+    display: none;
+  }
+
+  .cta-row .btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* Live GitHub star count, filled in by main.js; stays hidden if the API is
+   unreachable so the button simply reads "Star on GitHub". */
+.star-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.2rem;
+  padding: 0.1rem 0 0.1rem 0.65rem;
+  border-left: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ink-dim);
+}
+
+.star-count::before {
+  content: "\2605";
+  color: #e3a008;
+}
+
+.star-count[hidden] {
+  display: none;
+}
+
 /* ---------- scene: shared ---------- */
 
 .stage-heading {
@@ -2193,6 +2263,13 @@ kbd {
 
 .footer-inner a:hover {
   color: var(--accent);
+}
+
+.footer-yt svg {
+  width: 1.15rem;
+  height: auto;
+  margin-right: 0.35rem;
+  vertical-align: -0.15em;
 }
 
 .footer-inner strong {
