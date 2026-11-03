@@ -53,6 +53,7 @@ const browserAPI = (function() {
     api.tabs = {
       query: promisify(chrome.tabs.query, chrome.tabs),
       sendMessage: promisify(chrome.tabs.sendMessage, chrome.tabs),
+      create: promisify(chrome.tabs.create, chrome.tabs),
       onHighlighted: chrome.tabs.onHighlighted,
       onActivated: chrome.tabs.onActivated
     };
@@ -140,7 +141,8 @@ const CONTEXT_MENU_IDS = {
   SINGLE_DOWNLOAD: 'llmfeeder-single-download',
   MULTI_COPY: 'llmfeeder-multi-copy',
   MULTI_DOWNLOAD: 'llmfeeder-multi-download',
-  MULTI_ZIP: 'llmfeeder-multi-zip'
+  MULTI_ZIP: 'llmfeeder-multi-zip',
+  OPEN_SETTINGS: 'llmfeeder-open-settings'
 };
 
 // Current menu state
@@ -158,6 +160,11 @@ const PAGE_CONTEXTS = isFirefox
   ? ['page', 'selection', 'link', 'tab']  // Firefox supports 'tab' context
   : ['page', 'selection', 'link'];        // Chrome doesn't support 'tab'
 
+// Context for menus shown when right-clicking the toolbar icon itself.
+// This is the escape hatch for one-click download mode (issue #94): with the
+// popup disabled, users still need a way back into the settings.
+const ACTION_CONTEXTS = isFirefox ? ['browser_action'] : ['action'];
+
 // Helper to run menu operations with mutex lock
 async function withMenuLock(operation) {
   menuUpdateLock = menuUpdateLock.then(async () => {
@@ -166,6 +173,22 @@ async function withMenuLock(operation) {
     console.error('Menu operation error:', err);
   });
   return menuUpdateLock;
+}
+
+// Add the toolbar-icon menu entry that opens the settings page. Called from
+// both menu builders because they start from removeAll().
+async function createSettingsMenuItem() {
+  try {
+    await browserAPI.contextMenus.create({
+      id: CONTEXT_MENU_IDS.OPEN_SETTINGS,
+      title: 'Open LLMFeeder Settings',
+      contexts: ACTION_CONTEXTS
+    });
+  } catch (error) {
+    // Not fatal for the page menus, but log it: in one-click mode this entry
+    // is the way back into the settings.
+    console.error('Failed to create settings menu item:', error);
+  }
 }
 
 // Create single-tab context menus
@@ -201,6 +224,8 @@ async function createSingleTabMenus() {
       title: 'Download as Markdown (Alt+Shift+D)',
       contexts: PAGE_CONTEXTS
     });
+
+    await createSettingsMenuItem();
 
     currentMenuMode = 'single';
     currentMenuTabCount = 0;
@@ -248,6 +273,8 @@ async function createMultiTabMenus(tabCount) {
       contexts: PAGE_CONTEXTS
     });
 
+    await createSettingsMenuItem();
+
     currentMenuMode = 'multi';
     currentMenuTabCount = tabCount;
   });
@@ -275,9 +302,22 @@ async function updateContextMenus() {
   }
 }
 
+// Open the popup UI as a regular tab. Used by the toolbar-icon settings
+// menu entry, which matters when one-click download mode has disabled the
+// popup: the settings (including the one-click toggle itself) live there.
+async function openSettingsPage() {
+  const url = browserAPI.runtime.getURL('popup.html');
+  await browserAPI.tabs.create({ url });
+}
+
 // Handle context menu clicks
 browserAPI.contextMenus.onClicked.addListener(async (info, tab) => {
   const menuItemId = info.menuItemId;
+
+  if (menuItemId === CONTEXT_MENU_IDS.OPEN_SETTINGS) {
+    await openSettingsPage();
+    return;
+  }
 
   // Single-tab actions
   if (menuItemId === CONTEXT_MENU_IDS.SINGLE_COPY) {
@@ -308,11 +348,13 @@ browserAPI.tabs.onActivated.addListener(() => {
 // Initialize context menus when extension is installed or updated
 browserAPI.runtime.onInstalled.addListener(async () => {
   await createSingleTabMenus();
+  await initOneClickDownload();
 });
 
 // Initialize context menus when browser starts
 browserAPI.runtime.onStartup.addListener(async () => {
   await createSingleTabMenus();
+  await initOneClickDownload();
 });
 
 // Initialize context menus immediately on script load (for development/reload)
@@ -756,3 +798,74 @@ browserAPI.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 });
+
+// One-click download mode (issue #94)
+//
+// When the user enables "One-click download" in the settings, the toolbar
+// icon stops opening the popup (action.setPopup with an empty popup) and a
+// click instead runs the exact same convert + download path as the
+// Alt+Shift+D shortcut and the "Download as Markdown" context menu item,
+// honoring every saved setting (content scope, tables, images, title,
+// metadata). Turning the setting off restores the popup.
+let oneClickDownloadEnabled = false;
+
+async function applyOneClickDownload(enabled) {
+  oneClickDownloadEnabled = enabled === true;
+
+  if (!browserAPI.action || typeof browserAPI.action.setPopup !== 'function') {
+    return;
+  }
+
+  try {
+    const result = browserAPI.action.setPopup({
+      popup: oneClickDownloadEnabled ? '' : 'popup.html'
+    });
+    // Chrome (MV3) and Firefox both return a promise when no callback is
+    // passed; only await when one is actually returned.
+    if (result && typeof result.catch === 'function') {
+      await result;
+    }
+  } catch (error) {
+    console.error('Failed to apply one-click download mode:', error);
+  }
+}
+
+async function initOneClickDownload() {
+  try {
+    const data = await browserAPI.storage.sync.get({ oneClickDownload: false });
+    await applyOneClickDownload(data.oneClickDownload === true);
+  } catch (error) {
+    console.error('Failed to initialize one-click download mode:', error);
+  }
+}
+
+// Apply the saved preference as soon as the background script loads; the
+// service worker / background page can restart at any time and setPopup
+// state from a previous session is not guaranteed to survive.
+initOneClickDownload();
+
+// React immediately when the toggle is flipped in the popup settings.
+try {
+  const storageEvents = typeof browser !== 'undefined' ? browser.storage : chrome.storage;
+  if (storageEvents && storageEvents.onChanged) {
+    storageEvents.onChanged.addListener((changes, areaName) => {
+      if (areaName === 'sync' && changes.oneClickDownload) {
+        applyOneClickDownload(changes.oneClickDownload.newValue === true);
+      }
+    });
+  }
+} catch (error) {
+  console.error('Failed to watch one-click download setting:', error);
+}
+
+// Fires only when no popup is set, i.e. exactly when one-click mode is on.
+if (browserAPI.action && browserAPI.action.onClicked) {
+  browserAPI.action.onClicked.addListener((tab) => {
+    if (!oneClickDownloadEnabled) {
+      return;
+    }
+    submitShortcutCommand('download_markdown', 'native', { tab }).catch(error => {
+      console.error('One-click download failed:', error);
+    });
+  });
+}

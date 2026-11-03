@@ -24,5 +24,7 @@ describe('settings.js reinjection', () => {
 
     expect(settings.contentScope).toBe('mainContent');
     expect(settings.preserveTables).toBe(true);
+    // One-click download (issue #94) must default to off
+    expect(settings.oneClickDownload).toBe(false);
   });
 });

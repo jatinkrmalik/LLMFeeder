@@ -152,6 +152,7 @@ const metadataFormatTextarea = document.getElementById("metadataFormat");
 const metadataFormatContainer = document.getElementById("metadataFormatContainer");
 const resetMetadataFormatBtn = document.getElementById("resetMetadataFormat");
 const debugModeCheckbox = document.getElementById("debugMode");
+const oneClickDownloadCheckbox = document.getElementById("oneClickDownload");
 const copyLogsBtn = document.getElementById("copyLogsBtn");
 const triggerLazyLoadingCheckbox = document.getElementById("triggerLazyLoading");
 
@@ -382,6 +383,7 @@ async function loadSettings() {
     includeMetadataCheckbox.checked = data.includeMetadata;
     metadataFormatTextarea.value = data.metadataFormat;
     debugModeCheckbox.checked = data.debugMode;
+    oneClickDownloadCheckbox.checked = data.oneClickDownload === true;
     triggerLazyLoadingCheckbox.checked = data.triggerLazyLoading === true;
     showTokenCountCheckbox.checked = tokenSettings.showTokenCount;
     tokenContextLimitSelect.value = tokenSettings.tokenContextLimit.toString();
@@ -409,6 +411,7 @@ async function saveSettings() {
     const includeMetadata = includeMetadataCheckbox.checked;
     const metadataFormat = metadataFormatTextarea.value;
     const debugMode = debugModeCheckbox.checked;
+    const oneClickDownload = oneClickDownloadCheckbox.checked;
     const triggerLazyLoading = triggerLazyLoadingCheckbox.checked;
     const showTokenCount = showTokenCountCheckbox.checked;
     const tokenContextLimit = parseInt(tokenContextLimitSelect.value, 10);
@@ -422,6 +425,7 @@ async function saveSettings() {
       includeMetadata,
       metadataFormat,
       debugMode,
+      oneClickDownload,
       triggerLazyLoading,
       showTokenCount,
       tokenContextLimit,
@@ -1147,6 +1151,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     saveSettings();
   });
   triggerLazyLoadingCheckbox.addEventListener("change", saveSettings);
+  // The background script watches storage and applies one-click mode
+  // (action.setPopup) as soon as this is saved.
+  oneClickDownloadCheckbox.addEventListener("change", saveSettings);
 
   // Metadata format settings
   includeMetadataCheckbox.addEventListener("change", () => {
