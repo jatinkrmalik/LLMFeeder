@@ -1394,7 +1394,13 @@
           node.getAttribute('class') || ''
         ].join(' ');
         const languageMatch = languageClasses.match(/(?:language|lang)-(\S+)/);
-        const languageIdentifier = languageMatch ? languageMatch[1] : '';
+        // Some highlighters skip the class convention and put the language in a data
+        // attribute instead (data-lang, data-language) on either the <code> or <pre>.
+        const languageDataAttr = (codeElement || node).getAttribute('data-lang') ||
+          (codeElement || node).getAttribute('data-language') ||
+          node.getAttribute('data-lang') ||
+          node.getAttribute('data-language') || '';
+        const languageIdentifier = languageMatch ? languageMatch[1] : languageDataAttr;
         const codeContainer = (codeElement || node).cloneNode(true);
 
         // Syntax highlighters often emit <pre><span>...<br>...</span></pre>.
