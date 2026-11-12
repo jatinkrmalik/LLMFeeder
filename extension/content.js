@@ -878,6 +878,18 @@
     for (let i = styles.length - 1; i >= 0; i--) {
       styles[i].parentNode.removeChild(styles[i]);
     }
+    // Strip page chrome that wraps the content rather than belonging to it:
+    // sidebars and the ARIA landmark regions for site navigation, headers
+    // and footers. (#114: fullPage on a discussion page dragged all of this
+    // in as link noise around the actual content.)
+    const chrome = doc.querySelectorAll(
+      'aside, [role="navigation"], [role="complementary"], [role="banner"], [role="contentinfo"]'
+    );
+    for (let i = chrome.length - 1; i >= 0; i--) {
+      if (chrome[i].parentNode) {
+        chrome[i].parentNode.removeChild(chrome[i]);
+      }
+    }
     return doc.body;
   }
 
@@ -894,6 +906,24 @@
 
   function extractMainContent(doc) {
     try {
+      // Discussion pages (Reddit threads, Hacker News, ...) are not
+      // article-shaped: Readability is designed to discard comments, so it
+      // returns almost nothing useful for them. Extract the post plus the
+      // full comment tree directly instead. (#114)
+      const discussion = extractDiscussionContent(doc);
+      if (discussion) {
+        return {
+          content: discussion.content,
+          articleData: {
+            title: document.title,
+            author: discussion.author || extractAuthorFromMeta(),
+            siteName: extractSiteNameFromMeta(),
+            publishedTime: extractPublishedDateFromMeta(),
+            excerpt: ''
+          }
+        };
+      }
+
       const documentClone = doc.implementation.createHTMLDocument('Article');
       documentClone.documentElement.innerHTML = doc.documentElement.innerHTML;
       const reader = new Readability(documentClone);
@@ -935,6 +965,256 @@
                         doc.body;
     container.appendChild(mainContent.cloneNode(true));
     return container;
+  }
+
+  // ==========================================================================
+  // DISCUSSION-PAGE EXTRACTION (fixes #114)
+  // ==========================================================================
+  // Discussion pages are a root post plus a reply tree, not an article, so
+  // Readability's article heuristics — which explicitly discard `comment` /
+  // `replies` nodes — return almost nothing for them. The detectors below
+  // are structural (a single post plus a comment tree), so listing pages
+  // (many posts, no tree) keep the Readability path.
+  //
+  // The extractors only read light DOM: the custom elements Reddit's new UI
+  // uses (shreddit-post / shreddit-comment) slot their text into the light
+  // DOM, and anything behind a closed shadow root is invisible to a content
+  // script anyway. Comment bodies are cloned with nested replies removed
+  // first, then re-attached as nested blockquotes so Turndown renders the
+  // tree as `>` / `> >` nesting. Chrome (nav / sidebar / footer) is
+  // excluded by construction: only the post and the comment tree are kept.
+
+  function extractDiscussionContent(doc) {
+    // Reddit new UI: exactly one post on the page means a thread, not a
+    // listing (listings render many shreddit-posts and no comment tree).
+    const redditPosts = doc.querySelectorAll('shreddit-post');
+    if (redditPosts.length === 1) {
+      return buildDiscussionContainer(
+        extractRedditPost(redditPosts[0]),
+        buildRedditCommentTree(doc.querySelectorAll('shreddit-comment'))
+      );
+    }
+
+    // Reddit old UI: one link post plus a comment area.
+    const oldPosts = doc.querySelectorAll('.thing.link');
+    const oldCommentArea = doc.querySelector('.commentarea');
+    if (oldPosts.length === 1 && oldCommentArea) {
+      return buildDiscussionContainer(
+        extractOldRedditPost(oldPosts[0]),
+        buildOldRedditCommentTree(oldCommentArea)
+      );
+    }
+
+    // Hacker News: a comment tree only exists on item pages.
+    const hnTree = doc.querySelector('.comment-tree');
+    if (hnTree) {
+      return buildDiscussionContainer(
+        extractHnPost(doc),
+        buildHnCommentTree(hnTree)
+      );
+    }
+
+    return null;
+  }
+
+  function buildDiscussionContainer(post, comments) {
+    const hasPostBody = post.body && post.body.textContent.trim().length > 0;
+    if (!hasPostBody && comments.length === 0) {
+      return null;
+    }
+
+    const container = document.createElement('div');
+
+    if (hasPostBody) {
+      container.appendChild(post.body);
+    }
+
+    if (comments.length > 0) {
+      const heading = document.createElement('h2');
+      heading.textContent = 'Comments';
+      container.appendChild(heading);
+      comments.forEach((comment) => {
+        container.appendChild(renderDiscussionComment(comment));
+      });
+    }
+
+    return { content: container, author: post.author || '' };
+  }
+
+  function renderDiscussionComment(comment) {
+    const quote = document.createElement('blockquote');
+
+    if (comment.author) {
+      const authorLine = document.createElement('p');
+      const strong = document.createElement('strong');
+      strong.textContent = comment.author;
+      authorLine.appendChild(strong);
+      quote.appendChild(authorLine);
+    }
+
+    if (comment.body) {
+      quote.appendChild(comment.body);
+    }
+
+    comment.children.forEach((child) => {
+      quote.appendChild(renderDiscussionComment(child));
+    });
+
+    return quote;
+  }
+
+  // --- Reddit new UI (shreddit-*) -------------------------------------------
+
+  function extractRedditPost(postEl) {
+    const bodySlot = postEl.querySelector(':scope > [slot="text-body"]');
+    const titleEl = postEl.querySelector(':scope > [slot="title"]');
+    let body = null;
+    if (bodySlot) {
+      body = bodySlot.cloneNode(true);
+    } else if (titleEl) {
+      // Link/media post with no text body: keep the title so the post is
+      // still represented when there are no comments either.
+      body = document.createElement('p');
+      body.textContent = titleEl.textContent.trim();
+    }
+    return { body, author: postEl.getAttribute('author') || '' };
+  }
+
+  function buildRedditCommentTree(commentEls) {
+    // Comments may be nested in the DOM (replies inside their parent) or
+    // flat siblings carrying a depth attribute; document order is pre-order
+    // in both cases, so rebuild the tree from depth with a stack.
+    const roots = [];
+    const stack = [];
+    commentEls.forEach((el) => {
+      const depth = redditCommentDepth(el);
+      const node = {
+        author: el.getAttribute('author') || '',
+        body: extractRedditCommentBody(el),
+        children: []
+      };
+      while (stack.length > 0 && stack[stack.length - 1].depth >= depth) {
+        stack.pop();
+      }
+      if (stack.length === 0) {
+        roots.push(node);
+      } else {
+        stack[stack.length - 1].node.children.push(node);
+      }
+      stack.push({ depth, node });
+    });
+    return roots;
+  }
+
+  function redditCommentDepth(el) {
+    const attr = el.getAttribute('depth');
+    if (attr !== null && attr !== '') {
+      const parsed = parseInt(attr, 10);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+    // No depth attribute: count ancestor comment elements.
+    let depth = 0;
+    let parent = el.parentElement;
+    while (parent) {
+      if (parent.tagName === 'SHREDDIT-COMMENT') depth += 1;
+      parent = parent.parentElement;
+    }
+    return depth;
+  }
+
+  function extractRedditCommentBody(el) {
+    const slot = el.querySelector(':scope > [slot="comment"]');
+    if (slot) {
+      return slot.cloneNode(true);
+    }
+    // Fallback: clone the comment with nested replies stripped out.
+    const clone = el.cloneNode(true);
+    clone.querySelectorAll('shreddit-comment').forEach((nested) => {
+      if (nested.parentNode) nested.parentNode.removeChild(nested);
+    });
+    return clone;
+  }
+
+  // --- Reddit old UI ----------------------------------------------------------
+
+  function extractOldRedditPost(postEl) {
+    const bodyEl = postEl.querySelector('.usertext-body .md');
+    const titleEl = postEl.querySelector('a.title');
+    let body = null;
+    if (bodyEl) {
+      body = bodyEl.cloneNode(true);
+    } else if (titleEl) {
+      body = document.createElement('p');
+      body.textContent = titleEl.textContent.trim();
+    }
+    return { body, author: postEl.getAttribute('data-author') || '' };
+  }
+
+  function buildOldRedditCommentTree(commentArea) {
+    const topTable = commentArea.querySelector(':scope > .sitetable');
+    if (!topTable) return [];
+    return buildOldRedditComments(topTable);
+  }
+
+  function buildOldRedditComments(tableEl) {
+    const nodes = [];
+    Array.from(tableEl.children).forEach((child) => {
+      if (!child.classList || !child.classList.contains('comment')) return;
+      const bodyEl = child.querySelector('.entry .usertext-body .md');
+      const authorEl = child.querySelector('.entry .tagline .author');
+      const body = document.createElement('div');
+      if (bodyEl) body.appendChild(bodyEl.cloneNode(true));
+      const node = {
+        author: authorEl ? authorEl.textContent.trim() : '',
+        body: body.textContent.trim().length > 0 ? body : null,
+        children: []
+      };
+      const childTable = child.querySelector(':scope > .child > .sitetable');
+      if (childTable) {
+        node.children = buildOldRedditComments(childTable);
+      }
+      nodes.push(node);
+    });
+    return nodes;
+  }
+
+  // --- Hacker News ------------------------------------------------------------
+
+  function extractHnPost(doc) {
+    // HN has no self-text: the post is a title + link, already surfaced as
+    // the page title. Only the comment tree is extracted.
+    const authorEl = doc.querySelector('.subtext .hnuser');
+    return { body: null, author: authorEl ? authorEl.textContent.trim() : '' };
+  }
+
+  function buildHnCommentTree(treeEl) {
+    const rows = treeEl.querySelectorAll('.athing.comtr');
+    const roots = [];
+    const stack = [];
+    rows.forEach((row) => {
+      const indentImg = row.querySelector('.ind img');
+      const width = indentImg ? parseInt(indentImg.getAttribute('width') || '0', 10) : 0;
+      const depth = Math.floor((Number.isNaN(width) ? 0 : width) / 40);
+      const textEl = row.querySelector('.commtext');
+      const authorEl = row.querySelector('.hnuser');
+      const body = document.createElement('div');
+      if (textEl) body.appendChild(textEl.cloneNode(true));
+      const node = {
+        author: authorEl ? authorEl.textContent.trim() : '',
+        body: body.textContent.trim().length > 0 ? body : null,
+        children: []
+      };
+      while (stack.length > 0 && stack[stack.length - 1].depth >= depth) {
+        stack.pop();
+      }
+      if (stack.length === 0) {
+        roots.push(node);
+      } else {
+        stack[stack.length - 1].node.children.push(node);
+      }
+      stack.push({ depth, node });
+    });
+    return roots;
   }
 
   function extractAuthorFromMeta() {
