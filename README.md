@@ -426,6 +426,11 @@ A test bench page (`testbench.html`) is included to verify extension functionali
 - Enable **Preserve Tables** to test table conversion
 - Test with both "Main Content" and "Full Page" scopes
 
+## Support
+
+If LLMFeeder saves you time, you can [buy me a coffee](https://buymeacoffee.com/jk) or
+[sponsor it on GitHub](https://github.com/sponsors/jatinkrmalik). Stars, bug reports and pull requests help too.
+
 ## License
 
 MIT
