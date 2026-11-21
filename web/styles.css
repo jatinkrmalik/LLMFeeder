@@ -2272,6 +2272,13 @@ kbd {
   vertical-align: -0.15em;
 }
 
+.footer-support svg {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.3rem;
+  vertical-align: -0.15em;
+}
+
 .footer-inner strong {
   font-family: var(--display);
   color: var(--ink);
