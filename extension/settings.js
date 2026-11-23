@@ -18,6 +18,10 @@
       includeMetadata: true,
       metadataFormat: DEFAULT_METADATA_FORMAT,
       debugMode: false,
+      // Off by default. When enabled, clicking the toolbar icon downloads the
+      // current page as Markdown immediately instead of opening the popup
+      // (see issue #94). The background script applies it via action.setPopup.
+      oneClickDownload: false,
       // Off by default. Triggers a scroll-pass on lazy-loading surfaces (chat
       // UIs, virtualised feeds) before extraction. Has visible side effects
       // (page movement, optional footer warning) so users opt in explicitly.
